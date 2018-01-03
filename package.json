@@ -1,0 +1,26 @@
+{
+  "name": "mlstudy",
+  "version": "0.1.0",
+  "description": "",
+  "engines": {
+    "node": "6.11.1"
+  },
+  "main": "mlstudyserver.js",
+  "scripts": {
+    "start": "node mlstudyserver.js"
+  },
+  "dependencies": {
+    "express": "4.15.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/magland/mlstudy"
+  },
+  "keywords": [
+    "mountainlab"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^1.12.1"
+  }
+}
