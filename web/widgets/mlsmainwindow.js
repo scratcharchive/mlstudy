@@ -188,6 +188,17 @@ function MLSMainWindow(O) {
 		});
 	}
 
+	function select_document_from_docstor(callback) {
+		var dlg=new DocSelectDialog();
+		dlg.setDocStorClient(m_docstor_client);
+		dlg.setOptions({source:'docstor',owner:m_mls_manager.user(),user:m_mls_manager.user(),filter:'*.mls'});
+		dlg.show();
+		dlg.onSelected(function() {
+			var doc0=dlg.selection();
+			callback(doc0);
+		});
+	}
+
 	function open_study_browser() {
 		check_proceed_without_saving_changes(open_study_browser_2);
 		function open_study_browser_2() {
@@ -240,6 +251,8 @@ function MLSMainWindow(O) {
 	function open_study_docstor() {
 		check_proceed_without_saving_changes(open_study_docstor_2);
 		function open_study_docstor_2() {
+
+			/*
 			var owner=m_mls_manager.user();
 			var title='';
 			if (m_file_source=='docstor') {
@@ -250,8 +263,12 @@ function MLSMainWindow(O) {
 			if (!owner) return;
 			title=prompt('Title of document:',title);
 			if (!title) return;
-			loadFromDocStor(owner,title,function(err) {
-				if (err) alert(err);
+			*/
+
+			select_document_from_docstor(function(doc0) {
+				loadFromDocStor(doc0.owner,doc0.title,function(err) {
+					if (err) alert(err);
+				});
 			});
 		}
 	}
