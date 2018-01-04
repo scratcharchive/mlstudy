@@ -15,21 +15,42 @@ function MLSMainWindow(O) {
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
 	var m_mls_widget=new MLSWidget();
+	var m_original_study_object={};
 	m_mls_widget.setParent(O);
 	m_mls_widget.setMLSManager(m_mls_manager);
-	var m_top_widget=new MLSTopWidget();
-	m_top_widget.setParent(O);
-	m_top_widget.setMLSManager(m_mls_manager);
+	var m_menu_bar=new MLMenuBar();
+	var m_status_bar=new MLSStatusBar();
+	m_menu_bar.setParent(O);
+	m_status_bar.setParent(O);
+
+	JSQ.connect(m_mls_manager.study(),'changed',O,update_menus);
+
+	// File menu //////////////////////////////////////
+	var menu=m_menu_bar.addMenu('File');
+	menu.addItem('New study',create_new_study);
+	menu.addDivider();
+	menu.addItem('Open study from browser...',open_study_browser);
+	menu.addItem('Open study from cloud...',open_study_docstor);
+	menu.addDivider();
+	var menu_item_save=menu.addItem('Save changes',save_changes);
+	var menu_item_save_browser=menu.addItem('Save changes to browser as...',save_changes_browser);
+	var menu_item_save_docstor=menu.addItem('Save changes to cloud as...',save_changes_docstor);
+	menu.addDivider();
+	var menu_item_download_study=menu.addItem('Download study to computer...',download_study);
+	///////////////////////////////////////////////////
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
 
-		var top_height=40;
+		var top_height=30;
+		var bottom_height=33;
+		var marg=10;
 
-		m_top_widget.setGeometry(0,0,W,top_height);
-		m_mls_widget.setGeometry(0,top_height,W,H-top_height);
+		m_menu_bar.setGeometry(marg,0,W-marg*2,top_height);
+		m_mls_widget.setGeometry(0,top_height,W,H-top_height-bottom_height);
+		m_status_bar.setGeometry(marg,H-bottom_height,W-marg*2,bottom_height);
 	}
 
 	function loadFromDocStor(owner,title,callback) {
@@ -46,9 +67,8 @@ function MLSMainWindow(O) {
 	        }
 	        m_mls_manager.setMLSObject(obj);
 	        m_mls_widget.refresh();
-	        m_file_source='docstor';
-	        m_file_info={owner:owner,title:title,doc_id:doc_id};
-	        m_top_widget.setOriginalStudyObject(m_mls_manager.study().object());
+	        set_file_info('docstor',{owner:owner,title:title})
+	        set_original_study_object(m_mls_manager.study().object());
 	        callback(null);
 		});
 	}
@@ -64,7 +84,7 @@ function MLSMainWindow(O) {
         m_mls_widget.refresh();
         m_file_source='file_content';
         m_file_path=path;
-        m_top_widget.setOriginalStudyObject(m_mls_manager.study().object());
+        set_original_study_object(m_mls_manager.study().object());
         callback(null);
 	}
 
@@ -76,37 +96,140 @@ function MLSMainWindow(O) {
 		}
 		m_mls_manager.setMLSObject(obj);
 		m_mls_widget.refresh();
-        m_file_source='browser_storage';
-        m_file_info={title:title};
-        m_top_widget.setOriginalStudyObject(m_mls_manager.study().object());
+		set_file_info('browser_storage',{title:title});
+        set_original_study_object(m_mls_manager.study().object());
         callback(null);
 	}
 
-	JSQ.connect(m_top_widget,'save_changes',O,save_changes);
 	function save_changes() {
-		var obj=m_mls_manager.study().object();
-		var content=JSON.stringify(obj,null,4);
 		if (m_file_source=='docstor') {
-			set_document_content_to_docstor(m_docstor_client,m_file_info.doc_id,content,function(err) {
-				if (err) {
-					alert('Unable to save document: '+err);
-					return;
-				}
-				m_top_widget.setOriginalStudyObject(obj);
-			});
+			save_changes_docstor({prompt:false});
 		}
 		else if (m_file_source=='browser_storage') {
-			var LS=new LocalStorage();
-			LS.writeObject('mlstudy--'+m_file_info.title,obj);
-			m_top_widget.setOriginalStudyObject(obj);
+			save_changes_browser({prompt:false});
 		}
 		else if (m_file_source=='file_content') {
-			download(content,'',m_file_path);
-			m_top_widget.setOriginalStudyObject(obj);
+			save_changes_file_content({prompt:false});
+		}
+		else if (m_file_source==='') {
+			if (m_mls_manager.user())
+				save_changes_docstor({prompt:true});
+			else
+				save_changes_browser({prompt:true});
+		}
+		else {
+			alert('Unexpected file source: '+m_file_source);
 		}
 	}
 
-	JSQ.connect(m_top_widget,'download_study',O,download_study);
+	function save_changes_browser(opts) {
+		if (!opts) opts={};
+		if (!('prompt' in opts)) opts.prompt=true;
+		var title=m_file_info.title||'default.mls';
+		if (opts.prompt) {
+			title=prompt('Saving to browser. Title of document:',title);
+			if (!title) return;
+		}
+		var obj=m_mls_manager.study().object();
+		var content=JSON.stringify(obj,null,4);
+		var LS=new LocalStorage();
+		LS.writeObject('mlstudy--'+title,obj);
+		set_file_info('browser_storage',{title:title});
+		set_original_study_object(obj);
+		alert('Changes saved to browser document: '+m_file_info.title);
+	}
+	function save_changes_docstor(opts) {
+		if (!opts) opts={};
+		if (!('prompt' in opts)) opts.prompt=true;
+		var owner=m_file_info.owner||m_mls_manager.user();
+		var title=m_file_info.title||'study.mls';
+		if (opts.prompt) {
+			owner=prompt('Saving to cloud. Owner of document:',owner);
+			if (!owner) return;
+			title=prompt('Saving to cloud. Title of document:',title);
+			if (!title) return;
+		}
+		var obj=m_mls_manager.study().object();
+		var content=JSON.stringify(obj,null,4);
+		set_document_content_to_docstor(m_docstor_client,owner,title,content,function(err) {
+			if (err) {
+				alert('Unable to save document: '+err);
+				return;
+			}
+			set_file_info('docstor',{owner:owner,title:title});
+			set_original_study_object(obj);
+			alert('Changes saved to cloud document: '+m_file_info.title+' ('+owner+')');
+		});
+	}
+	function save_changes_file_content() {
+		var obj=m_mls_manager.study().object();
+		var content=JSON.stringify(obj,null,4);
+		download(content,'',m_file_path);
+		set_original_study_object(obj);
+		alert('Changes save to '+m_file_path);
+	}
+
+	function create_new_study() {
+		check_proceed_without_saving_changes(create_new_study_2);
+		function create_new_study_2() {
+			m_mls_manager.setMLSObject({});
+			m_mls_widget.refresh();
+			set_file_info('',{});
+		}
+	}
+
+	function open_study_browser() {
+		check_proceed_without_saving_changes(open_study_browser_2);
+		function open_study_browser_2() {
+			var title='';
+			if (m_file_source=='browser_storage')
+				title=m_file_info.title;
+			title=prompt('Title of document:',title);
+			if (!title) return;
+			var LS=new LocalStorage();
+			var obj=LS.readObject('mlstudy--'+title);
+			if (!obj) {
+				alert('Unable to read study from browser storage: '+title);
+				return;
+			}
+			loadFromBrowserStorage(title,function(err) {
+				if (err) alert(err);
+			});
+		}
+	}
+
+	function open_study_docstor() {
+		check_proceed_without_saving_changes(open_study_docstor_2);
+		function open_study_docstor_2() {
+			var owner=m_mls_manager.user();
+			var title='';
+			if (m_file_source=='docstor') {
+				owner=m_file_info.owner||m_mls_manager.user();
+				title=m_file_info.title;
+			}
+			owner=prompt('Owner of document:',owner);
+			if (!owner) return;
+			title=prompt('Title of document:',title);
+			if (!title) return;
+			loadFromDocStor(owner,title,function(err) {
+				if (err) alert(err);
+			});
+		}
+	}
+
+	function check_proceed_without_saving_changes(callback) {
+		if (!is_modified()) {
+			callback();
+			return;
+		}
+		var resp=confirm('Proceed without saving changes?');
+		if (!resp) {
+			return;
+		}
+		callback();
+	}
+
+	//JSQ.connect(m_top_widget,'download_study',O,download_study);
 	function download_study() {
 		var obj=m_mls_manager.study().object();
 		var content=JSON.stringify(obj,null,4);
@@ -122,10 +245,99 @@ function MLSMainWindow(O) {
 		download(content,fname);
 	}
 
+	function set_original_study_object(obj) {
+		m_original_study_object=JSQ.clone(obj);
+		update_menus();
+	}
+
+	function is_modified() {
+		return (JSON.stringify(m_original_study_object)!=JSON.stringify(m_mls_manager.study().object()));
+	}
+
+	function update_menus() {
+		menu_item_save.setDisabled(false);
+		menu_item_save_browser.setDisabled(false);
+		menu_item_save_docstor.setDisabled(false);
+		if (!is_modified()) {
+			menu_item_save.setDisabled(true);
+			if (m_file_source=='browser_storage')
+				menu_item_save_browser.setDisabled(false);
+			if (m_file_source=='docstor')
+				menu_item_save_docstor.setDisabled(false);
+		}
+	}
+
+	function set_file_info(source,info) {
+		m_file_source=source;
+		m_file_info=JSQ.clone(info);
+		m_status_bar.setFileInfo(source,info);
+	}
+
 	update_layout();
 }
 
-function set_document_content_to_docstor(DSC,doc_id,content,callback) {
+function MLSStatusBar(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('MLSStatusBar');
+
+	this.setFileInfo=function(source,info) {setFileInfo(source,info);};
+
+	var m_file_source='';
+	var m_file_info={};
+
+	O.div().append('<span id=file_info></span>');
+
+	JSQ.connect(O,'sizeChanged',O,update_layout);
+	function update_layout() {
+		var W=O.width();
+		var H=O.height();
+		
+		//m_content.css({position:'absolute',left:0,top:0,width:W,height:H});
+	}
+
+	function setFileInfo(source,info) {
+		m_file_source=source;
+		m_file_info=JSQ.clone(info);
+		refresh();
+	}
+
+	function refresh() {
+		var str='';
+		if (m_file_source=='browser_storage')
+			str='Browser document: '+(m_file_info.title||'');
+		else if (m_file_source=='docstor')
+			str='Cloud document: '+m_file_info.title+' ('+m_file_info.owner+')';
+		O.div().find('#file_info').html(str);
+	}
+
+	update_layout();
+}
+
+function set_document_content_to_docstor(DSC,owner,title,content,callback) {
+	var query={owned_by:owner,filter:{"attributes.title":title}};
+    if (DSC.user()!=owner)
+    	query.and_shared_with=DSC.user();
+    DSC.findDocuments(query,function(err,docs) {
+        if (err) {
+            callback('Problem finding document: '+err);
+            return;
+        }
+        if (docs.length==0) {
+            DSC.createDocument({owner:owner,attributes:{title:title},content:content},function(err) {
+            	callback(err);
+            });
+            return; 
+        }
+        if (docs.length>1) {
+            callback('Error: more than one document with this title and owner found.');
+            return; 
+        }
+        set_document_content_to_docstor_by_doc_id(DSC,docs[0]._id,content,callback);
+    });
+}
+
+function set_document_content_to_docstor_by_doc_id(DSC,doc_id,content,callback) {
 	DSC.setDocument(doc_id,{content:content},function(err) {
 		callback(err);
 	});
@@ -158,6 +370,7 @@ function download_document_content_from_docstor(DSC,owner,title,callback) {
     });
 }
 
+/*
 function MLSTopWidget(O) {
 	O=O||this;
 	JSQWidget(O);
@@ -213,3 +426,4 @@ function MLSTopWidget(O) {
 
 	update_layout();
 }
+*/

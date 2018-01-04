@@ -61,6 +61,14 @@ opts.STYLESHEETS.push(
 	'mlsdatasetwidget.css'
 );
 
+//// MLMenuBar
+opts.SCRIPTS.push(
+	'mlmenubar.js','jquery.dropdown.min.js'
+);
+opts.STYLESHEETS.push(
+	'jquery.dropdown.min.css','mlmenubar.css'
+);
+
 opts.SOURCEPATH.push('managers')
 opts.SCRIPTS.push(
 	'mlsmanager.js'

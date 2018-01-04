@@ -53,7 +53,7 @@ function MLSDatasetListWidget(O) {
 	}
 
 	function refresh() {
-		var current_dataset=currentDatasetId();
+		var current_dataset_id=currentDatasetId();
 
 		m_table.clearRows();
 		m_table.setColumnCount(2);
@@ -66,7 +66,7 @@ function MLSDatasetListWidget(O) {
 			m_table.addRow(row);
 		}
 
-		if (current_dataset) {
+		if (current_dataset_id) {
 			set_current_row_by_dataset_id(current_dataset_id);
 		}
 

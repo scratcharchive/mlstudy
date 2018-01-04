@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var KBucketUploadDialog_stylesheets_loaded=false;
 
 function KBucketUploadDialog(O) {
 	O=O||this;
@@ -32,7 +31,6 @@ function KBucketUploadDialog(O) {
 		      <div>
 		        <div>
 		          <div>
-		            <span class="glyphicon glyphicon-cloud-upload"></span>
 		            <h2>File Uploader</h2>
 		            <h4>kbucket</h4>
 		            <div id=auth></div>
@@ -54,10 +52,6 @@ function KBucketUploadDialog(O) {
 	O.div().append($(html));
 	O.div().append('<div id=list_container><ul id=list class="upload-list"></ul></div>')
 	var m_label='Upload file(s) to KBucket';
-	if (!KBucketUploadDialog_stylesheets_loaded) {
-		load_stylesheets();
-		KBucketUploadDialog_stylesheets_loaded=true;
-	}
 
 	function show() {
 		O.setSize(800,600);
@@ -237,18 +231,6 @@ function KBucketUploadDialog(O) {
 				O.emit('finished',args);
 			}
 		}
-	}
-
-	function load_stylesheets() {
-		load_css('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css');
-	}
-
-	function load_css(url) {
-		$("<link/>", {
-		   rel: "stylesheet",
-		   type: "text/css",
-		   href: url
-		}).appendTo("head");
 	}
 
 	function encodeQuery(q) {

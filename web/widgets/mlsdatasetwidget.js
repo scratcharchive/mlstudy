@@ -516,7 +516,7 @@ function DescriptionWidget(O) {
 	this.setDescription=function(descr) {setDescription(descr);};
 	this.onDescriptionEdited=function(handler) {JSQ.connect(O,'description-edited',O,handler);};
 
-	var m_top_bar=$('<div><span style="font-weight:bold">Description</span> <button id=edit_button>Edit</button></div>');
+	var m_top_bar=$('<div><span style="font-weight:bold">Dataset description:</span>&nbsp;&nbsp;&nbsp;&nbsp; <button id=edit_button>Edit</button></div>');
 	var m_textarea=$('<textarea readonly=readonly></textarea>');
 	O.div().append(m_top_bar);
 	O.div().append(m_textarea);
@@ -564,7 +564,7 @@ function KDDTopWidget(O) {
 	this.refresh=function() {refresh();};
 
 	var m_dataset_id='';
-	var m_content=$('<div><a href=# id=refresh_link title="Click to refresh this dataset"><span id=title class=title></span></a></div>');
+	var m_content=$('<div>Dataset: <span id=title class=title></span>&nbsp;&nbsp;&nbsp;<button id=refresh_link title="Click to refresh this dataset">refresh</button></div>');
 	O.div().append(m_content);
 
 	m_content.find('#refresh_link').click(function() {

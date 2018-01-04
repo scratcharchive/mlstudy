@@ -5,6 +5,7 @@ function MLSManager() {
   this.loginInfo=function() {return JSQ.clone(m_login_info);};
   this.kBucketAuthUrl=function() {return kBucketAuthUrl();};
   this.kBucketUrl=function() {return kBucketUrl();};
+  this.user=function() {return user();};
 
 	var m_study=new MLStudy();
   var m_login_info={};
@@ -19,6 +20,13 @@ function MLSManager() {
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
     if (on_localhost) return 'http://localhost:5031';
     else return 'https://river.simonsfoundation.org';
+  }
+  function user() {
+    if (m_login_info.google_profile) {
+      console.log(m_login_info.google_profile);
+      return 'profile...';
+    }
+    else return '';
   }
 }
 
@@ -55,6 +63,7 @@ function MLStudy(O) {
   };
 
   function setObject(obj) {
+    if (JSON.stringify(m_object)==JSON.stringify(obj)) return;
     m_object=JSQ.clone(obj);
     m_object.datasets=m_object.datasets||{};
     m_object.pipelines=m_object.pipelines||{};
