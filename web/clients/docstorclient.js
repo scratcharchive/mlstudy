@@ -78,7 +78,7 @@ function DocStorClient() {
 			else {
 				filter0=JSON.parse(JSON.stringify(opts.filter));
 			}
-			query.filter=JSON.stringify(opts.filter);
+			query.filter=JSON.stringify(filter0);
 		}
 		api_call('findDocuments',query,function(err,resp) {
 			if (err) {
