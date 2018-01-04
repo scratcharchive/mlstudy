@@ -31,11 +31,11 @@ function MLSMainWindow(O) {
 	menu.addDivider();
 	menu.addItem('Open study from browser...',open_study_browser);
 	menu.addItem('Open study from cloud...',open_study_docstor);
+	menu.addItem('Upload study from computer...',upload_study);
 	menu.addDivider();
 	var menu_item_save=menu.addItem('Save changes',save_changes);
 	var menu_item_save_browser=menu.addItem('Save changes to browser as...',save_changes_browser);
 	var menu_item_save_docstor=menu.addItem('Save changes to cloud as...',save_changes_docstor);
-	menu.addDivider();
 	var menu_item_download_study=menu.addItem('Download study to computer...',download_study);
 	///////////////////////////////////////////////////
 
@@ -215,6 +215,28 @@ function MLSMainWindow(O) {
 		}
 	}
 
+	function upload_study() {
+		check_proceed_without_saving_changes(upload_study_2);
+		function upload_study_2() {
+			var UP=new FileUploader();
+			UP.uploadTextFile({},function(tmp) {
+				if (!tmp.success) {
+					alert('Unexpected problem: '+tmp.error);
+					return;
+				}
+				var obj=jsu_parse_json(tmp.text);
+				if (!obj) {
+					alert('Error parsing json content');
+					return;
+				}
+				m_mls_manager.setMLSObject(obj);
+				m_mls_widget.refresh();
+				set_file_info('',{});
+		        set_original_study_object(m_mls_manager.study().object());
+			});
+		}
+	}
+
 	function open_study_docstor() {
 		check_proceed_without_saving_changes(open_study_docstor_2);
 		function open_study_docstor_2() {
@@ -261,6 +283,7 @@ function MLSMainWindow(O) {
 		}
 		download(content,fname);
 	}
+
 
 	function set_original_study_object(obj) {
 		m_original_study_object=JSQ.clone(obj);
