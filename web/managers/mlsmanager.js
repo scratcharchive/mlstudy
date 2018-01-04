@@ -23,8 +23,7 @@ function MLSManager() {
   }
   function user() {
     if (m_login_info.google_profile) {
-      console.log(m_login_info.google_profile);
-      return 'profile...';
+      return m_login_info.google_profile.U3||'';
     }
     else return '';
   }
