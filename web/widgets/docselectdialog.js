@@ -66,7 +66,7 @@ function DocSelectDialog(O) {
 					var doc0=docs[i];
 					var doc1={
 						owner:m_options.owner,
-						title:doc0.title
+						title:(doc0.attributes||{}).title||''
 					};
 					docs0.push(doc1);
 				}
