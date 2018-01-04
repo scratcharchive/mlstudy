@@ -92,7 +92,7 @@ function MLSDatasetWidget(O) {
 		m_files_table.headerRow().cell(1).html('File');
 		m_files_table.headerRow().cell(2).html('Size');
 		m_files_table.headerRow().cell(3).html('Orig. Path');
-		m_files_table.headerRow().cell(4).html('KB');
+		m_files_table.headerRow().cell(4).html('KBucket');
 		
 		m_files_table.clearRows();
 		var ds=get_dataset();

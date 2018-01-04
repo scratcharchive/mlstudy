@@ -16,7 +16,6 @@ function KBucketClient() {
 		}
 		var url0=m_kbucket_url;
 		var url1=url0+'/stat/'+sha1;
-		console.log('url1: '+url1);
 		jsu_http_get_json(url1,function(tmp) {
 			if (!tmp.success) {
 				callback('Error in http_get_json: '+tmp.error,null);

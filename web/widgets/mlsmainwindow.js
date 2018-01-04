@@ -178,22 +178,39 @@ function MLSMainWindow(O) {
 		}
 	}
 
+	function select_document_from_browser_storage(callback) {
+		var dlg=new DocSelectDialog();
+		dlg.setOptions({source:'browser_storage'});
+		dlg.show();
+		dlg.onSelected(function() {
+			var doc0=dlg.selection();
+			callback(doc0);
+		});
+	}
+
 	function open_study_browser() {
 		check_proceed_without_saving_changes(open_study_browser_2);
 		function open_study_browser_2() {
+
+			/*
 			var title='';
 			if (m_file_source=='browser_storage')
 				title=m_file_info.title;
 			title=prompt('Title of document:',title);
 			if (!title) return;
-			var LS=new LocalStorage();
-			var obj=LS.readObject('mlstudy--'+title);
-			if (!obj) {
-				alert('Unable to read study from browser storage: '+title);
-				return;
-			}
-			loadFromBrowserStorage(title,function(err) {
-				if (err) alert(err);
+			*/
+
+			select_document_from_browser_storage(function(doc0) {
+				var title=doc0.title;
+				var LS=new LocalStorage();
+				var obj=LS.readObject('mlstudy--'+title);
+				if (!obj) {
+					alert('Unable to read study from browser storage: '+title);
+					return;
+				}
+				loadFromBrowserStorage(title,function(err) {
+					if (err) alert(err);
+				});
 			});
 		}
 	}
