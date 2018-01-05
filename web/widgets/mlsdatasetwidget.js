@@ -131,7 +131,7 @@ function MLSDatasetWidget(O) {
 			var add_parameter_link=$('<a href=#>Add parameter</a>');
 			add_parameter_link.click(add_param);
 
-			var upload_params_link=$('<span class=upload_button title="Upload params.json"></span>');
+			var upload_params_link=$('<a href=#>Upload params.json</a>');
 			upload_params_link.click(upload_params);
 
 			var row=m_files_table.createRow();
