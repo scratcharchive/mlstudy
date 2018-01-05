@@ -138,7 +138,7 @@ function KBucketUploadDialog(O) {
 		  file_records[file.uniqueIdentifier]={file:file,element:f};
 		});
 		r.on('progress', function (file) {
-		  var str = (100*r.progress())+'%';
+		  var str = 'Uploading ('+format_progress(r.progress())+')';
 		  O.div().find('#progress').html(str);
 		});
 		r.on('complete', function () {
@@ -205,6 +205,11 @@ function KBucketUploadDialog(O) {
 		  };
 		  xhr.send();
 		});
+
+		function format_progress(p) {
+			var val=Math.floor((p*100)*10)/10;
+			return val+'%';
+		}
 
 		function check_finished() {
 			var ok=true;

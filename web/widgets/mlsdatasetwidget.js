@@ -135,8 +135,11 @@ function MLSDatasetWidget(O) {
 			upload_params_link.click(upload_params);
 
 			var row=m_files_table.createRow();
-			row.cell(0).append(upload_params_link);
 			row.cell(1).append(add_parameter_link);
+			m_params_table.addRow(row);	
+
+			var row=m_files_table.createRow();
+			row.cell(1).append(upload_params_link);
 			m_params_table.addRow(row);	
 		}
 	}
