@@ -27,23 +27,15 @@ function KBucketUploadDialog(O) {
 
 	var html=`
 		<div id=container style="text-align:center">
-		    <div>
-		      <div>
-		        <div>
-		          <div>
-		            <h2>File Uploader</h2>
-		            <h4>kbucket</h4>
-		            <div id=auth></div>
-		            <div id='resumable'>
-		              	<button id="upload" class="btn btn-lg upload-btn" type="button">Upload File(s)</button>
-		              	<div id='progress' class="progress">
-		                	<div id='progress-bar' class="progress-bar" role="progressbar"></div>
-			      		</div>
-		            </div>
-		          </div>
-		        </div>
-		      </div>
-		    </div>
+          <div>
+            <h2>File Uploader</h2>
+            <h4>kbucket</h4>
+            <div id=auth></div>
+            <div id='resumable'>
+              	<button id="upload" class="btn btn-lg upload-btn" type="button">Upload File(s)</button>
+              	<div><span id=progress>-------</span></div>
+            </div>
+          </div>
 		</div>
 	`;
 	var m_dialog=$('<div id="dialog"></div>');
@@ -129,17 +121,14 @@ function KBucketUploadDialog(O) {
 		  throw Error('resumable not supported');
 
 		var button = m_dialog.find('#upload')[0],
-		    progress = m_dialog.find('#progress')[0],
 		    list = m_dialog.find('#list')[0];
 		var file_records={};
 
 		r.assignBrowse(button);
 		r.assignDrop(button);
 
-		progress.style['visibility'] = 'hidden';
 
 		r.on('fileAdded', function (file) {
-		  progress.style['visibility'] = 'visible';
 		  var f=$('<li />');
 		  f[0].id = 'file-' + file.uniqueIdentifier;
 		  f.addClass('file');
@@ -149,10 +138,11 @@ function KBucketUploadDialog(O) {
 		  file_records[file.uniqueIdentifier]={file:file,element:f};
 		});
 		r.on('progress', function (file) {
-		  progress.style['width'] = 100*r.progress()+'%';
+		  var str = (100*r.progress())+'%';
+		  O.div().find('#progress').html(str);
 		});
 		r.on('complete', function () {
-		  progress.style['visibility'] = 'hidden';
+		  O.div().find('#progress').html('Complete');
 		});
 
 		function fileError(file, msg) {
