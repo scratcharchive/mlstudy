@@ -37,6 +37,8 @@ function MLSMainWindow(O) {
 	var menu_item_save_browser=menu.addItem('Save changes to browser as...',save_changes_browser);
 	var menu_item_save_docstor=menu.addItem('Save changes to cloud as...',save_changes_docstor);
 	var menu_item_download_study=menu.addItem('Download study to computer...',download_study);
+	menu.addDivider();
+	var menu_item_share_study=menu.addItem('Share study...',share_study);
 	///////////////////////////////////////////////////
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
@@ -301,6 +303,13 @@ function MLSMainWindow(O) {
 		download(content,fname);
 	}
 
+	function share_study() {
+		var dlg=new DocShareDialog();
+		dlg.setDocStorClient(m_docstor_client);
+		dlg.setDocumentInfo(m_file_info);
+		dlg.show();
+	}
+
 
 	function set_original_study_object(obj) {
 		m_original_study_object=JSQ.clone(obj);
@@ -321,6 +330,11 @@ function MLSMainWindow(O) {
 				menu_item_save_browser.setDisabled(false);
 			if (m_file_source=='docstor')
 				menu_item_save_docstor.setDisabled(false);
+		}
+
+		menu_item_share_study.setDisabled(false);
+		if (m_file_source!='docstor') {
+			//menu_item_share_study.setDisabled(true);
 		}
 	}
 

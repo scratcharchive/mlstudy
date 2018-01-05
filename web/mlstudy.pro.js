@@ -55,7 +55,7 @@ opts.STYLESHEETS.push('create.css');
 opts.SOURCEPATH.push('widgets')
 opts.SCRIPTS.push(
 	'edittextdlg.js','mlsdatasetlistwidget.js','mlsdatasetwidget.js','mlswidget.js','mlsmainwindow.js',
-	'mltablewidget.js','docselectdialog.js'
+	'mltablewidget.js','docselectdialog.js','docsharedialog.js'
 );
 opts.STYLESHEETS.push(
 	'mlsdatasetwidget.css'
