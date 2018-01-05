@@ -334,7 +334,7 @@ function MLSMainWindow(O) {
 
 		menu_item_share_study.setDisabled(false);
 		if (m_file_source!='docstor') {
-			//menu_item_share_study.setDisabled(true);
+			menu_item_share_study.setDisabled(true);
 		}
 	}
 
