@@ -53,7 +53,6 @@ function KBucketUploadDialog(O) {
 		m_dialog.append(O.div());
 		$('body').append(m_dialog);
 		//O.div().find('#container').css({"max-width":(W-40)});
-		console.log(O.div().find('#container'));
 		m_dialog.dialog({width:W+20,
 		              height:H+60,
 		              resizable:false,

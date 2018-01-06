@@ -457,7 +457,7 @@ function MLSTopWidget(O) {
 	if (window.mlpipeline_mode!='local') {
 		var link0=$('<button>Download study</button>');
 		m_content.append(link0);
-		link0.click(function() {console.log('aaa'); O.emit('download_study');});
+		link0.click(function() {O.emit('download_study');});
 	}
 	O.div().append(m_content);
 

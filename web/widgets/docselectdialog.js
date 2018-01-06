@@ -80,7 +80,6 @@ function DocSelectDialog(O) {
 			for (var i in names) {
 				var name0=names[i];
 				if (jsu_starts_with(name0,'mlstudy--')) {
-					console.log(name0);
 					docs0.push({title:name0.slice(('mlstudy--').length)});
 				}
 			}
