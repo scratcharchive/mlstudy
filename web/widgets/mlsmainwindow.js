@@ -342,6 +342,42 @@ function MLSMainWindow(O) {
 		m_file_source=source;
 		m_file_info=JSQ.clone(info);
 		m_status_bar.setFileInfo(source,info);
+		update_url();
+	}
+
+	function update_url() {
+		var query=parse_url_params0();
+		var querystr='';
+		if (m_file_source=='docstor') {
+			querystr='source=docstor&owner='+m_file_info.owner+'&title='+m_file_info.title;
+		}
+		else if (m_file_source=='browser_storage') {
+			querystr='source=browser_storage&title='+m_file_info.title;	
+		}
+		if ('passcode' in query) {
+			querystr+='&passcode='+query.passcode;
+		}
+		if ('login' in query) {
+			querystr+='&login='+query.login;
+		}
+		try {
+			history.pushState(null, null, '?'+querystr);
+		}
+		catch(err) {
+			console.log ('Unable to update url');
+		}
+	}
+
+	function parse_url_params0() {
+		var match,
+		pl     = /\+/g,  // Regex for replacing addition symbol with a space
+		search = /([^&=]+)=?([^&]*)/g,
+		decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+		query  = window.location.search.substring(1);
+		url_params = {};
+		while (match = search.exec(query))
+			url_params[decode(match[1])] = decode(match[2]);
+		return url_params;
 	}
 
 	update_layout();

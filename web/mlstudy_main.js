@@ -39,7 +39,7 @@ function jsqmain(query) {
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
 
     show_full_browser_message('MLStudy','Logging in...');
-    Authenticate({passcode:query.passcode||''},function(err,login_info) {
+    Authenticate({passcode:query.passcode||'',login_method:query.login||''},function(err,login_info) {
         if (err) {
             show_full_browser_message('MLStudy','Error logging in: '+err);
             return;

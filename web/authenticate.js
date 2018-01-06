@@ -4,6 +4,18 @@ function Authenticate(opts,callback) {
 		callback('',{passcode:opts.passcode});
 		return;
 	}
+	if (opts.login_method=='google') {
+		login_via_google();
+		return;
+	}
+	else if (opts.login_method=='passcode') {
+		login_via_passcode();
+		return;
+	}
+	else if (opts.login_method=='anonymous') {
+		login_as_anonymous();
+		return;
+	}
 
 	var dlg1=new ChooseLoginDlg();
 	dlg1.onAccepted(on_accepted);
@@ -11,25 +23,37 @@ function Authenticate(opts,callback) {
 
 	function on_accepted() {
 		if (dlg1.choice()=='google') {
-			var dlg=new GoogleLogInDlg();
-			dlg.show(function(tmp) {
-				var ret={
-					google_id_token:tmp.id_token,
-					google_profile:tmp.profile
-				}
-				callback('',ret);
-			});	
+			login_via_google();
 		}
 		else if (dlg1.choice()=='passcode') {
-			var passcode0=prompt('Enter passcode:');
-			callback('',{passcode:passcode0});
+			login_via_passcode();
 		}
 		else if (dlg1.choice()=='anonymous') {
-			callback('',{});
+			login_as_anonymous();
 		}
 		else {
 			callback('Unexpected login choice: '+dlg1.choice(),{});
 		}
+	}
+
+	function login_via_google() {
+		var dlg=new GoogleLogInDlg();
+		dlg.show(function(tmp) {
+			var ret={
+				google_id_token:tmp.id_token,
+				google_profile:tmp.profile
+			}
+			callback('',ret);
+		});	
+	}
+
+	function login_via_passcode() {
+		var passcode0=prompt('Enter passcode:');
+		callback('',{passcode:passcode0});
+	}
+
+	function login_as_anonymous() {
+		callback('',{});
 	}
 }
 
