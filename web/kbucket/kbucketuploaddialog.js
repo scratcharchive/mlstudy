@@ -120,22 +120,47 @@ function KBucketUploadDialog(O) {
 		if (!r.support)
 		  throw Error('resumable not supported');
 
-		var button = m_dialog.find('#upload')[0],
-		    list = m_dialog.find('#list')[0];
+		var button = m_dialog.find('#upload')[0];
+		var list = m_dialog.find('#list')[0];
 		var file_records={};
 
 		r.assignBrowse(button);
 		r.assignDrop(button);
 
-
 		r.on('fileAdded', function (file) {
-		  var f=$('<li />');
-		  f[0].id = 'file-' + file.uniqueIdentifier;
-		  f.addClass('file');
-		  f.append(file.fileName + " (" + file.size + " bytes) <span id=status>Uploading (please wait)...</span>");
-		  list.append(f[0]);
-		  r.upload();
-		  file_records[file.uniqueIdentifier]={file:file,element:f};
+			var f=$('<li />');
+			f[0].id = 'file-' + file.uniqueIdentifier;
+			f.addClass('file');
+			f.append(file.fileName + " (" + file.size + " bytes) <span id=status>Uploading (please wait)...</span>");
+			list.append(f[0]);
+			file_records[file.uniqueIdentifier]={file:file,element:f};
+			if (ends_with(file.fileName,'.prv')) {
+				file.cancel();
+				read_as_text(file.file,function(txt) {
+					var prv0=try_parse_json(txt);
+					if (!prv0) {
+						alert('Error parsing JSON of prv file.');
+						throw Error("Error parsing JSON of prv file.");
+						return;
+					}
+					var a=create_prv_link(file.fileName,prv0);	
+					f.append(a);
+					f.addClass('complete');
+					f.addClass('success');
+					file_records[file.uniqueIdentifier].finished=true;
+					file_records[file.uniqueIdentifier].prv=prv0;
+					file_records[file.uniqueIdentifier].prv_file_name=file.fileName;
+					f.find('#status').html('Done');
+					setTimeout(function() {
+						check_finished();
+					},200);
+				});
+				return;
+			}
+			else {
+				file_records[file.uniqueIdentifier].prv_file_name=file.fileName+'.prv';
+				r.upload();
+			}
 		});
 		r.on('progress', function (file) {
 		  var str = 'Uploading ('+format_progress(r.progress())+')';
@@ -183,10 +208,7 @@ function KBucketUploadDialog(O) {
 		      r = undefined;
 		    }
 		    if (r && r.prv) {
-		      var a = $('<a>'+file.fileName+'.prv'+'</a>');
-		      a[0].download = file.fileName + '.prv';
-		      a[0].href = 'data:application/json,' + encodeURIComponent(JSON.stringify(r.prv,null,4));
-		      a.css({color:'#337ab7!'});
+		      var a=create_prv_link(file.fileName+'.prv',r.prv);
 		      f.find('#status').html('Finished uploading.');
 		      f.append('&nbsp;');
 		      f.append(a);
@@ -206,6 +228,36 @@ function KBucketUploadDialog(O) {
 		  xhr.send();
 		});
 
+		function ends_with(str,str2) {
+			return (str.slice(str.length-str2.length)==str2);
+		}
+
+		function try_parse_json(txt) {
+			try {
+				return JSON.parse(txt);
+			}
+			catch(err) {
+				return null;
+			}
+		}
+
+		function read_as_text(html5_file,callback) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+			  var text = reader.result;
+			  callback(text);
+			}
+			reader.readAsText(html5_file);
+		}
+
+		function create_prv_link(file_name,prv) {
+			var a = $('<a>'+file_name+'</a>');
+			a[0].download = file_name;
+			a[0].href = 'data:application/json,' + encodeURIComponent(JSON.stringify(prv,null,4));
+			a.css({color:'#337ab7!'});
+			return a;
+		}
+
 		function format_progress(p) {
 			var val=Math.floor((p*100)*10)/10;
 			return val+'%';
@@ -220,7 +272,7 @@ function KBucketUploadDialog(O) {
 			if (ok) {
 				var files0=[];
 				for (var unique_id in file_records) {
-					files0.push({prv:file_records[unique_id].prv,fileName:file_records[unique_id].file.fileName});
+					files0.push({prv:file_records[unique_id].prv,fileName:file_records[unique_id].prv_file_name});
 				}
 				var args={files:files0};
 				O.emit('finished',args);

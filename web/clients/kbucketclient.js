@@ -23,8 +23,12 @@ function KBucketClient() {
 			}
 			var obj=tmp.object;
 			if (!obj.success) {
-				callback(null,{found:false});
+				callback(obj.error);
 				return;	
+			}
+			if (!obj.found) {
+				callback(null,{found:false});
+				return;
 			}
 			if (size_bytes!=obj.size) {
 				callback('Found file has incorrect size: '+obj.size+' <> '+size_bytes,null);

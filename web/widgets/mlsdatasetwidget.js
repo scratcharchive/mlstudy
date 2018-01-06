@@ -204,19 +204,6 @@ function MLSDatasetWidget(O) {
 		});
 		row.cell(0).append(link);
 
-		// upload prv
-		var link=$('<span class=upload_button></span>');
-		if (file.prv) {
-			link.attr('title','Upload different .prv file');
-		}
-		else {
-			link.attr('title','Upload .prv file');
-		}
-		link.click(function() {
-			upload_prv_file(name);
-		});
-		row.cell(0).append(link);
-
 		if (file.prv) {
 			var download_link1=$('<span class=download2_button title="Download prv file"></span>')
 			download_link1.click(function() {
@@ -320,6 +307,7 @@ function MLSDatasetWidget(O) {
 		set_dataset(ds);
 		refresh();
 	}
+	/*
 	function upload_prv_file(name) {
 		var UP=new FileUploader();
 		UP.uploadTextFile({},function(tmp) {
@@ -352,6 +340,7 @@ function MLSDatasetWidget(O) {
 			}
 		});
 	}
+	*/
 	function download_prv_file(name) {
 		var ds=get_dataset();
 		if (!ds) return;
