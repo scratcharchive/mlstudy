@@ -46,6 +46,26 @@ opts.SCRIPTS.push(
 );
 
 //////////////////////////////////////////////////////////////////////
+// codemirror
+opts.SCRIPTS.push('CodeMirror/lib/codemirror.js');
+opts.STYLESHEETS.push('CodeMirror/lib/codemirror.css');
+opts.SCRIPTS.push('CodeMirror/mode/javascript/javascript.js');
+opts.SCRIPTS.push('jshint/jshint.js','CodeMirror/addon/lint/lint.js',
+				  'CodeMirror/addon/lint/javascript-lint.js');
+opts.STYLESHEETS.push('CodeMirror/addon/lint/lint.css');
+
+
+//////////////////////////////////////////////////////////////////////
+opts.SOURCEPATH.push('jsoneditor/dist')
+opts.SCRIPTS.push(
+	'jsoneditor.min.js'
+);
+opts.STYLESHEETS.push(
+	'jsoneditor.min.css'
+);
+
+
+//////////////////////////////////////////////////////////////////////
 opts.TARGET = 'index.html';
 opts.SCRIPTS.push(
 	'mlstudy_main.js','authenticate.js'
@@ -54,11 +74,22 @@ opts.STYLESHEETS.push('create.css');
 
 opts.SOURCEPATH.push('widgets')
 opts.SCRIPTS.push(
-	'edittextdlg.js','mlsdatasetlistwidget.js','mlsdatasetwidget.js','mlswidget.js','mlsmainwindow.js',
-	'mltablewidget.js','docselectdialog.js','docsharedialog.js'
+	'edittextdlg.js','mlsdatasetlistwidget.js','mlsdatasetwidget.js','mlsdatasetsview.js',
+	'mlsmainwindow.js','mltablewidget.js','docselectdialog.js','docsharedialog.js',
+	'mlshomeview.js','descriptionwidget.js','mlspipelinemodulesview.js','mlspipelinemodulelistwidget.js',
+	'mlspipelinemodulewidget.js',
+	'mlsbatchscriptsview.js','mlsbatchscriptlistwidget.js','mlsbatchscriptwidget.js'
 );
 opts.STYLESHEETS.push(
-	'mlsdatasetwidget.css'
+	'mlsdatasetwidget.css','mlsmainwindow.css','descriptionwidget.css'
+);
+
+//////////////////////////////////////////////////////////////////////
+opts.SOURCEPATH.push('mlpipeline')
+opts.SCRIPTS.push(
+	'editmlpipelinewidget.js','editmlpipelinetablewidget.js','mlpipeline.js',
+	'newstepdialog.js','jobmanager.js','processormanager.js','kuleleclient.js',
+	'editstepdialog.js','mlpipelinelistwidget.js'
 );
 
 //// MLMenuBar

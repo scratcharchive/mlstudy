@@ -4,6 +4,8 @@ function MLMenuBar(O) {
 	O.div().addClass('MLMenuBar');
 
 	this.addMenu=function(label) {return addMenu(label);};
+	this.addSpacer=function() {return addSpacer();};
+	this.addButton=function(label,handler) {return addButton(label,handler);};
 
 	var m_menus=[];
 
@@ -11,6 +13,14 @@ function MLMenuBar(O) {
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
+
+		var font_size=Math.max(12,Math.min(30,H-15));
+
+		//var Hbutton=Math.max(12,H-20);
+
+		O.div().find('.mlmenubar-menu-button').css({"font-size":font_size+'px'});
+		O.div().find('.mlmenubar-button').css({"font-size":font_size+'px'});
+		O.div().find('a').css({"font-size":font_size+'px',"line-height":H+'px'});
 		
 		//m_content.css({position:'absolute',left:0,top:0,width:W,height:H});
 	}
@@ -18,7 +28,7 @@ function MLMenuBar(O) {
 	function addMenu(label) {
 		var menu=new MLMenu();
 		var menu_id=menu.menuId();
-		O.div().append(`<button id=action_dropdown data-jq-dropdown="#action_dropdown_items-"${menu_id}>${label} ▼</button>`);
+		O.div().append(`<a class=mlmenubar-menu-button id=action_dropdown data-jq-dropdown="#action_dropdown_items-"${menu_id}>${label} ▼</a>`);
 		var elmt=$(`
 		  <div id="action_dropdown_items-"${O.objectId()} class="jq-dropdown jq-dropdown-tip">
 			  <ul class="jq-dropdown-menu">
@@ -28,6 +38,21 @@ function MLMenuBar(O) {
 		$('body').append(elmt);
 		menu.setElement(elmt);
 		return menu;
+	}
+
+	function addSpacer() {
+		var elmt=$('<span class=mlmenubar-spacer></span>');
+		O.div().append(elmt);
+		elmt.css({padding:'5px'});
+		return elmt;
+	}
+
+	function addButton(label,handler) {
+		var elmt=$('<a href=# class=mlmenubar-button>'+label+'</a>');
+		O.div().append(elmt);
+		elmt.css({"padding-left":'8px',"padding-right":'8px'});
+		elmt.click(function() {setTimeout(handler,0);});
+		return elmt;
 	}
 
 	update_layout();

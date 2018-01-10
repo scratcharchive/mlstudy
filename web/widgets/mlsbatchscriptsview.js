@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-function MLSWidget(O,options) {
+function MLSBatchScriptsView(O,options) {
 	O=O||this;
 	JSQWidget(O);
-	O.div().addClass('MLSWidget');
+	O.div().addClass('MLSBatchScriptsView');
 
 	if (!options) options={};
 
-	this.setMLSManager=function(M) {setMLSManager(M); refresh();};
+	this.setProcessorManager=function(PM) {m_batch_script_widget.setProcessorManager(PM);};
+	this.setMLSManager=function(M) {setMLSManager(M);};
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;
 
-	var m_list_widget=new MLSDatasetListWidget();
-	var m_dataset_widget=new MLSDatasetWidget();
+	var m_list_widget=new MLSBatchScriptListWidget();
+	var m_batch_script_widget=new MLSBatchScriptWidget();
 	m_list_widget.setParent(O);
-	m_dataset_widget.setParent(O);
+	m_batch_script_widget.setParent(O);
 
-	m_list_widget.onCurrentDatasetChanged(refresh_dataset);
+	m_list_widget.onCurrentBatchScriptChanged(refresh_batch_script);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -42,34 +43,35 @@ function MLSWidget(O,options) {
 
 		hmarg=5;
 		m_list_widget.setGeometry(hmarg,0,W1-hmarg*2,H);
-		m_dataset_widget.setGeometry(W1+hmarg,0,W2-hmarg*2,H);
+		m_batch_script_widget.setGeometry(W1+hmarg,0,W2-hmarg*2,H);
 	}
 
 	function refresh() {
 		m_list_widget.refresh();
-		refresh_dataset();
+		refresh_batch_script();
 	}
-	function refresh_dataset() {
-		var ds_id=m_list_widget.currentDatasetId();
-		if (!ds_id) {
-			m_dataset_widget.refresh();
+	function refresh_batch_script() {
+		var script_name=m_list_widget.currentBatchScriptName();
+		if (!script_name) {
+			m_batch_script_widget.setBatchScript(new MLSBatchScript());
 			return;
 		}
-		/*
-		var ds=m_manager.study().dataset(ds_id);
-		if (!ds) {
-			m_dataset_widget.refresh();
-			return;	
-		}
-		*/
-		m_dataset_widget.setDatasetId(ds_id);
-		m_dataset_widget.refresh();
+		var S=m_manager.study().batchScript(script_name);
+		if (!S) S=new MLSBatchScript();
+		m_batch_script_widget.setBatchScript(S);
+
+		S.onChanged(function() {
+			if (script_name) {
+				m_manager.study().setBatchScript(script_name,S);
+			}
+		});
 	}
 
 	function setMLSManager(M) {
 		m_manager=M;
+		m_batch_script_widget.setJobManager(M.jobManager());
 		m_list_widget.setMLSManager(M);
-		m_dataset_widget.setMLSManager(M);
+		refresh();
 	}
 
 	update_layout();

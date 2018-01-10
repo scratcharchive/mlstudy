@@ -1,0 +1,26 @@
+.MLSMainWindow {
+	background-color: #EDFCFA;
+}
+
+.current_view_button {
+	pointer-events: none;
+  	cursor: default;
+  	text-decoration: none;
+  	color:black;
+  	border-left:solid 1px brown;
+  	border-right:solid 1px brown;
+  	border-top:solid 1px brown;
+}
+
+.noncurrent_view_button {
+	color:gray;
+	text-decoration: none;
+	border-bottom:solid 1px brown;
+}
+
+.mlmenubar-menu-button {
+}
+
+.mlmenubar-spacer {
+	padding:10px !important;
+}

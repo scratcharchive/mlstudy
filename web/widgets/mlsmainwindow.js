@@ -7,21 +7,55 @@ function MLSMainWindow(O) {
 	this.loadFromDocStor=function(owner,title,callback) {loadFromDocStor(owner,title,callback);};
 	this.loadFromFileContent=function(path,content,callback) {loadFromFileContent(path,content,callback);};
 	this.loadFromBrowserStorage=function(title,callback) {loadFromBrowserStorage(title,callback);};
-	this.setLoginInfo=function(info) {m_mls_manager.setLoginInfo(info);};
+	this.setLoginInfo=function(info) {setLoginInfo(info);};
 
 	var m_mls_manager=new MLSManager();
+	var m_job_manager=new JobManager();
+	var m_processor_manager=new ProcessorManager();
+	var m_kulele_client=new KuleleClient();
+	m_mls_manager.setJobManager(m_job_manager);
 	var m_docstor_client=null;
 	var m_file_source=''; //e.g., docstor
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
-	var m_mls_widget=new MLSWidget();
+
+	m_kulele_client.setKuleleUrl('https://kulele.herokuapp.com');
+	m_kulele_client.setCordionUrl('https://cordion.herokuapp.com');
+	m_kulele_client.setSubserverName('river');
+
+	var m_datasets_view=new MLSDatasetsView();
+	m_datasets_view.setParent(O);
+	m_datasets_view.setMLSManager(m_mls_manager);
+
+	var m_pipeline_modules_view=new MLSPipelineModulesView();
+	m_pipeline_modules_view.setProcessorManager(m_processor_manager);
+	m_pipeline_modules_view.setParent(O);
+	m_pipeline_modules_view.setMLSManager(m_mls_manager);
+
+	var m_batch_scripts_view=new MLSBatchScriptsView();
+	m_batch_scripts_view.setProcessorManager(m_processor_manager);
+	m_batch_scripts_view.setParent(O);
+	m_batch_scripts_view.setMLSManager(m_mls_manager);
+
+	var m_home_view=new MLSHomeView();
+	m_home_view.setParent(O);
+	m_home_view.setMLSManager(m_mls_manager);
+	JSQ.connect(m_home_view,'goto_view',O,function(sender,args) {
+		goto_view(args.name);
+	});
+
 	var m_original_study_object={};
-	m_mls_widget.setParent(O);
-	m_mls_widget.setMLSManager(m_mls_manager);
 	var m_menu_bar=new MLMenuBar();
 	var m_status_bar=new MLSStatusBar();
 	m_menu_bar.setParent(O);
 	m_status_bar.setParent(O);
+	var m_current_view='study_home';
+
+	var m_views={};
+	m_views['study_home']=m_home_view;
+	m_views['datasets']=m_datasets_view;
+	m_views['pipeline_modules']=m_pipeline_modules_view;
+	m_views['batch_scripts']=m_batch_scripts_view;
 
 	JSQ.connect(m_mls_manager.study(),'changed',O,update_menus);
 
@@ -40,18 +74,30 @@ function MLSMainWindow(O) {
 	menu.addDivider();
 	var menu_item_share_study=menu.addItem('Share study...',share_study);
 	///////////////////////////////////////////////////
+	m_menu_bar.addSpacer();
+	var goto_buttons={};
+	goto_buttons['study_home']=m_menu_bar.addButton('Study home',function() {goto_view('study_home');});
+	goto_buttons['datasets']=m_menu_bar.addButton('Datasets',function() {goto_view('datasets');});
+	goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
+	goto_buttons['batch_scripts']=m_menu_bar.addButton('Batch scripts',function() {goto_view('batch_scripts');});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
 
-		var top_height=30;
+		var top_height=40;
 		var bottom_height=33;
 		var marg=10;
 
 		m_menu_bar.setGeometry(marg,0,W-marg*2,top_height);
-		m_mls_widget.setGeometry(0,top_height,W,H-top_height-bottom_height);
+		for (var name in m_views) {
+			m_views[name].setGeometry(0,top_height,W,H-top_height-bottom_height);
+			if (name==m_current_view)
+				m_views[name].show();
+			else
+				m_views[name].hide();
+		}
 		m_status_bar.setGeometry(marg,H-bottom_height,W-marg*2,bottom_height);
 	}
 
@@ -68,11 +114,18 @@ function MLSMainWindow(O) {
 	            return;
 	        }
 	        m_mls_manager.setMLSObject(obj);
-	        m_mls_widget.refresh();
+	        refresh_views();
 	        set_file_info('docstor',{owner:owner,title:title})
 	        set_original_study_object(m_mls_manager.study().object());
 	        callback(null);
 		});
+	}
+
+	function refresh_views() {
+		for (var name in m_views) {
+			if (m_views[name].refresh)
+				m_views[name].refresh();
+		}
 	}
 
 	function loadFromFileContent(path,content,callback) {
@@ -83,7 +136,7 @@ function MLSMainWindow(O) {
             return;
         }
         m_mls_manager.setMLSObject(obj);
-        m_mls_widget.refresh();
+        refresh_views();
         m_file_source='file_content';
         m_file_path=path;
         set_original_study_object(m_mls_manager.study().object());
@@ -97,7 +150,7 @@ function MLSMainWindow(O) {
 			obj={};
 		}
 		m_mls_manager.setMLSObject(obj);
-		m_mls_widget.refresh();
+		refresh_views();
 		set_file_info('browser_storage',{title:title});
         set_original_study_object(m_mls_manager.study().object());
         callback(null);
@@ -175,7 +228,7 @@ function MLSMainWindow(O) {
 		check_proceed_without_saving_changes(create_new_study_2);
 		function create_new_study_2() {
 			m_mls_manager.setMLSObject({});
-			m_mls_widget.refresh();
+			refresh_views();
 			set_file_info('',{});
 		}
 	}
@@ -199,6 +252,13 @@ function MLSMainWindow(O) {
 			var doc0=dlg.selection();
 			callback(doc0);
 		});
+	}
+
+	function goto_view(name) {
+		if (name==m_current_view) return;
+		m_current_view=name;
+		update_menus();
+		update_layout();
 	}
 
 	function open_study_browser() {
@@ -243,7 +303,7 @@ function MLSMainWindow(O) {
 					return;
 				}
 				m_mls_manager.setMLSObject(obj);
-				m_mls_widget.refresh();
+				refresh_views();
 				set_file_info('',{});
 		        set_original_study_object(m_mls_manager.study().object());
 			});
@@ -310,6 +370,25 @@ function MLSMainWindow(O) {
 		dlg.show();
 	}
 
+	function setLoginInfo(info) {
+		m_mls_manager.setLoginInfo(info);
+		var opts=JSQ.clone(info);
+		opts.processing_server=m_kulele_client.subserverName();
+		m_kulele_client.login(opts,function(tmp) {
+			if (!tmp.success) {
+				console.error('Error logging in to kulele: '+tmp.error);
+				return;
+			}
+			m_kulele_client.getProcessorSpec(function(tmp1) {
+				if (!tmp1.success) {
+					console.error('Error getting processor spec: '+tmp1.error);
+					return;
+				}
+				m_processor_manager.setSpec(tmp1.spec);
+			})
+		});
+	}
+
 
 	function set_original_study_object(obj) {
 		m_original_study_object=JSQ.clone(obj);
@@ -336,12 +415,24 @@ function MLSMainWindow(O) {
 		if (m_file_source!='docstor') {
 			menu_item_share_study.setDisabled(true);
 		}
+
+		for (var name in goto_buttons) {
+			goto_buttons[name].removeClass('current_view_button');
+			goto_buttons[name].removeClass('noncurrent_view_button');
+			if (name==m_current_view) {
+				goto_buttons[name].addClass('current_view_button');
+			}
+			else {
+				goto_buttons[name].addClass('noncurrent_view_button');	
+			}
+		}
 	}
 
 	function set_file_info(source,info) {
 		m_file_source=source;
 		m_file_info=JSQ.clone(info);
 		m_status_bar.setFileInfo(source,info);
+		m_home_view.setFileInfo(source,info);
 		update_url();
 	}
 
