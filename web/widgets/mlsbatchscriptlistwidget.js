@@ -69,7 +69,7 @@ function MLSBatchScriptListWidget(O) {
 
 		m_table.clearRows();
 		m_table.setColumnCount(1);
-		m_table.headerRow().cell(0).html('Module');
+		m_table.headerRow().cell(0).html('Script modules');
 		var names=m_manager.study().batchScriptNames();
 		for (var i=0; i<names.length; i++) {
 			var row=m_table.createRow();
@@ -90,7 +90,7 @@ function MLSBatchScriptListWidget(O) {
 	}
 
 	function setup_row(row) {
-		var edit_name_link=$('<span class=edit_button title="Edit batch script name"></span>');
+		var edit_name_link=$('<span class=edit_button title="Edit script module name"></span>');
 		edit_name_link.click(function(evt) {
 			edit_batch_script_name(row.batch_script_name);
 			return false; //so that we don't get a click on the row
@@ -111,7 +111,7 @@ function MLSBatchScriptListWidget(O) {
 
 	function edit_batch_script_name(pname) {
 		var name=pname;
-		var name2=prompt('New name for batch script:',name);
+		var name2=prompt('New name for script module:',name);
 		if (!name2) return;
 		if (name2==name) return;
 		m_manager.study().changeBatchScriptName(name,name2);

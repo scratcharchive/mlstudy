@@ -64,6 +64,7 @@ function MLStudy(O) {
   this.batchScript=function(name) {return batchScript(name);};
   this.setBatchScript=function(name,X) {setBatchScript(name,X);};
   this.removeBatchScript=function(name) {removeBatchScript(name);};
+  this.changeBatchScriptName=function(name,new_name) {changeBatchScriptName(name,new_name);};
 
   var m_object={
     datasets:{},
@@ -162,6 +163,13 @@ function MLStudy(O) {
       delete m_object.batch_scripts[name];
       O.emit('changed');
     }
+  }
+  function changeBatchScriptName(name,new_name) {
+    if (name==new_name) return;
+    var X=batchScript(name);
+    if (!X) return;
+    removeBatchScript(name);
+    setBatchScript(new_name,X); 
   }
   function description() {
     return m_object.description||'';
@@ -361,7 +369,7 @@ function BatchJobManager(O) {
   O=O||this;
   JSQObject(O);
 
-  this.startBatchJob=function(batch_script,study_object) {return startBatchJob(batch_script,study_object);};
+  this.startBatchJob=function(batch_script,module_scripts,study_object) {return startBatchJob(batch_script,module_scripts,study_object);};
   this.setKuleleClient=function(KC) {m_kulele_client=KC;};
   this.kuleleClient=function() {return m_kulele_client;};
   this.runningJobCount=function() {return m_running_jobs.length;};
@@ -369,11 +377,16 @@ function BatchJobManager(O) {
   var m_running_jobs=[];
   var m_kulele_client=null;
 
-  function startBatchJob(batch_script,study_object) {
+  function startBatchJob(batch_script,module_scripts,study_object) {
     var has_error=false;
     mlpLog({bold:true,text:'Starting batch job...'});
     var J=new BatchJob(null,m_kulele_client);
     J.setBatchScript(batch_script.script());
+    var all_scripts={};
+    for (var name0 in module_scripts) {
+      all_scripts[name0]=module_scripts[name0].script();
+    }
+    J.setAllScripts(all_scripts);
     J.setStudyObject(study_object);
     JSQ.connect(J,'error',O,function(sender,err) {
       has_error=true;
@@ -403,6 +416,7 @@ function BatchJob(O,kulele_client) {
   JSQObject(O);
 
   this.setBatchScript=function(script) {m_script=script;};
+  this.setAllScripts=function(scripts) {m_all_scripts=scripts;};
   this.setStudyObject=function(obj) {m_study_object=obj;};
   this.id=function() {return m_id;};
   this.start=function() {start();};
@@ -411,6 +425,7 @@ function BatchJob(O,kulele_client) {
 
   var m_id=JSQ.makeRandomId(6);
   var m_script='';
+  var m_all_scripts={};
   var m_study_object={};
   var m_queued_processes=[];
   var m_outputs={};
@@ -424,8 +439,26 @@ function BatchJob(O,kulele_client) {
       setResult:set_result
     };
 
+    var require=function(str) {
+      if (!(str in m_all_scripts)) {
+        throw new Error('Error in require, script not found: '+str);
+      }
+
+      var script0='(function() {var exports={};'+m_all_scripts[str]+'\n return exports;})()';
+      try {
+        var ret=eval(script0);
+        return ret;
+      }
+      catch(err) {
+        throw new Error('Error in module '+str+': '+err.message);
+        return;
+      }
+    }
+
+    var script2='(function() {'+m_script+'\n})()';
+
     try {
-      eval(m_script);
+      eval(script2);
     }
     catch(err) {
       console.error(err);

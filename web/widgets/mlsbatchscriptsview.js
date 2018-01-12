@@ -211,7 +211,12 @@ function MLSBatchScriptsView(O,options) {
 			alert('Cannot start job. A job is already running.');
 			return;
 		}
-		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),m_manager.study().object());
+		var module_scripts={};
+		var names0=m_manager.study().batchScriptNames();
+		for (var i in names0) {
+			module_scripts[names0[i]]=m_manager.study().batchScript(names0[i]);
+		}
+		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),module_scripts,m_manager.study().object());
 		var batch_script_name=m_list_widget.currentBatchScriptName();
 		m_batch_jobs_by_batch_script_name[batch_script_name]=job;
 		update_results_widget();

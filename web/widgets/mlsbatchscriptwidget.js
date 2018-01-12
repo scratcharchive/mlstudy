@@ -103,7 +103,6 @@ function MLSBatchScriptWidget(O) {
 			}
 		}	
 		O.emit('run_script');
-		
 	}
 
 	update_layout();
