@@ -30,8 +30,10 @@ function ProcessorManager(O) {
     this.registerProcessor=function(spec) {registerProcessor(spec);};
     this.numProcessors=function() {var num=0; for (var key in m_processor_specs) num++; return num;};
     //this.registerMetaProcessor=function(obj) {registerMetaProcessor(obj);};
+    this.specHasBeenSet=function() {return m_spec_has_been_set;};
 
 	var m_processor_specs={};
+    var m_spec_has_been_set=false;
     //var m_meta_processors={};
 
 	function setSpec(spec) {
@@ -40,6 +42,7 @@ function ProcessorManager(O) {
         for (var key in spec.processors) {
             O.registerProcessor(spec.processors[key]);
         }
+        m_spec_has_been_set=true;
         /*
         for (var key in processor_manager_spec.processors) {
             O.registerProcessor(processor_manager_spec.processors[key]);

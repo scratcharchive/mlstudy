@@ -48,6 +48,8 @@ function MLSMainWindow(O) {
 	var m_original_study_object={};
 	var m_menu_bar=new MLMenuBar();
 	var m_status_bar=new MLSStatusBar();
+	m_status_bar.setKuleleClient(m_kulele_client);
+	m_status_bar.setProcessorManager(m_processor_manager);
 	m_menu_bar.setParent(O);
 	m_status_bar.setParent(O);
 	var m_current_view='study_home';
@@ -89,6 +91,14 @@ function MLSMainWindow(O) {
 	var menu=m_menu_bar.addMenu('Tools',{downarrow:true});
 	menu.addItem('Generate kbucket upload token',generate_kbucket_upload_token);
 	///////////////////////////////////////////////////
+
+	JSQ.connect(m_batch_scripts_view,'download_original_file_from_prv',O,function(sender,args) {
+		download_original_file_from_prv(args.prv);
+	});
+
+	JSQ.connect(m_datasets_view,'download_original_file_from_prv',O,function(sender,args) {
+		download_original_file_from_prv(args.prv);
+	});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -486,6 +496,40 @@ function MLSMainWindow(O) {
 		}
 	}
 
+	function download_original_file_from_prv(prv) {
+		var sha1=prv.original_checksum||'';
+		var size=prv.original_size||0;
+
+		var kbucket_client=new KBucketClient();
+		kbucket_client.setKBucketUrl(m_mls_manager.kBucketUrl());
+		kbucket_client.stat(sha1,size,function(err,stat0) {
+			if (err) {
+				alert(err);
+				return;
+			}
+			if (!stat0.found) {
+				alert('Unexpected: not found on server.');
+				return;
+			}
+			var file_name=get_file_name_from_path(prv.original_path||'');
+			var url=stat0.url;
+			var aaa=url.indexOf('?');
+			if (aaa>=0) {
+				url=url.slice(0,aaa)+'/'+file_name+'?'+url.slice(aaa+1);
+			}
+			else {
+				url=url+'/'+file_name;
+			}
+			window.open(url,'_blank');
+		});
+	}
+
+	function get_file_name_from_path(path) {
+		var aaa=path.lastIndexOf('/');
+		if (aaa>=0) return path.slice(aaa+1);
+		else return path;
+	}
+
 	function parse_url_params0() {
 		var match,
 		pl     = /\+/g,  // Regex for replacing addition symbol with a space
@@ -507,11 +551,15 @@ function MLSStatusBar(O) {
 	O.div().addClass('MLSStatusBar');
 
 	this.setFileInfo=function(source,info) {setFileInfo(source,info);};
+	this.setKuleleClient=function(KC) {m_kulele_client=KC;};
+	this.setProcessorManager=function(PM) {m_processor_manager=PM;};
 
 	var m_file_source='';
 	var m_file_info={};
+	var m_processor_manager=null;
+	var m_kulele_client=null;
 
-	O.div().append('<span id=file_info></span>');
+	O.div().append('<span id=file_info></span> | <span id=processing_server_info></span>');
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -534,7 +582,20 @@ function MLSStatusBar(O) {
 		else if (m_file_source=='docstor')
 			str='Cloud document: '+m_file_info.title+' ('+m_file_info.owner+')';
 		O.div().find('#file_info').html(str);
+
+		if ((m_kulele_client)&&(m_processor_manager)) {
+			var server=m_kulele_client.subserverName();
+			var num_processors=m_processor_manager.numProcessors();
+			var str=`Processing server: ${server} (${num_processors} processors)`;
+			O.div().find('#processing_server_info').html(str);
+		}
 	}
+
+	function periodic_refresh() {
+		refresh();
+		setTimeout(periodic_refresh,1000);
+	}
+	periodic_refresh();
 
 	update_layout();
 }

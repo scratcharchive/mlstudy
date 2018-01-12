@@ -372,34 +372,7 @@ function MLSDatasetWidget(O) {
 		if (!ds) return;
 		var file0=ds.file(name);
 		var prv=file0.prv||{};
-		var sha1=prv.original_checksum||'';
-		var size=prv.original_size||0;
-		m_kbucket_client.setKBucketUrl(m_manager.kBucketUrl());
-		m_kbucket_client.stat(sha1,size,function(err,stat0) {
-			if (err) {
-				alert(err);
-				return;
-			}
-			if (!stat0.found) {
-				alert('Unexpected: not found on server.');
-				return;
-			}
-			var file_name=get_file_name_from_path(prv.original_path||'');
-			var url=stat0.url;
-			var aaa=url.indexOf('?');
-			if (aaa>=0) {
-				url=url.slice(0,aaa)+'/'+file_name+'?'+url.slice(aaa+1);
-			}
-			else {
-				url=url+'/'+file_name;
-			}
-			window.open(url,'_blank');
-		});
-	}
-	function get_file_name_from_path(path) {
-		var aaa=path.lastIndexOf('/');
-		if (aaa>=0) return path.slice(aaa+1);
-		else return path;
+		O.emit('download_original_file_from_prv',{prv:prv});
 	}
 	function refresh_kb_elements() {
 		var elmts=O.div().find('.kb');

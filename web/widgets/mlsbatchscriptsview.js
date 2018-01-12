@@ -54,6 +54,10 @@ function MLSBatchScriptsView(O,options) {
 
 	m_list_widget.onCurrentBatchScriptChanged(refresh_batch_script);
 
+	JSQ.connect(m_results_widget,'download_original_file_from_prv',O,function(sender,args) {
+		O.emit('download_original_file_from_prv',args);
+	});
+
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();

@@ -42,6 +42,10 @@ function MLSDatasetsView(O,options) {
 	m_dataset_widget.setParent(O);
 	m_menu_bar.setParent(O);
 
+	JSQ.connect(m_dataset_widget,'download_original_file_from_prv',O,function(sender,args) {
+		O.emit('download_original_file_from_prv',args);
+	});
+
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();

@@ -78,6 +78,7 @@ function MLSBatchScriptResultsWidget(O) {
 
 	function create_result_row(rname,result) {
 		var row=m_table.createRow();
+		row.rname=rname;
 		
 		var elmt0=$('<span>'+rname+'</span>');
 		var elmt1=$('<span>'+result.status+'</span>');
@@ -90,10 +91,6 @@ function MLSBatchScriptResultsWidget(O) {
 				elmt0=$('<a href=# title="'+result.value+'">'+rname+'</a>');
 			}
 			else if (result.value.prv) {
-				elmt0=$('<a href=# title="Click to download">'+rname+'</a>');
-				elmt0.click(function() {
-					download_file_from_prv(result.value.prv);
-				});
 				row.prv=result.value.prv;
 			}
 			else {
@@ -118,6 +115,7 @@ function MLSBatchScriptResultsWidget(O) {
 
 	function check_on_kbucket_2(row) {
 		row.cell(2).html('checking');
+		var rname=row.rname;
 		check_on_kbucket_3(row.prv,function(err,tmp) {
 			if (err) {
 				console.error('Error checking kbucket: '+err);
@@ -125,9 +123,15 @@ function MLSBatchScriptResultsWidget(O) {
 				return;
 			}
 			if (tmp.found) {
+				var elmt0_download=$('<a href=#>'+rname+'</a>');
+				elmt0_download.click(download_result_file);
+				row.cell(0).empty();
+				row.cell(0).append(elmt0_download);
 				row.cell(2).html('<span class=yes>On kbucket</span>');
 			}
 			else {
+				row.cell(0).empty();
+				row.cell(0).append('<span>'+rname+'</span>');
 				var elmt=$('<span><a href=#><span class=no>Upload to kbucket</span></a></span>');
 				if (row.upload_error) {
 					elmt.append(' Error uploading: '+row.upload_error);
@@ -146,6 +150,11 @@ function MLSBatchScriptResultsWidget(O) {
 				row.cell(2).append(elmt);
 			}
 		});
+		function download_result_file() {
+			var prv=row.prv;
+			prv.original_path=rname;
+			O.emit('download_original_file_from_prv',{prv:prv});
+		}
 	}
 
 	function check_on_kbucket_3(prv,callback) {
@@ -162,13 +171,9 @@ function MLSBatchScriptResultsWidget(O) {
 		var process_id='';
 		m_kulele_client.queueJob(
 			'kbucket.upload',
+			{file:prv},
 			{},
-			{},
-			{
-				sha1:prv.original_checksum,
-				size:prv.original_size,
-				force_run:JSQ.makeRandomId(6)
-			},
+			{force_run:JSQ.makeRandomId(6)},
 			{},
 			function(resp) {
 			    process_id=resp.process_id||'';
