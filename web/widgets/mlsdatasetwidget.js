@@ -270,7 +270,7 @@ function MLSDatasetWidget(O) {
 		
 		var CC=new KBucketAuthClient();
 		CC.setKBucketAuthUrl(kbucketauth_url);
-		CC.getAuth('upload',m_manager.loginInfo(),function(err,token,token_decoded) {
+		CC.getAuth('upload',m_manager.loginInfo(),{},function(err,token,token_decoded) {
 			if (err) {
 				alert(err);
 				return;

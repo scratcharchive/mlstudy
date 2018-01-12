@@ -75,12 +75,20 @@ function MLSMainWindow(O) {
 	menu.addDivider();
 	var menu_item_share_study=menu.addItem('Share study...',share_study);
 	///////////////////////////////////////////////////
+
 	m_menu_bar.addSpacer();
 	var goto_buttons={};
 	goto_buttons['study_home']=m_menu_bar.addButton('Study home',function() {goto_view('study_home');});
 	goto_buttons['datasets']=m_menu_bar.addButton('Datasets',function() {goto_view('datasets');});
 	goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
 	goto_buttons['batch_scripts']=m_menu_bar.addButton('Batch scripts',function() {goto_view('batch_scripts');});
+
+	m_menu_bar.addSpacer();
+	m_menu_bar.addSpacer();
+	// Tools menu //////////////////////////////////////
+	var menu=m_menu_bar.addMenu('Tools',{downarrow:true});
+	menu.addItem('Generate kbucket upload token',generate_kbucket_upload_token);
+	///////////////////////////////////////////////////
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -260,6 +268,24 @@ function MLSMainWindow(O) {
 		m_current_view=name;
 		update_menus();
 		update_layout();
+	}
+
+	function generate_kbucket_upload_token() {
+		var duration=prompt('Duration (sec):');
+		if (!duration) return;
+		duration=Number(duration);
+		var kbucketauth_url=m_mls_manager.kBucketAuthUrl();
+		
+		var CC=new KBucketAuthClient();
+		CC.setKBucketAuthUrl(kbucketauth_url);
+		CC.getAuth('upload',m_mls_manager.loginInfo(),{duration_sec:duration},function(err,token) {
+			if (err) {
+				alert(err);
+				return;
+			}
+			console.log (token);
+			alert('The token has been written to the developer console.');
+		});
 	}
 
 	function open_study_browser() {
