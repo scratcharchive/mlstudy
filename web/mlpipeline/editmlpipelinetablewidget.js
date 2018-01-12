@@ -55,12 +55,21 @@ function EditMLPipelineTableWidget(O) {
     JSQ.connect(m_job_manager,'job_status_changed',O,update_contents);
   }
 
+  function pipeline_from_object(obj) {
+    var MLP;
+    if (obj.script)
+      MLP=new MLPipelineScript();
+    else
+      MLP=new MLPipeline();
+    MLP.setObject(obj);
+    return MLP;
+  }
+
   function setPipelineObject(obj) {
     if ((!m_pipeline)&&(!obj)) return;
     if ((m_pipeline)&&(JSON.stringify(obj)==JSON.stringify(m_pipeline.object()))) return;
     if (obj) {
-      m_pipeline=new MLPipeline();
-      m_pipeline.setObject(obj);
+      m_pipeline=pipeline_from_object(obj);
       m_pipeline.onChanged(function() {
         O.emit('pipeline_edited');
         refresh();
@@ -111,11 +120,13 @@ function EditMLPipelineTableWidget(O) {
     m_table.setColumnProperties(0,{"max-width":20}); //buttons1
     m_table.setColumnProperties(1,{"max-width":20}); //buttons2
     m_table.setColumnProperties(2,{"max-width":20}); //buttons3
-    for (var i=0; i<m_pipeline.stepCount(); i++) {
-  		var row0=m_table.createRow();
-  		row0.step_index=i;
-  		row0.setIsMoveable(true);
-  		m_table.addRow(row0);
+    if (m_pipeline.stepCount) {
+      for (var i=0; i<m_pipeline.stepCount(); i++) {
+    		var row0=m_table.createRow();
+    		row0.step_index=i;
+    		row0.setIsMoveable(true);
+    		m_table.addRow(row0);
+      }
     }
     
     var row0=m_table.createRow();

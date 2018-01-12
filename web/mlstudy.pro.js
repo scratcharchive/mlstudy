@@ -78,9 +78,11 @@ opts.SCRIPTS.push(
 	'mlsmainwindow.js','mltablewidget.js','docselectdialog.js','docsharedialog.js',
 	'mlshomeview.js','descriptionwidget.js','mlspipelinemodulesview.js','mlspipelinemodulelistwidget.js',
 	'mlspipelinemodulewidget.js',
-	'mlsbatchscriptsview.js','mlsbatchscriptlistwidget.js','mlsbatchscriptwidget.js'
+	'mlsbatchscriptsview.js','mlsbatchscriptlistwidget.js','mlsbatchscriptwidget.js',
+	'mlsbatchscriptresultswidget.js'
 );
 opts.STYLESHEETS.push(
+	'mltablewidget.css',
 	'mlsdatasetwidget.css','mlsmainwindow.css','descriptionwidget.css'
 );
 
@@ -89,7 +91,10 @@ opts.SOURCEPATH.push('mlpipeline')
 opts.SCRIPTS.push(
 	'editmlpipelinewidget.js','editmlpipelinetablewidget.js','mlpipeline.js',
 	'newstepdialog.js','jobmanager.js','processormanager.js','kuleleclient.js',
-	'editstepdialog.js','mlpipelinelistwidget.js'
+	'editstepdialog.js','mlpipelinelistwidget.js','mlplogwidget.js'
+);
+opts.STYLESHEETS.push(
+	'mlplogwidget.css'
 );
 
 //// MLMenuBar

@@ -18,12 +18,12 @@ function MLPipelineListWidget(O) {
 	JSQWidget(O);
 	O.div().addClass('MLPipelineListWidget');
 
-	this.setPipelineModule=function(X) {m_pipeline_module=X; refresh(); X.onChanged(schedule_refresh);};
+	this.setPipelineModule=function(X) {m_pipeline_module=X; refresh(); if (X) X.onChanged(schedule_refresh);};
 	this.currentPipelineName=function() {return m_current_pipeline_name;};
 	this.setCurrentPipelineName=function(name) {setCurrentPipelineName(name);};
 	this.onCurrentPipelineChanged=function(handler) {JSQ.connect(O,'current_pipeline_changed',O,handler);};
 
-	var m_pipeline_module=new MLSPipelineModule();
+	var m_pipeline_module=null;
 	var m_table=new MLTableWidget();
 	m_table.setParent(O);
 	m_table.setSelectionMode('single');
@@ -63,41 +63,45 @@ function MLPipelineListWidget(O) {
 	}
 
 	function refresh() {
-		m_pipeline_rows=[];
 		m_table.clearRows();
-		m_table.setColumnCount(3);
-		m_table.headerRow().cell(1).html('Pipeline');
-		m_table.headerRow().cell(2).html('Export');
-		for (var i=0; i<m_pipeline_module.pipelineCount(); i++) {
-			var P=m_pipeline_module.pipeline(i);
-			var row=m_table.createRow();
-			row.setIsMoveable(true);
-			row.pipeline_index=i;
-			row.pipeline=P;
-			setup_row(row);
-			m_pipeline_rows.push(row);
-			m_table.addRow(row);
+		if (m_pipeline_module) {
+			m_pipeline_rows=[];
+			m_table.setColumnCount(3);
+			m_table.headerRow().cell(1).html('Pipeline');
+			m_table.headerRow().cell(2).html('Export');
+			for (var i=0; i<m_pipeline_module.pipelineCount(); i++) {
+				var P=m_pipeline_module.pipeline(i);
+				var row=m_table.createRow();
+				row.setIsMoveable(true);
+				row.pipeline_index=i;
+				row.pipeline=P;
+				setup_row(row);
+				m_pipeline_rows.push(row);
+				m_table.addRow(row);
+			}
+
+			var row0=m_table.createRow();
+		    m_table.addRow(row0);
+		    var add_button=$('<a id=add href="#">Add pipeline</a>');
+		    add_button.click(add_pipeline);
+		    row0.cell(1).append(add_button);
+
+		    var row0=m_table.createRow();
+		    m_table.addRow(row0);
+		    var add_button2=$('<a id=add href="#">Add script</a>');
+		    add_button2.click(add_script);
+		    row0.cell(1).append(add_button2);
+
+		    //update_layout();
+		    if (m_current_pipeline_name) {
+		    	O.setCurrentPipelineName(m_current_pipeline_name);
+		    }
 		}
-
-		var row0=m_table.createRow();
-	    m_table.addRow(row0);
-	    var add_button=$('<a id=add href="#">Add pipeline</a>');
-	    add_button.click(add_pipeline);
-	    row0.cell(1).append(add_button);
-
-	    var row0=m_table.createRow();
-	    m_table.addRow(row0);
-	    var add_button2=$('<a id=add href="#">Add script</a>');
-	    add_button2.click(add_script);
-	    row0.cell(1).append(add_button2);
-
-	    //update_layout();
-	    if (m_current_pipeline_name) {
-	    	O.setCurrentPipelineName(m_current_pipeline_name);
-	    }
+		update_layout();
 	}
 
 	function on_rows_moved() {
+		if (!m_pipeline_module) return;
 		var new_pipeline_order=[];
 		for (var i=0; i<m_table.rowCount(); i++) {
 		  var row=m_table.row(i);

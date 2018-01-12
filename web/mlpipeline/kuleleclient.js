@@ -54,8 +54,9 @@ function KuleleClient(O) {
 	this.prvUploadToUserStorage=function(userid,filename,file_data,callback) {prvUploadToUserStorage(userid,filename,file_data,callback);};
 	this.prvUploadText=function(txt,callback) {prvUploadText(txt,callback);};
 	this.prvUploadTextToUserStorage=function(userid,filename,txt,callback) {prvUploadTextToUserStorage(userid,filename,txt,callback);};
-	this.setProcessorManager=function(PM) {m_processor_manager=PM;};
-	this.processorManager=function() {return m_processor_manager;};
+	//this.setProcessorManager=function(PM) {m_processor_manager=PM;};
+	//this.processorManager=function() {return m_processor_manager;};
+	this.processorSpec=function(processor_name) {return processorSpec(processor_name);};
 	this.queueJob=function(processor_name,inputs,outputs_to_return,params,opts,callback) {queueJob(processor_name,inputs,outputs_to_return,params,opts,callback);};
 	this.probeJob=function(process_id,callback) {probeJob(process_id,callback);};
 	this.cancelJob=function(process_id,callback) {cancelJob(process_id,callback);};
@@ -69,12 +70,13 @@ function KuleleClient(O) {
 	var m_kulele_url='';
 	var m_cordion_url='';
 	var m_subserver_name='';
-	var m_processor_manager=null;
+	//var m_processor_manager=null;
 	var m_authorization_jwt='';
 	var m_authorization={};
 	var m_larinetserver=null; //only set when using nodejs
 	var m_login_info={};
 	var m_local_mode=false;
+	var m_processor_spec={};
 
 	if (jsu_starts_with(document.documentURI,'http://localhost')) {
 		m_kulele_url='http://localhost:5004';
@@ -244,8 +246,8 @@ function KuleleClient(O) {
 
 	function queueJob(processor_name,inputs,outputs_to_return,params,opts_in,callback) {
 		var logtxt='Queuing processor job: '+processor_name+' '+JSON.stringify(params);
-		mlpLog({text:logtxt});
-		var spec=m_processor_manager.processorSpec(processor_name);
+		//mlpLog({text:logtxt});
+		var spec=O.processorSpec(processor_name);
 		if (!spec) {
 			callback({success:false,error:'Processor is not registered: '+processor_name});
 			return;
@@ -326,8 +328,24 @@ function KuleleClient(O) {
 			a:'processor-spec'
 		};
 		post_to_larinet(url0,req,function(tmp) {
+			if (tmp.success) {
+				m_processor_spec=JSQ.clone(tmp.spec);
+			}
+			else {
+				m_processor_spec={};
+			}
 			callback(tmp);
 		});
+	}
+
+	function processorSpec(processor_name) {
+		var processors=m_processor_spec.processors||[];
+		for (var i in processors) {
+			var P=processors[i];
+			if (P.name==processor_name)
+				return JSQ.clone(P);
+		}
+		return null;
 	}
 
 	function post_to_larinet(url0,req,callback) {

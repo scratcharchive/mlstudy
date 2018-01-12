@@ -26,10 +26,22 @@ function MLSPipelineModulesView(O,options) {
 
 	var m_manager=null;
 
+
 	var m_list_widget=new MLSPipelineModuleListWidget();
 	var m_pipeline_module_widget=new MLSPipelineModuleWidget();
+
+	var m_menu_bar=new MLMenuBar();
+	var menu=m_menu_bar.addMenu('...');
+	menu.addItem('Add new pipeline module...',add_new_pipeline_module);
+	menu.addDivider();
+	menu.addItem('Remove selected pipeline modules...',remove_selected_pipeline_modules);
+	menu.addDivider();
+	menu.addItem('Export selected pipeline modules...',export_selected_pipeline_modules);
+	menu.addItem('Import pipeline module(s)...',import_pipeline_modules);
+
 	m_list_widget.setParent(O);
 	m_pipeline_module_widget.setParent(O);
+	m_menu_bar.setParent(O);
 
 	m_list_widget.onCurrentPipelineModuleChanged(refresh_pipeline_module);
 
@@ -37,12 +49,14 @@ function MLSPipelineModulesView(O,options) {
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
+		var Hmenu=50;
 
 		var W1=Math.max(200,Math.floor(W/10));
 		var W2=W-W1;
 
 		hmarg=5;
-		m_list_widget.setGeometry(hmarg,0,W1-hmarg*2,H);
+		m_menu_bar.setGeometry(hmarg,0,W1-hmarg*2,Hmenu);
+		m_list_widget.setGeometry(hmarg,Hmenu,W1-hmarg*2,H-Hmenu);
 		m_pipeline_module_widget.setGeometry(W1+hmarg,0,W2-hmarg*2,H);
 	}
 
@@ -53,39 +67,121 @@ function MLSPipelineModulesView(O,options) {
 	function refresh_pipeline_module() {
 		var module_name=m_list_widget.currentPipelineModuleName();
 		if (!module_name) {
-			m_pipeline_module_widget.setPipelineModule(new MLSPipelineModule());
+			m_pipeline_module_widget.setPipelineModule(null);
 			return;
 		}
 		var P=m_manager.study().pipelineModule(module_name);
-		if (!P) P=new MLSPipelineModule();
 		m_pipeline_module_widget.setPipelineModule(P);
 
-		P.onChanged(function() {
-			if (module_name) {
-				m_manager.study().setPipelineModule(module_name,P);
-			}
-		});
+		if (P) {
+			P.onChanged(function() {
+				if (module_name) {
+					m_manager.study().setPipelineModule(module_name,P);
+				}
+			});
+		}
+	}
 
-		/*
-		var pname=m_list_widget.currentPipelineModuleName();
-		if (!pname) {
-			m_pipeline_module_widget.setPipeline(new MLPipeline());
+	function add_new_pipeline_module() {
+		var pipeline_module_name=prompt('Pipeline module name:');
+		if (!pipeline_module_name) return;
+		m_manager.study().setPipelineModule(pipeline_module_name,new MLSPipelineModule());
+		refresh();
+		m_list_widget.setCurrentPipelineModuleName(pipeline_module_name);
+	}
+
+	function remove_selected_pipeline_modules() {
+		var names=m_list_widget.selectedPipelineModuleNames();
+		if (names.length==0) {
+			alert('No pipeline modules selected.');
 			return;
 		}
-		var P0=new MLPipeline();
-		var P=m_manager.study().pipelineModule(pname);
-		if (P) {
-			P0.setObject(P.object());
-		}
-		m_pipeline_module_widget.setPipeline(P0);
-		P0.onChanged(function() {
-			if (pname) {
-				var PP=new MLSPipelineModule();
-				PP.setObject(P0.object());
-				m_manager.study().setPipelineModule(pname,PP);
+		if (confirm('Remove '+names.length+' pipeline modules?')) {
+			for (var i in names) {
+				var name=names[i];
+				m_manager.study().removePipelineModule(name);
 			}
+			refresh();
+		}
+	}
+
+	function import_pipeline_modules() {
+		var UP=new FileUploader();
+		UP.uploadTextFile({},function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			console.log(tmp);
+			var obj=try_parse_json(tmp.text);
+			if (!obj) {
+				alert('Error parsing json');
+				return;
+			}
+			if (!('pipeline_modules' in obj)) {
+				if ('pipelines' in obj) {
+					var imported_name=remove_file_extension(tmp.file_name);
+					var obj2={pipeline_modules:{}};
+					obj2.pipeline_modules[imported_name]=obj;
+					obj=obj2;
+				}
+				else {
+					alert('Missing json field: pipeline_modules');
+					return;
+				}
+			}
+			var last_name='';
+			var count=0;
+			for (var name in obj.pipeline_modules) {
+				var X=new MLSPipelineModule();
+				X.setObject(obj.pipeline_modules[name]);
+				m_manager.study().setPipelineModule(name,X);
+				last_name=name;
+				count++;
+			}
+			refresh();
+			if (last_name) {
+				m_list_widget.setCurrentPipelineModuleName(last_name);
+			}
+			alert('Imported '+count+' pipeline modules.');
 		});
-		*/
+	}
+
+	function remove_file_extension(str) {
+		var list=str.split('.');
+		if (list.length>1)
+			list=list.slice(0,list.length-1);
+		return list.join('.');
+	}
+
+	function export_selected_pipeline_modules() {
+		var names=m_list_widget.selectedPipelineModuleNames();
+		if (names.length==0) {
+			alert('No pipeline modules selected.');
+			return;
+		}
+		var obj={pipeline_modules:{}};
+		for (var i in names) {
+			var name=names[i];
+			var PM=m_manager.study().pipelineModule(name);
+			if (!PM) {
+				alert('Unable to find pipeline module: '+name);
+				return;
+			}
+			obj.pipeline_modules[name]=PM.object();
+		}
+
+		var fname0='';
+		if (names.length==1) {
+			fname0=names[0]+'.json';
+		}
+		else {
+			fname0='pipeline_modules.json';
+		}
+		fname0=prompt('Download '+names.length+' pipeline modules to file:',fname0);
+		if (!fname0) return;
+		
+		download(JSON.stringify(obj,null,4),fname0);
 	}
 
 	function setMLSManager(M) {

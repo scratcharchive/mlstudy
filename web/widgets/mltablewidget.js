@@ -29,10 +29,11 @@ function MLTableWidget(O) {
 	this.setColumnProperties=function(colnum,props) {setColumnProperties(colnum,props);};
 	this.setRowsMoveable=function(val) {m_rows_moveable=val; schedule_refresh();};
 	this.rowsMoveable=function() {return m_rows_moveable;};
-	this.setSelectionMode=function(mode) {m_selection_mode=mode;}; //none,single
+	this.setSelectionMode=function(mode) {m_selection_mode=mode;}; //none,single,multiple
 	this.selectionMode=function() {return m_selection_mode;};
 	this.currentRow=function() {return m_current_row;};
 	this.setCurrentRow=function(row) {setCurrentRow(row);};
+	this.selectedRows=function() {return selectedRows();};
 
 	var m_table=$('<table class=Table1></table>');
 	O.div().append(m_table);
@@ -44,6 +45,9 @@ function MLTableWidget(O) {
 	var m_rows_moveable=false;
 	var m_current_row=null;
 	var m_selection_mode='none'; //see above for list of possibilities
+
+	var m_select_all_checkbox=$('<input id="select_all_checkbox" type=checkbox class=mls_checkbox></input>');
+	m_select_all_checkbox.click(on_select_all_rows);
 
 	function setColumnCount(num) {
 		m_header_row.setColumnCount(num);
@@ -67,18 +71,27 @@ function MLTableWidget(O) {
 		O.emit('current_row_changed');
 		update_row_highlighting();
 	}
-	function update_row_highlighting() {
-		for (var i in m_rows) {
-			m_rows[i].tr().removeClass('selected');
+	function selectedRows() {
+		if (m_selection_mode=='multiple') {
+			var ret=[];
+			for (var i=0; i<O.rowCount(); i++) {
+				if (O.row(i).isSelected())
+					ret.push(O.row(i));
+			}
+			return ret;
 		}
-		if (m_current_row) {
-			m_current_row.tr().addClass('selected');
+		else {
+			if (O.currentRow())
+				return [O.currentRow()];
+			else
+				return [];
 		}
 	}
 	function createRow() {
 		var row=new MLTableWidgetRow(0,O);
+		row.onSelectedChanged(update_row_highlighting);
 		JSQ.connect(row,'clicked',O,function(sender,evt) {
-			if (m_selection_mode=='single') {
+			if ((m_selection_mode=='single')||(m_selection_mode=='multiple')) {
 				setCurrentRow(row);
 			}
 		});
@@ -102,7 +115,63 @@ function MLTableWidget(O) {
 		for (var i=0; i<m_rows.length; i++) {
 			tbody.append(m_rows[i].tr());
 		}
+
+		if (m_selection_mode=='multiple') {
+			var elmt=$(m_header_row.tr().find('th')[0]);
+			elmt.children().detach();
+			elmt.empty();
+			elmt.append(m_select_all_checkbox);
+		}
+
 		update_row_highlighting();
+	}
+
+	function on_select_all_rows() {
+		if (O.div().find('#select_all_checkbox').is(':checked')) {
+			for (var i=0; i<m_rows.length; i++) {
+				m_rows[i].setSelected(true);
+			}
+	    }
+	    else {
+	    	for (var i=0; i<m_rows.length; i++) {
+				m_rows[i].setSelected(false);
+			}
+	    }
+	    update_row_highlighting();
+	}
+
+	function update_row_highlighting() {
+		for (var i in m_rows) {
+			m_rows[i].tr().removeClass('mltablewidget-current');
+		}
+		if (m_current_row) {
+			m_current_row.tr().addClass('mltablewidget-current');
+		}
+		
+	    var all_selected=true;
+	    var at_least_one_selected=false;
+	    for (var i=0; i<m_rows.length; i++) {
+	    	if (m_rows[i].isSelected()) {
+	    		m_rows[i].tr().addClass('mltablewidget-selected');
+	    		at_least_one_selected=true;
+	    	}
+	    	else {
+	    		m_rows[i].tr().removeClass('mltablewidget-selected');
+	    		all_selected=false;
+	    	}
+	    }
+	    if ((all_selected)&&(at_least_one_selected)) {
+	      m_select_all_checkbox.prop('checked',true);
+	      m_select_all_checkbox.prop('indeterminate',false);  
+	    }
+	    else if (at_least_one_selected) {
+	      m_select_all_checkbox.prop('checked',true);  
+	      m_select_all_checkbox.prop('indeterminate',true);  
+	    }
+	    else {
+	      m_select_all_checkbox.prop('checked',false);  
+	      m_select_all_checkbox.prop('indeterminate',false);  
+	    }
 	}
 
 	function move_row(src_row_index,dst_row_index) {
@@ -206,8 +275,9 @@ function MLTableWidgetHeaderRow(O,table_widget) {
 
 	function setColumnCount(num) {
 		m_tr.empty();
-		if (table_widget.rowsMoveable())
+		if ((table_widget.rowsMoveable())||(table_widget.selectionMode()=='multiple')) {
 			m_tr.append('<th />');
+		}
 		m_cells=[];
 		for (var i=0; i<num; i++) {
 			var cell=$('<th></th>');
@@ -228,14 +298,21 @@ function MLTableWidgetRow(O,table_widget) {
 	this.dragHandle=function() {if (m_is_moveable) return m_drag_handle; else return null;};
 	this.setDragDropSource=function(val) {if (m_drag_drop_source==val) return; m_drag_drop_source=val; update_drag_animation();};
 	this.setDragDropDestination=function(val) {if (m_drag_drop_destination==val) return; m_drag_drop_destination=val; update_drag_animation();};
+	this.isSelected=function() {return isSelected();};
+	this.setSelected=function(val) {setSelected(val);};
+	this.onSelectedChanged=function(handler) {JSQ.connect(O,'selected-changed',O,handler);};
 
 	var m_tr=$('<tr />');
 	var m_cells=[];
 	var m_is_moveable=false;
 	var m_table_widget=table_widget;
-	var m_drag_handle=$('<td class=table_row_drag_handle><span /></td>');
+	var m_drag_handle=$('<span class=table_row_drag_handle />');
 	var m_drag_drop_source=false;
 	var m_drag_drop_destination=false;
+	var m_selection_checkbox=$('<input type=checkbox class="mltable_selection_checkbox" />');
+	m_selection_checkbox.change(function() {
+		O.emit('selected-changed');
+	});
 
 	m_tr.click(function(evt) {
 		O.emit('clicked',evt);
@@ -246,11 +323,11 @@ function MLTableWidgetRow(O,table_widget) {
 	function setIsMoveable(val) {
 		m_is_moveable=val;
 		if (m_is_moveable) {
-			m_drag_handle.find('span').css({visibility:''});
+			m_drag_handle.css({visibility:''});
 			m_drag_handle.css({cursor:'move'});
 		}
 		else {
-			m_drag_handle.find('span').css({visibility:'hidden'});
+			m_drag_handle.css({visibility:'hidden'});
 			m_drag_handle.css({cursor:'default'});
 		}
 	}
@@ -268,14 +345,40 @@ function MLTableWidgetRow(O,table_widget) {
 
 	function set_column_count(num) {
 		m_tr.empty();
-		if (m_table_widget.rowsMoveable())
-			m_tr.append(m_drag_handle);
+		if ((m_table_widget.rowsMoveable())||(m_table_widget.selectionMode()=='multiple')) {
+			var td0=$('<td />');
+			td0.click(function(evt) {
+				evt.stopPropagation();
+			});
+			if (m_table_widget.rowsMoveable())
+				td0.append(m_drag_handle);
+			if (m_table_widget.selectionMode()=='multiple')
+				td0.append(m_selection_checkbox);	
+			m_tr.append(td0);
+		}
+		
 		for (var i=0; i<num; i++) {
 			var cell=$('<td />');
 			m_cells.push(cell);
 			m_tr.append(cell);
 		}
 	}
+
+	function isSelected() {
+		var cb=m_tr.find('.mltable_selection_checkbox');
+		if (cb.length>0) {
+			return $(cb[0]).is(':checked');
+		}
+		else return false;
+	}
+
+	function setSelected(val) {
+		var cb=m_tr.find('.mltable_selection_checkbox');
+		if (cb.length>0) {
+			$(cb[0]).prop('checked',val);
+		}
+	}
+
 	set_column_count(m_table_widget.columnCount());	
 
 }

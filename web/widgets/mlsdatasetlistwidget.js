@@ -21,27 +21,30 @@ function MLSDatasetListWidget(O) {
 	this.setMLSManager=function(M) {m_manager=M; m_study=M.study();};
 	this.refresh=function() {refresh();};
 	this.onCurrentDatasetChanged=function(handler) {JSQ.connect(m_table,'current_row_changed',O,handler);};
+	this.setCurrentDatasetId=function(id) {setCurrentDatasetId(id);};
 	this.currentDatasetId=function() {return currentDatasetId();};
+	this.selectedDatasetIds=function() {return selectedDatasetIds();};
 
 	var m_manager=null;
 	var m_study=null;
 	var m_table=new MLTableWidget();
 	m_table.setParent(O);
-	m_table.setSelectionMode('single');
+	m_table.setSelectionMode('multiple');
 	m_table.setRowsMoveable(false);
 
-	var m_button_bar=$('<div><button style="font-size:20px" id=add_dataset>Add dataset</button></div>');
-	O.div().append(m_button_bar);
+	//var m_button_bar=$('<div><button style="font-size:20px" id=add_dataset>Add dataset</button></div>');
+	//O.div().append(m_button_bar);
 
-	m_button_bar.find('#add_dataset').click(add_dataset);
+	//m_button_bar.find('#add_dataset').click(add_dataset);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
-		var button_height=40;
+		//var button_height=40;
+		var button_height=0;
 
-		m_button_bar.css({position:'absolute',left:0,top:H-button_height,width:W,height:button_height})
+		//m_button_bar.css({position:'absolute',left:0,top:H-button_height,width:W,height:button_height})
 
 		m_table.setGeometry(0,0,W,H-button_height);
 	}
@@ -52,12 +55,17 @@ function MLSDatasetListWidget(O) {
 		return row.dataset_id;
 	}
 
+	function setCurrentDatasetId(id) {
+		set_current_row_by_dataset_id(id);
+	}
+
 	function refresh() {
 		var current_dataset_id=currentDatasetId();
 
 		m_table.clearRows();
-		m_table.setColumnCount(2);
-		m_table.headerRow().cell(1).html('Dataset');
+		m_table.setColumnCount(1);
+
+		m_table.headerRow().cell(0).html('Dataset');
 		var ids=m_study.datasetIds();
 		for (var i=0; i<ids.length; i++) {
 			var row=m_table.createRow();
@@ -78,26 +86,56 @@ function MLSDatasetListWidget(O) {
 	}
 
 	function setup_row(row) {
-		var close_link=$('<span class=remove_button title="Delete dataset"></span>');
-		close_link.click(function() {remove_dataset(row.dataset_id);});
-		row.cell(0).append(close_link);
+		//var close_link=$('<span class=remove_button title="Delete dataset"></span>');
+		//close_link.click(function() {remove_dataset(row.dataset_id);});
+		//row.cell(0).append(close_link);
+		//var checkbox=$('<input type=checkbox class="mls_checkbox" data-dataset-id="'+row.dataset_id+'" />');
+      	//row.cell(0).append(checkbox);
+      	//checkbox.click(update_row_highlighting);
 
 		var edit_name_link=$('<span class=edit_button title="Edit dataset ID"></span>');
 		edit_name_link.click(function(evt) {
 			edit_dataset_id(row.dataset_id);
 			return false; //so that we don't get a click on the row
 		});
-		row.cell(1).append(edit_name_link);
-		row.cell(1).append($('<span>'+row.dataset_id+'</span>'));
+		row.cell(0).append(edit_name_link);
+		row.cell(0).append($('<span>'+row.dataset_id+'</span>'));
 	}
 
-	function add_dataset() {
-		var dataset_id=prompt('Dataset ID:');
-		if (!dataset_id) return;
-		m_study.setDataset(dataset_id,new MLSDataset());
-		refresh();
-		set_current_row_by_dataset_id(dataset_id);
+	function get_selected_dataset_ids() {
+		var rows=m_table.selectedRows();
+		var ret={};
+		for (var i in rows) {
+			ret[rows[i].dataset_id]=1;
+		}
+	    return ret;
 	}
+
+	function selectedDatasetIds() {
+		return get_selected_dataset_ids_list();
+	}
+
+	function get_selected_dataset_ids_list() {
+		var ids=get_selected_dataset_ids();
+		var list=[];
+		for (var id in ids) {
+		  list.push(id);
+		}
+		return list;
+	}
+	/*
+	function set_selected_dataset_ids(ids) {
+		for (var i=0; i<m_table.rowCount(); i++) {
+			var row=m_table.row(i);
+			if (row.dataset_id in ids) {
+				row.setSelected(true);
+			}
+			else {
+				row.setSelected(false);
+			}
+		}
+	}
+	*/
 
 	function set_current_row_by_dataset_id(did) {
 		for (var i=0; i<m_table.rowCount(); i++) {

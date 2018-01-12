@@ -8,10 +8,14 @@ function MLSManager() {
   this.user=function() {return user();};
   this.setJobManager=function(JM) {m_job_manager=JM;};
   this.jobManager=function() {return m_job_manager;};
+  this.batchJobManager=function() {return m_batch_job_manager;};
+  this.setKuleleClient=function(KC) {m_batch_job_manager.setKuleleClient(KC);};
+  this.kuleleClient=function() {return m_batch_job_manager.kuleleClient();};
 
-	var m_study=new MLStudy();
+	var m_study=new MLStudy(null);
   var m_login_info={};
   var m_job_manager=null;
+  var m_batch_job_manager=new BatchJobManager();
 
   function kBucketAuthUrl() {
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
@@ -244,7 +248,16 @@ function MLSPipelineModule(obj) {
   function pipeline(i) {
     var pipelines=m_object.pipelines||[];
     var obj=pipelines[i]||{};
-    var MLP=new MLPipeline();
+    var MLP=pipeline_from_object(obj);
+    return MLP;
+  }
+
+  function pipeline_from_object(obj) {
+    var MLP;
+    if (obj.script)
+      MLP=new MLPipelineScript();
+    else
+      MLP=new MLPipeline();
     MLP.setObject(obj);
     return MLP;
   }
@@ -253,8 +266,7 @@ function MLSPipelineModule(obj) {
     var pipelines=m_object.pipelines||[];
     var found=false;
     for (var i=0; i<pipelines.length; i++) {
-      var MLP=new MLPipeline();
-      MLP.setObject(pipelines[i]);
+      var MLP=pipeline_from_object(pipelines[i]);
       if (MLP.name()==name) {
         return MLP;
       }
@@ -265,8 +277,7 @@ function MLSPipelineModule(obj) {
   function removePipelineByName(name) {
     var pipelines=JSQ.clone(m_object.pipelines||[]);
     for (var i=0; i<pipelines.length; i++) {
-      var MLP=new MLPipeline();
-      MLP.setObject(pipelines[i]);
+      var MLP=pipeline_from_object(pipelines[i]);
       if (MLP.name()==name) {
         pipelines.splice(i,1);
         break;
@@ -285,8 +296,7 @@ function MLSPipelineModule(obj) {
     var pipelines=JSQ.clone(m_object.pipelines||[]);
     var found=false;
     for (var i=0; i<pipelines.length; i++) {
-      var MLP=new MLPipeline();
-      MLP.setObject(pipelines[i]);
+      var MLP=pipeline_from_object(pipelines[i]);
       if (MLP.name()==X.name()) {
         pipelines[i]=X.object();
         found=true;
@@ -345,4 +355,474 @@ function MLSBatchScript(obj) {
   }
 
   that.setObject(obj||{});
+}
+
+function BatchJobManager(O) {
+  O=O||this;
+  JSQObject(O);
+
+  this.startBatchJob=function(batch_script,study_object) {return startBatchJob(batch_script,study_object);};
+  this.setKuleleClient=function(KC) {m_kulele_client=KC;};
+  this.kuleleClient=function() {return m_kulele_client;};
+  this.runningJobCount=function() {return m_running_jobs.length;};
+
+  var m_running_jobs=[];
+  var m_kulele_client=null;
+
+  function startBatchJob(batch_script,study_object) {
+    var has_error=false;
+    mlpLog({bold:true,text:'Starting batch job...'});
+    var J=new BatchJob(null,m_kulele_client);
+    J.setBatchScript(batch_script.script());
+    J.setStudyObject(study_object);
+    JSQ.connect(J,'error',O,function(sender,err) {
+      has_error=true;
+      mlpLog({error:true,text:'Error in batch job: '+err});
+    });
+    JSQ.connect(J,'completed',O,function() {
+      var txt='Batch job completed';
+      if (has_error) txt+=' with error.';
+      else txt+=' without error.';
+      mlpLog({bold:true,text:txt,error:has_error});
+      for (var i in m_running_jobs) {
+        if (m_running_jobs[i]==J) {
+          m_running_jobs.splice(i,1);
+          break;
+        }
+      }
+    });
+    
+    m_running_jobs.push(J);
+    J.start();
+    return J;
+  }
+}
+
+function BatchJob(O,kulele_client) {
+  O=O||this;
+  JSQObject(O);
+
+  this.setBatchScript=function(script) {m_script=script;};
+  this.setStudyObject=function(obj) {m_study_object=obj;};
+  this.id=function() {return m_id;};
+  this.start=function() {start();};
+  this.resultNames=function() {return resultNames();};
+  this.result=function(name) {return result(name);};
+
+  var m_id=JSQ.makeRandomId(6);
+  var m_script='';
+  var m_study_object={};
+  var m_queued_processes=[];
+  var m_outputs={};
+  var m_results={};
+  var m_max_simultaneous_processor_jobs=10;
+
+  function start() {
+    var _MLS={
+      study:JSQ.clone(m_study_object),
+      runProcess:run_process,
+      setResult:set_result
+    };
+
+    try {
+      eval(m_script);
+    }
+    catch(err) {
+      console.error(err);
+      report_error('Error evaluating script: '+err.message);
+      return;
+    }
+
+    setTimeout(check_queued_processes,100);
+  }
+
+  function resultNames() {
+    var ret=[];
+    for (var rname in m_results) {
+      ret.push(rname);
+    }
+    return ret;
+  }
+
+  function result(name) {
+    return JSQ.clone(m_results[name]||null);
+  }
+
+  function check_queued_processes() {
+    var done_with_all=true;
+    var num_running=0;
+    for (var i in m_queued_processes) {
+      var P=m_queued_processes[i];
+      if ((P.job)&&(!P.job.isCompleted())) {
+        num_running++;
+        done_with_all=false;
+      }
+      if ((P.job)&&(P.job.isCompleted())) {
+        if (!P.handled_outputs) {
+          //completed but have not handled outputs yet
+          done_with_all=false;
+        }
+      }
+      if (!P.job) {
+        done_with_all=false;
+      }
+    }
+    for (var rname in m_results) {
+      var rr=m_results[rname];
+      if ((rr.assigned_output)&&(!rr.value)) {
+        if (rr.assigned_output in m_outputs) {
+          var aa=m_outputs[rr.assigned_output];
+          if (aa.status=='finished') {
+            rr.value=JSQ.clone(aa.value);
+            rr.status='finished';
+            O.emit('results_changed');  
+          }
+          else if (aa.status=='error') {
+            rr.status='error';
+            rr.error=aa.error;
+            rr.processor_name=aa.processor_name;
+            O.emit('results_changed');  
+          }
+          else if (aa.status=='running') {
+            rr.status='running';
+            rr.processor_name=aa.processor_name;
+            O.emit('results_changed');  
+            done_with_all=false;
+          }
+        }
+        else {
+          done_with_all=false;
+        }
+      }
+    }
+    if (done_with_all) {
+      O.emit('completed');
+      return;
+    }
+    for (var i in m_queued_processes) {
+      var P=m_queued_processes[i];
+      if (!P.job) {
+        //not yet started
+        if (num_running<m_max_simultaneous_processor_jobs) {
+          if (processor_job_ready_to_run(P)) {
+            start_processor(P);
+            num_running++;
+          }
+        }
+      }
+      else if (!P.job.isCompleted()) {
+        //running
+      }
+      else if (P.job.error()) {
+        //process completed with error
+        report_error('Error running process ('+P.processor_name+'): '+P.job.error());
+        if (!P.handled_outputs) {
+          var output_files=P.job.outputFiles();
+          for (var oname in P.outputs) {
+            m_outputs[P.outputs[oname]]={status:'error',error:P.job.error(),processor_name:P.processor_name};
+          }
+          P.handled_outputs=true;
+        }
+      }
+      else {
+        //process completed successfully -- so set the outputs
+        if (!P.handled_outputs) {
+          var output_files=P.job.outputFiles();
+          for (var oname in P.outputs) {
+            var ofile=output_files[oname]||null;
+            if (!ofile) {
+              report_error('Unexpected missing output file '+oname+'  for processor '+P.processor_name);
+              return;
+            }
+            m_outputs[P.outputs[oname]]={value:JSQ.clone(ofile),status:'finished'};
+          }
+          P.handled_outputs=true;
+        }
+      }
+    }
+    setTimeout(check_queued_processes,100);
+  }
+
+  function report_error(err) {
+    O.emit('error',err);
+    stop_all_jobs();
+    O.emit('completed');
+  }
+
+  function stop_all_jobs() {
+    for (var i in m_queued_processes) {
+      var P=m_queued_processes[i];
+      if (P.job) {
+        if (!P.job.isCompleted()) {
+          P.job.stop();
+        }
+      }
+    }
+  }
+
+  function processor_job_ready_to_run(P) {
+    for (var iname in P.inputs) {
+      var input=P.inputs[iname];
+      if (typeof(input)=='string') {
+        if ((input in m_outputs)&&(m_outputs[input].status=='finished')) {
+          //okay
+        }
+        else return false;
+      }
+      else {
+        //okay
+      }
+    }
+    return true;
+  }
+
+  function start_processor(P) {
+    var X=new ProcessorJob(null,kulele_client);
+    P.job=X;
+    X.setProcessorName(P.processor_name);
+    var input_files={};
+    for (var iname in P.inputs) {
+      var input=P.inputs[iname];
+      if (typeof(input)=='string') {
+        if ((input in m_outputs)&&(m_outputs[input].status=='finished')) {
+          input_files[iname]=m_outputs[input].value;
+        }
+        else {
+          console.error('Unexpected: input not in m_outputs: '+input);
+        }
+      }
+      else {
+        input_files[iname]=JSQ.clone(input);
+      }
+    }
+    X.setInputFiles(input_files);
+    var outputs_to_return={};
+    for (var oname in P.outputs) {
+      outputs_to_return[oname]=true;
+      m_outputs[P.outputs[oname]]={status:'running',processor_name:P.processor_name,processor:P};
+    }
+    X.setOutputsToReturn(outputs_to_return);
+    X.setParameters(P.parameters);
+    X.start();
+  }
+
+  function run_process(processor_name,inputs,outputs,parameters) {
+    if (!parameters) {
+      throw new Error('Improper call to runProcess.');
+      return;
+    }
+    for (var oname in outputs) {
+      if (outputs[oname]===true) {
+        outputs[oname]='unspecified_'+oname+'_'+JSQ.makeRandomId(10);
+      }
+    }
+    var PP={
+      processor_name:processor_name,
+      inputs:JSQ.clone(inputs),
+      outputs:JSQ.clone(outputs),
+      parameters:JSQ.clone(parameters)
+    };
+    m_queued_processes.push(PP);
+    return JSQ.clone(outputs);
+  }
+
+  function set_result(obj,fname,file) {
+    if (!file) {
+      file=fname;
+      fname=obj;
+      obj=null;
+    }
+    if (obj) fname=obj.id+'/'+fname;
+    if (typeof(file)=='string') {
+      m_results[fname]={assigned_output:file,status:'pending'};
+    }
+    else {
+      m_results[fname]={value:JSQ.clone(file),status:'finished'};
+    }
+    O.emit('results_changed');
+  }
+}
+
+function ProcessorJob(O,kulele_client) {
+  O=O||this;
+  JSQObject(O);
+
+  this.setProcessorName=function(name) {m_processor_name=name;};
+  this.setInputFiles=function(input_files) {m_input_files=JSQ.clone(input_files);};
+  this.setOutputsToReturn=function(outputs_to_return) {m_outputs_to_return=JSQ.clone(outputs_to_return);};
+  this.setParameters=function(parameters) {m_parameters=JSQ.clone(parameters);};
+  this.outputFiles=function() {return JSQ.clone(m_output_files);};
+  this.id=function() {return m_id;};
+  this.start=function() {start();};
+  this.stop=function() {stop();};
+  this.isCompleted=function() {return m_is_completed;};
+  this.error=function() {return m_error;};
+
+  var m_id=JSQ.makeRandomId(6);
+  var m_processor_name='';
+  var m_input_files={};
+  var m_outputs_to_return={};
+  var m_parameters={};
+  var m_is_completed=false;
+  var m_error='';
+  var m_process_id=''; //returned from kulele
+
+  var m_output_files={};
+
+  function start() {
+    var KC=kulele_client;
+    var spec=KC.processorSpec(m_processor_name);
+    if (!spec) {
+      report_error('Unable to find processor: '+m_processor_name);
+      return;
+    }
+    var inputs={};
+    for (var i in spec.inputs) {
+      var spec_input=spec.inputs[i];
+      if (m_input_files[spec_input.name]) {
+        var tmp=m_input_files[spec_input.name];
+        if (tmp.prv)
+          inputs[spec_input.name]=tmp.prv;
+        else {
+          var tmp2=[];
+          for (var i in tmp) tmp2.push(tmp[i].prv);
+          inputs[spec_input.name]=tmp2;
+        }
+      }
+      else {
+        if (spec_input.optional!=true) {
+          report_error('Missing required input: '+spec_input.name);
+          return;
+        }
+      }
+    }
+    var outputs_to_return={};
+    for (var i in spec.outputs) {
+      var spec_output=spec.outputs[i];
+      if (m_outputs_to_return[spec_output.name]) {
+        outputs_to_return[spec_output.name]=true;
+      }
+      else {
+        if (spec_output.optional!=true) {
+          report_error('Missing required output: '+spec_output.name);
+          return;
+        }
+      }
+    }
+    outputs_to_return.console_out=true;
+    plog('----------------------------------------------------------------------------');
+    plog('Queueing job: '+m_processor_name);
+    {
+      var inputs_str='INPUTS: ';
+      for (var iname in inputs) {
+        inputs_str+=iname+'='+inputs[iname]+'  ';
+      }
+      plog('  '+inputs_str);
+    }
+    {
+      var params_str='PARAMS: ';
+      for (var pname in m_parameters) {
+        params_str+=pname+'='+m_parameters[pname]+'  ';
+      }
+      plog('  '+params_str);
+    }
+    plog('----------------------------------------------------------------------------');
+    KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,{},function(resp) {
+      if (!resp.success) {
+        report_error(resp.error);
+        return;
+      }
+      m_process_id=resp.process_id;
+      handle_process_probe_response(resp);
+    });
+  }
+  function handle_process_probe_response(resp) {
+    if (!resp.success) {
+      report_error(resp.error);
+      return;
+    }
+    if (m_process_id!=resp.process_id) {
+      report_error('Unexpected: process_id does not match response: '+m_process_id+'<>'+resp.process_id);
+      return;
+    }
+    if (resp.latest_console_output) {
+      var lines=resp.latest_console_output.split('\n');
+      for (var i in lines) {
+        if (lines[i].trim()) {
+          var str0='  |'+m_processor_name+'| ';
+          while (str0.length<35) str0+=' ';
+          plog(str0+lines[i],{side:'server'});
+        }
+      }
+    }
+    if (resp.complete) {
+      var err0='';
+      if (!resp.result) {
+        report_error('Unexpected: result not found in process response.');
+        return;
+      }
+      var result=resp.result;
+      if (!result.success) {
+        if (!err0)
+          err0=result.error||'Unknown error';
+      }
+      if (result.outputs) {
+        for (var okey in m_outputs_to_return) {
+          if (!result.outputs[okey]) {
+            if (!err0)
+              err0='Output not found in process response: '+okey;
+          }
+          else {
+            var prv0=result.outputs[okey];
+            m_output_files[okey]={prv:prv0};
+          }
+        }
+        if (result.outputs['console_out']) {
+          var prv0=result.outputs['console_out'];
+          m_output_files['console_out']={prv:prv0};
+        }
+      }
+      else {
+        if (!err0)
+          err0='Unexpected: result.outputs not found in process response';
+      }
+      if (err0) {
+        report_error(err0);
+        return;
+      }
+      report_finished();
+    }
+    else {
+      setTimeout(send_process_probe,5000);
+    }
+  }
+  
+  function send_process_probe() {
+    var KC=kulele_client;
+    KC.probeJob(m_process_id,function(resp) {
+      handle_process_probe_response(resp);
+    });
+  }
+  function stop() {
+    plog('Canceling job');
+    var KC=kulele_client;
+    KC.cancelJob(m_process_id,function(resp) {
+      if (!resp.success) {
+        plog('Error canceling job: '+resp.error,{error:true});
+        return;
+      }
+    })
+  }
+  function plog(str,obj) {
+    obj=obj||{};
+    obj.text=m_processor_name+'::::: '+str;
+    mlpLog(obj);
+  }
+  function report_error(err) {
+    m_is_completed=true;
+    m_error=err;
+  }
+  function report_finished() {
+    m_is_completed=true;
+  }
 }

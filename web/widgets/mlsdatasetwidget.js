@@ -19,7 +19,7 @@ function MLSDatasetWidget(O) {
 	O.div().addClass('MLSDatasetWidget');
 
 	this.setMLSManager=function(M) {m_manager=M;};
-	this.setDatasetId=function(ds_id) {m_dataset_id=ds_id; m_top_widget.setDatasetId(ds_id); m_bottom_widget.setDatasetId(ds_id);};
+	this.setDatasetId=function(ds_id) {m_dataset_id=ds_id;};
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;
@@ -30,16 +30,26 @@ function MLSDatasetWidget(O) {
 	var m_params_table=new MLTableWidget();
 	var m_description_widget=new DescriptionWidget();
 	m_description_widget.setLabel('Dataset description: ');
-	var m_top_widget=new KDDTopWidget();
-	var m_bottom_widget=new KDDBottomWidget();
+	//var m_top_widget=new KDDTopWidget();
+	
+	//var m_bottom_widget=new KDDBottomWidget();
 	m_files_table.setParent(O);
 	m_params_table.setParent(O);
 	m_description_widget.setParent(O);
-	m_top_widget.setParent(O);
-	m_bottom_widget.setParent(O);
+	//m_top_widget.setParent(O);
+	//m_bottom_widget.setParent(O);
 
-	JSQ.connect(m_top_widget,'refresh',O,refresh);
-	JSQ.connect(m_bottom_widget,'refresh',O,refresh);
+	var m_menu_bar=new MLMenuBar();
+	var menu=m_menu_bar.addMenu('...');
+	menu.addItem('Export dataset to JSON file...',export_dataset);
+	menu.addItem('Export parameters to JSON file...',download_params_file);
+	menu.addItem('Import parameters from JSON file...',upload_params);
+	menu.addDivider();
+	menu.addItem('Refresh dataset',refresh);
+	m_menu_bar.setParent(O);
+
+	//JSQ.connect(m_top_widget,'refresh',O,refresh);
+	//JSQ.connect(m_bottom_widget,'refresh',O,refresh);
 
 	m_description_widget.onDescriptionEdited(function() {;
 		var ds=get_dataset();
@@ -49,23 +59,36 @@ function MLSDatasetWidget(O) {
 		ds.setProperties(prop);
 		set_dataset(ds);
 		refresh();
-		
 	});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
+		var widgets=[m_files_table,m_params_table,m_description_widget,m_menu_bar];
+		if (m_dataset_id) {
+			for (var i in widgets) {
+				widgets[i].show();
+			}
+		}
+		else {
+			for (var i in widgets) {
+				widgets[i].hide();
+			}
+		}
+
 		var W=O.width();
 		var H=O.height();
 		var W1=Math.min(700,2*W/3);
-		var Htop=40;
-		var Hbottom=30;
+		var Htop=50;
+		var Hbottom=0;
 		var H1=Math.max(400,(H-Htop-Hbottom)*2/3);
+		var menu_bar_width=50;
 
-		m_top_widget.setGeometry(0,5,W,Htop);
+		m_menu_bar.setGeometry(0,5,menu_bar_width,Htop);
+		//m_top_widget.setGeometry(menu_bar_width,5,W-menu_bar_width,Htop);
 		m_files_table.setGeometry(0,Htop,W1,H1-Htop);
 		m_params_table.setGeometry(W1,Htop,W-W1,H1-Htop);
 		m_description_widget.setGeometry(0,Htop+H1,W,H-Hbottom-H1-Htop);
-		m_bottom_widget.setGeometry(0,H-Hbottom,W,Hbottom);
+		//m_bottom_widget.setGeometry(0,H-Hbottom,W,Hbottom);
 	}
 
 	function refresh() {
@@ -79,6 +102,7 @@ function MLSDatasetWidget(O) {
 		setTimeout(function() {
 			refresh_kb_elements();	
 		},100);
+		update_layout();
 	}
 
 	function get_dataset() {
@@ -132,15 +156,8 @@ function MLSDatasetWidget(O) {
 			var add_parameter_link=$('<a href=#>Add parameter</a>');
 			add_parameter_link.click(add_param);
 
-			var upload_params_link=$('<a href=#>Upload params.json</a>');
-			upload_params_link.click(upload_params);
-
 			var row=m_files_table.createRow();
 			row.cell(1).append(add_parameter_link);
-			m_params_table.addRow(row);	
-
-			var row=m_files_table.createRow();
-			row.cell(1).append(upload_params_link);
 			m_params_table.addRow(row);	
 		}
 	}
@@ -267,7 +284,7 @@ function MLSDatasetWidget(O) {
 				var ds=get_dataset();
 				var files=tmp.files||[];
 				for (var i=0; i<files.length; i++) {
-					ds.setFile(files[i].fileName,{prv:files[i].prv});
+					ds.setFile(files[i].file_name,{prv:files[i].prv});
 				}
 				set_dataset(ds);
 				refresh();
@@ -418,8 +435,8 @@ function MLSDatasetWidget(O) {
 				elmt.append('&nbsp;Found');
 			});
 		}
-		m_top_widget.refresh();
-		m_bottom_widget.refresh();
+		//m_top_widget.refresh();
+		//m_bottom_widget.refresh();
 	}
 	function create_original_download_file_link(name) {
 		var ret=$('<span class=download_button title="Download original file from the kbucket server"></span>');
@@ -429,7 +446,7 @@ function MLSDatasetWidget(O) {
 		return ret;
 	}
 
-	JSQ.connect(m_bottom_widget,'download_params_file',O,download_params_file);
+	//JSQ.connect(m_bottom_widget,'download_params_file',O,download_params_file);
 	function download_params_file() {
 		var ds=get_dataset();
 		if (!ds) return;
@@ -437,11 +454,18 @@ function MLSDatasetWidget(O) {
 		download(JSON.stringify(params,null,4),m_dataset_id+'_params.json');
 	}
 
-	JSQ.connect(m_bottom_widget,'download_json_file',O,download_json_file);
-	function download_json_file() {
+	//JSQ.connect(m_bottom_widget,'download_json_file',O,download_json_file);
+	function export_dataset() {
+		if (!m_dataset_id) {
+			alert('Dataset id is empty.');
+			return;
+		}
 		var ds=get_dataset();
 		if (!ds) return;
-		var obj=ds.object();
+		var obj={
+			datasets:{}
+		};
+		obj.datasets[m_dataset_id]=ds.object();
 		download(JSON.stringify(obj,null,4),m_dataset_id+'.json');
 	}
 
@@ -500,6 +524,7 @@ function MLSDatasetWidget(O) {
 	update_layout();
 }
 
+/*
 function KDDTopWidget(O) {
 	O=O||this;
 	JSQWidget(O);
@@ -509,12 +534,8 @@ function KDDTopWidget(O) {
 	this.refresh=function() {refresh();};
 
 	var m_dataset_id='';
-	var m_content=$('<div>Dataset: <span id=title class=title></span>&nbsp;&nbsp;&nbsp;<button id=refresh_link title="Click to refresh this dataset">refresh</button></div>');
+	var m_content=$('<div>Dataset: <span id=title class=title></span>&nbsp;&nbsp;</div>');
 	O.div().append(m_content);
-
-	m_content.find('#refresh_link').click(function() {
-		O.emit('refresh');
-	});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -530,7 +551,9 @@ function KDDTopWidget(O) {
 
 	update_layout();
 }
+*/
 
+/*
 function KDDBottomWidget(O) {
 	O=O||this;
 	JSQWidget(O);
@@ -570,3 +593,4 @@ function KDDBottomWidget(O) {
 
 	update_layout();
 }
+*/

@@ -1,0 +1,8 @@
+.MLPLogWidget .bold {
+	font-weight: bold;
+	color: lightyellow;
+}
+
+.MLPLogWidget .error {
+	color:pink;
+}

@@ -62,6 +62,13 @@ function EditMLPipelineWidget(O) {
 		var H2=30;
 		var spacing1=30;
 
+		if (m_pipeline) {
+			m_button_widget.show();
+		}
+		else {
+			m_button_widget.hide();
+		}
+
 		m_editor_div.css({left:0,top:20,width:W,height:H-H2-40,position:'absolute'});
 		m_script_editor_div.css({left:0,top:20,width:W,height:H-H2-40,position:'absolute'});
 		m_script_editor.setSize(W,H-H2-40);
@@ -77,11 +84,11 @@ function EditMLPipelineWidget(O) {
 			m_table_widget.show();
 		}
 		else if (mode=='script') {
-			m_script_editor_div.css({visibility:'visible'});
+			m_script_editor_div.css({visibility:''});
 			m_script_editor.refresh();
 		}
 		else if (mode=='code') {
-			m_editor_div.css({visibility:'visible'});
+			m_editor_div.css({visibility:''});
 		}
 	}
 
@@ -111,6 +118,7 @@ function EditMLPipelineWidget(O) {
 				set_to_editor_if_different(m_editor,'');
 			}
 		}
+		update_layout();
 	}
 	function set_to_editor_if_different(editor,obj) {
 		if (JSON.stringify(obj)==JSON.stringify(editor.get())) return;
@@ -250,12 +258,12 @@ function EditMLPipelineButtonWidget(O) {
 		O.div().find('#code').css({visibility:'hidden'});
 		O.div().find('#tree').css({visibility:'hidden'});
 		if (m_is_pipeline_script) {
-			O.div().find('#script').css({visibility:'visible'});
+			O.div().find('#script').css({visibility:''});
 		}
 		else {
-			O.div().find('#table').css({visibility:'visible'});
-			O.div().find('#code').css({visibility:'visible'});
-			O.div().find('#tree').css({visibility:'visible'});
+			O.div().find('#table').css({visibility:''});
+			O.div().find('#code').css({visibility:''});
+			O.div().find('#tree').css({visibility:''});
 		}
 	}
 }

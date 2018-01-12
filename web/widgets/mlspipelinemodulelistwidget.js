@@ -22,27 +22,21 @@ function MLSPipelineModuleListWidget(O) {
 	this.refresh=function() {refresh();};
 	this.onCurrentPipelineModuleChanged=function(handler) {JSQ.connect(m_table,'current_row_changed',O,handler);};
 	this.currentPipelineModuleName=function() {return currentPipelineModuleName();};
+	this.setCurrentPipelineModuleName=function(name) {setCurrentPipelineModuleName(name);};
+	this.selectedPipelineModuleNames=function() {return selectedPipelineModuleNames();};
 
 	var m_manager=null;
 	var m_table=new MLTableWidget();
 	m_table.setParent(O);
-	m_table.setSelectionMode('single');
+	m_table.setSelectionMode('multiple');
 	m_table.setRowsMoveable(false);
-
-	var m_button_bar=$('<div><button style="font-size:20px" id=add_pipeline_module>Add pipeline module</button></div>');
-	O.div().append(m_button_bar);
-
-	m_button_bar.find('#add_pipeline_module').click(add_pipeline_module);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
-		var button_height=40;
 
-		m_button_bar.css({position:'absolute',left:0,top:H-button_height,width:W,height:button_height})
-
-		m_table.setGeometry(0,0,W,H-button_height);
+		m_table.setGeometry(0,0,W,H);
 	}
 
 	function currentPipelineModuleName() {
@@ -51,12 +45,31 @@ function MLSPipelineModuleListWidget(O) {
 		return row.pipeline_module_name;
 	}
 
+	function setCurrentPipelineModuleName(name) {
+		for (var i=0; i<m_table.rowCount(); i++) {
+			console.log(m_table.row(i).pipeline_module_name);
+			if (m_table.row(i).pipeline_module_name==name) {
+				m_table.setCurrentRow(m_table.row(i));
+				return;
+			}
+		}
+	}
+
+	function selectedPipelineModuleNames() {
+		var rows=m_table.selectedRows();
+		var ret=[];
+		for (var i in rows) {
+			ret.push(rows[i].pipeline_module_name);
+		}
+		return ret;
+	}
+
 	function refresh() {
 		var current_pipeline_module_name=currentPipelineModuleName();
 
 		m_table.clearRows();
-		m_table.setColumnCount(2);
-		m_table.headerRow().cell(1).html('Module');
+		m_table.setColumnCount(1);
+		m_table.headerRow().cell(0).html('Module');
 		var names=m_manager.study().pipelineModuleNames();
 		for (var i=0; i<names.length; i++) {
 			var row=m_table.createRow();
@@ -77,25 +90,13 @@ function MLSPipelineModuleListWidget(O) {
 	}
 
 	function setup_row(row) {
-		var close_link=$('<span class=remove_button title="Delete module"></span>');
-		close_link.click(function() {remove_pipeline_module(row.pipeline_module_name);});
-		row.cell(0).append(close_link);
-
 		var edit_name_link=$('<span class=edit_button title="Edit module name"></span>');
 		edit_name_link.click(function(evt) {
 			edit_pipeline_module_name(row.pipeline_module_name);
 			return false; //so that we don't get a click on the row
 		});
-		row.cell(1).append(edit_name_link);
-		row.cell(1).append($('<span>'+row.pipeline_module_name+'</span>'));
-	}
-
-	function add_pipeline_module() {
-		var pipeline_module_name=prompt('Pipeline module name:');
-		if (!pipeline_module_name) return;
-		m_manager.study().setPipelineModule(pipeline_module_name,new MLSPipelineModule());
-		refresh();
-		set_current_row_by_pipeline_module_name(pipeline_module_name);
+		row.cell(0).append(edit_name_link);
+		row.cell(0).append($('<span>'+row.pipeline_module_name+'</span>'));
 	}
 
 	function set_current_row_by_pipeline_module_name(pname) {
@@ -115,14 +116,6 @@ function MLSPipelineModuleListWidget(O) {
 		if (name2==name) return;
 		m_manager.study().changePipelineModuleName(name,name2);
 		refresh();
-	}
-
-	function remove_pipeline_module(pname) {
-		if (confirm('Remove pipeline module ('+pname+')?')) {
-			m_manager.study().removePipelineModule(pname);
-			m_table.setCurrentRow(0);
-			refresh();	
-		}
 	}
 
 	update_layout();

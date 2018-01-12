@@ -149,6 +149,7 @@ function KBucketUploadDialog(O) {
 					file_records[file.uniqueIdentifier].finished=true;
 					file_records[file.uniqueIdentifier].prv=prv0;
 					file_records[file.uniqueIdentifier].prv_file_name=file.fileName;
+					file_records[file.uniqueIdentifier].file_name=file.fileName.slice(0,file.fileName.length-('.prv').length);
 					f.find('#status').html('Done');
 					setTimeout(function() {
 						check_finished();
@@ -158,6 +159,7 @@ function KBucketUploadDialog(O) {
 			}
 			else {
 				file_records[file.uniqueIdentifier].prv_file_name=file.fileName+'.prv';
+				file_records[file.uniqueIdentifier].file_name=file.fileName;
 				r.upload();
 			}
 		});
@@ -271,7 +273,7 @@ function KBucketUploadDialog(O) {
 			if (ok) {
 				var files0=[];
 				for (var unique_id in file_records) {
-					files0.push({prv:file_records[unique_id].prv,fileName:file_records[unique_id].prv_file_name});
+					files0.push({prv:file_records[unique_id].prv,prv_file_name:file_records[unique_id].prv_file_name,file_name:file_records[unique_id].file_name});
 				}
 				var args={files:files0};
 				O.emit('finished',args);

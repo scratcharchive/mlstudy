@@ -22,27 +22,21 @@ function MLSBatchScriptListWidget(O) {
 	this.refresh=function() {refresh();};
 	this.onCurrentBatchScriptChanged=function(handler) {JSQ.connect(m_table,'current_row_changed',O,handler);};
 	this.currentBatchScriptName=function() {return currentBatchScriptName();};
+	this.setCurrentBatchScriptName=function(name) {setCurrentBatchScriptName(name);};
+	this.selectedBatchScriptNames=function() {return selectedBatchScriptNames();};
 
 	var m_manager=null;
 	var m_table=new MLTableWidget();
 	m_table.setParent(O);
-	m_table.setSelectionMode('single');
+	m_table.setSelectionMode('multiple');
 	m_table.setRowsMoveable(false);
-
-	var m_button_bar=$('<div><button style="font-size:20px" id=add_batch_script>Add batch script</button></div>');
-	O.div().append(m_button_bar);
-
-	m_button_bar.find('#add_batch_script').click(add_batch_script);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
-		var button_height=40;
 
-		m_button_bar.css({position:'absolute',left:0,top:H-button_height,width:W,height:button_height})
-
-		m_table.setGeometry(0,0,W,H-button_height);
+		m_table.setGeometry(0,0,W,H);
 	}
 
 	function currentBatchScriptName() {
@@ -51,12 +45,31 @@ function MLSBatchScriptListWidget(O) {
 		return row.batch_script_name;
 	}
 
+	function setCurrentBatchScriptName(name) {
+		for (var i=0; i<m_table.rowCount(); i++) {
+			console.log(m_table.row(i).batch_script_name);
+			if (m_table.row(i).batch_script_name==name) {
+				m_table.setCurrentRow(m_table.row(i));
+				return;
+			}
+		}
+	}
+
+	function selectedBatchScriptNames() {
+		var rows=m_table.selectedRows();
+		var ret=[];
+		for (var i in rows) {
+			ret.push(rows[i].batch_script_name);
+		}
+		return ret;
+	}
+
 	function refresh() {
 		var current_batch_script_name=currentBatchScriptName();
 
 		m_table.clearRows();
-		m_table.setColumnCount(2);
-		m_table.headerRow().cell(1).html('Module');
+		m_table.setColumnCount(1);
+		m_table.headerRow().cell(0).html('Module');
 		var names=m_manager.study().batchScriptNames();
 		for (var i=0; i<names.length; i++) {
 			var row=m_table.createRow();
@@ -77,52 +90,32 @@ function MLSBatchScriptListWidget(O) {
 	}
 
 	function setup_row(row) {
-		var close_link=$('<span class=remove_button title="Delete module"></span>');
-		close_link.click(function() {remove_batch_script(row.batch_script_name);});
-		row.cell(0).append(close_link);
-
-		var edit_name_link=$('<span class=edit_button title="Edit module name"></span>');
+		var edit_name_link=$('<span class=edit_button title="Edit batch script name"></span>');
 		edit_name_link.click(function(evt) {
 			edit_batch_script_name(row.batch_script_name);
 			return false; //so that we don't get a click on the row
 		});
-		row.cell(1).append(edit_name_link);
-		row.cell(1).append($('<span>'+row.batch_script_name+'</span>'));
+		row.cell(0).append(edit_name_link);
+		row.cell(0).append($('<span>'+row.batch_script_name+'</span>'));
 	}
 
-	function add_batch_script() {
-		var batch_script_name=prompt('Batch script name:');
-		if (!batch_script_name) return;
-		m_manager.study().setBatchScript(batch_script_name,new MLSBatchScript());
-		refresh();
-		set_current_row_by_batch_script_name(batch_script_name);
-	}
-
-	function set_current_row_by_batch_script_name(sname) {
+	function set_current_row_by_batch_script_name(pname) {
 		for (var i=0; i<m_table.rowCount(); i++) {
 			var row=m_table.row(i);
-			if (row.batch_script_name==sname) {
+			if (row.batch_script_name==pname) {
 				m_table.setCurrentRow(row);
 				return;
 			}
 		}
 	}
 
-	function edit_batch_script_name(sname) {
-		var name=sname;
+	function edit_batch_script_name(pname) {
+		var name=pname;
 		var name2=prompt('New name for batch script:',name);
 		if (!name2) return;
 		if (name2==name) return;
 		m_manager.study().changeBatchScriptName(name,name2);
 		refresh();
-	}
-
-	function remove_batch_script(sname) {
-		if (confirm('Remove batch script ('+sname+')?')) {
-			m_manager.study().removeBatchScript(sname);
-			m_table.setCurrentRow(0);
-			refresh();	
-		}
 	}
 
 	update_layout();

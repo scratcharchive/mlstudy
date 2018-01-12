@@ -25,11 +25,32 @@ function MLSBatchScriptsView(O,options) {
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;
+	var m_batch_jobs_by_batch_script_name={};
 
 	var m_list_widget=new MLSBatchScriptListWidget();
 	var m_batch_script_widget=new MLSBatchScriptWidget();
+	JSQ.connect(m_batch_script_widget,'run_script',O,run_script);
+
+	var m_menu_bar=new MLMenuBar();
+	var menu=m_menu_bar.addMenu('...');
+	menu.addItem('Add new batch script...',add_new_batch_script);
+	menu.addDivider();
+	menu.addItem('Export selected batch scripts...',export_selected_batch_scripts);
+	menu.addItem('Import batch script(s)...',import_batch_scripts);
+	menu.addDivider();
+	menu.addItem('Remove selected batch scripts...',remove_selected_batch_scripts);
+
+	var m_tab_widget=new JSQTabWidget();
+	var m_log_widget=new MLPLogWidget();
+	var m_results_widget=new MLSBatchScriptResultsWidget();
+	m_tab_widget.addTab(m_results_widget,'Results');
+	m_tab_widget.addTab(m_log_widget,'Console');
+	m_tab_widget.setCurrentTabIndex(0);
+
 	m_list_widget.setParent(O);
 	m_batch_script_widget.setParent(O);
+	m_menu_bar.setParent(O);
+	m_tab_widget.setParent(O);
 
 	m_list_widget.onCurrentBatchScriptChanged(refresh_batch_script);
 
@@ -37,41 +58,168 @@ function MLSBatchScriptsView(O,options) {
 	function update_layout() {
 		var W=O.width();
 		var H=O.height();
+		var Hmenu=50;
 
-		var W1=Math.max(200,Math.floor(W/10));
-		var W2=W-W1;
+		var W1=Math.max(300,Math.floor(W/5));
+		var W3=Math.min(700,Math.max(200,(W-W1)/2));
+		if (W3==500) W3=Math.max(700,(W-W1)/3);
+		var W2=W-W1-W3;
 
-		hmarg=5;
-		m_list_widget.setGeometry(hmarg,0,W1-hmarg*2,H);
-		m_batch_script_widget.setGeometry(W1+hmarg,0,W2-hmarg*2,H);
+		var xmarg=5;
+		m_menu_bar.setGeometry(xmarg,0,W1-hmarg*2,Hmenu);
+		m_list_widget.setGeometry(hmarg,Hmenu,W1-hmarg*2,H-Hmenu);
+		m_batch_script_widget.setGeometry(W1,0,W2,H);
+		m_tab_widget.setGeometry(W1+W2,0,W3,H);
 	}
 
 	function refresh() {
 		m_list_widget.refresh();
 		refresh_batch_script();
+		update_results_widget();
 	}
 	function refresh_batch_script() {
-		var script_name=m_list_widget.currentBatchScriptName();
-		if (!script_name) {
-			m_batch_script_widget.setBatchScript(new MLSBatchScript());
+		var batch_script_name=m_list_widget.currentBatchScriptName();
+		if (!batch_script_name) {
+			m_batch_script_widget.setBatchScript(null);
+			update_results_widget();
 			return;
 		}
-		var S=m_manager.study().batchScript(script_name);
-		if (!S) S=new MLSBatchScript();
-		m_batch_script_widget.setBatchScript(S);
+		var P=m_manager.study().batchScript(batch_script_name);
+		m_batch_script_widget.setBatchScript(P);
 
-		S.onChanged(function() {
-			if (script_name) {
-				m_manager.study().setBatchScript(script_name,S);
+		if (P) {
+			P.onChanged(function() {
+				if (batch_script_name) {
+					m_manager.study().setBatchScript(batch_script_name,P);
+				}
+			});
+		}
+		update_results_widget();
+	}
+
+	function update_results_widget() {
+		var batch_script_name=m_list_widget.currentBatchScriptName();
+  		if (!batch_script_name) {
+  			m_results_widget.setBatchJob(null);
+  			return;
+  		}
+  		var job=m_batch_jobs_by_batch_script_name[batch_script_name]||null;
+  		m_results_widget.setBatchJob(job);
+	}
+
+	function add_new_batch_script() {
+		var batch_script_name=prompt('Batch script name:');
+		if (!batch_script_name) return;
+		m_manager.study().setBatchScript(batch_script_name,new MLSBatchScript());
+		refresh();
+		m_list_widget.setCurrentBatchScriptName(batch_script_name);
+	}
+
+	function remove_selected_batch_scripts() {
+		var names=m_list_widget.selectedBatchScriptNames();
+		if (names.length==0) {
+			alert('No batch scripts selected.');
+			return;
+		}
+		if (confirm('Remove '+names.length+' batch scripts?')) {
+			for (var i in names) {
+				var name=names[i];
+				m_manager.study().removeBatchScript(name);
 			}
+			refresh();
+		}
+	}
+
+	function import_batch_scripts() {
+		var UP=new FileUploader();
+		UP.uploadTextFile({},function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			console.log(tmp);
+			var obj=try_parse_json(tmp.text);
+			if (!obj) {
+				alert('Error parsing json');
+				return;
+			}
+			if (!('batch_scripts' in obj)) {
+				alert('Missing json field: batch_scripts');
+				return;
+			}
+			var last_name='';
+			var count=0;
+			for (var name in obj.batch_scripts) {
+				var X=new MLSBatchScript();
+				X.setObject(obj.batch_scripts[name]);
+				m_manager.study().setBatchScript(name,X);
+				last_name=name;
+				count++;
+			}
+			refresh();
+			if (last_name) {
+				m_list_widget.setCurrentBatchScriptName(last_name);
+			}
+			alert('Imported '+count+' batch scripts.');
 		});
+	}
+
+	function remove_file_extension(str) {
+		var list=str.split('.');
+		if (list.length>1)
+			list=list.slice(0,list.length-1);
+		return list.join('.');
+	}
+
+	function export_selected_batch_scripts() {
+		var names=m_list_widget.selectedBatchScriptNames();
+		if (names.length==0) {
+			alert('No batch scripts selected.');
+			return;
+		}
+		var obj={batch_scripts:{}};
+		for (var i in names) {
+			var name=names[i];
+			var PM=m_manager.study().batchScript(name);
+			if (!PM) {
+				alert('Unable to find batch script: '+name);
+				return;
+			}
+			obj.batch_scripts[name]=PM.object();
+		}
+
+		var fname0='';
+		if (names.length==1) {
+			fname0=names[0]+'.json';
+		}
+		else {
+			fname0='batch_scripts.json';
+		}
+		fname0=prompt('Download '+names.length+' batch scripts to file:',fname0);
+		if (!fname0) return;
+		
+		download(JSON.stringify(obj,null,4),fname0);
+	}
+
+	function run_script() {
+		var BJM=m_manager.batchJobManager();
+		if (BJM.runningJobCount()>0) {
+			alert('Cannot start job. A job is already running.');
+			return;
+		}
+		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),m_manager.study().object());
+		var batch_script_name=m_list_widget.currentBatchScriptName();
+		m_batch_jobs_by_batch_script_name[batch_script_name]=job;
+		update_results_widget();
 	}
 
 	function setMLSManager(M) {
 		m_manager=M;
 		m_batch_script_widget.setJobManager(M.jobManager());
 		m_list_widget.setMLSManager(M);
+		m_results_widget.setKuleleClient(M.kuleleClient());
 		refresh();
+		//m_batch_script_widget.setMLSManager(M);
 	}
 
 	update_layout();

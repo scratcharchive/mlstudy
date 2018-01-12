@@ -22,7 +22,7 @@ function MLSPipelineModuleWidget(O) {
 	this.setProcessorManager=function(PM) {m_pipeline_widget.setProcessorManager(PM);};
 	this.setJobManager=function(JM) {m_pipeline_widget.setJobManager(JM);};
 
-	var m_pipeline_module=new MLSPipelineModule();
+	var m_pipeline_module=null;
 	var m_list_widget=new MLPipelineListWidget(0);
 	var m_pipeline_widget=new EditMLPipelineWidget();
 	m_list_widget.setParent(O);
@@ -32,6 +32,18 @@ function MLSPipelineModuleWidget(O) {
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
+		var widgets=[m_list_widget,m_pipeline_widget];
+		if (m_pipeline_module) {
+			for (var i in widgets) {
+				widgets[i].show();
+			}
+		}
+		else {
+			for (var i in widgets) {
+				widgets[i].hide();
+			}
+		}
+		
 		var W=O.width();
 		var H=O.height();
 
@@ -47,9 +59,14 @@ function MLSPipelineModuleWidget(O) {
 		m_pipeline_module=X;
 		m_list_widget.setPipelineModule(X);
 		m_list_widget.setCurrentPipelineName('');
+		update_layout();
 	}
 
 	function refresh_pipeline() {
+		if (!m_pipeline_module) {
+			m_pipeline_widget.setPipeline(null);
+			return;
+		}
 		var pname=m_list_widget.currentPipelineName();
 		var MLP=m_pipeline_module.pipelineByName(pname);
 		if (MLP) {

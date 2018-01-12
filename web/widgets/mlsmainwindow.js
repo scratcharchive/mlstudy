@@ -14,6 +14,7 @@ function MLSMainWindow(O) {
 	var m_processor_manager=new ProcessorManager();
 	var m_kulele_client=new KuleleClient();
 	m_mls_manager.setJobManager(m_job_manager);
+	m_mls_manager.setKuleleClient(m_kulele_client);
 	var m_docstor_client=null;
 	var m_file_source=''; //e.g., docstor
 	var m_file_path=''; //when m_file_source=='file_content'
@@ -60,7 +61,7 @@ function MLSMainWindow(O) {
 	JSQ.connect(m_mls_manager.study(),'changed',O,update_menus);
 
 	// File menu //////////////////////////////////////
-	var menu=m_menu_bar.addMenu('File');
+	var menu=m_menu_bar.addMenu('File',{downarrow:true});
 	menu.addItem('New study',create_new_study);
 	menu.addDivider();
 	menu.addItem('Open study from browser...',open_study_browser);
@@ -385,7 +386,7 @@ function MLSMainWindow(O) {
 					return;
 				}
 				m_processor_manager.setSpec(tmp1.spec);
-			})
+			});
 		});
 	}
 

@@ -27,10 +27,20 @@ function MLSDatasetsView(O,options) {
 
 	var m_list_widget=new MLSDatasetListWidget();
 	var m_dataset_widget=new MLSDatasetWidget();
+	m_list_widget.onCurrentDatasetChanged(refresh_dataset);
+
+	var m_menu_bar=new MLMenuBar();
+	var menu=m_menu_bar.addMenu('...');
+	menu.addItem('Add new dataset...',add_dataset);
+	menu.addDivider();
+	menu.addItem('Remove selected datasets...',remove_selected_datasets);
+	menu.addDivider();
+	menu.addItem('Import dataset(s) from JSON file...',import_datasets);
+	menu.addItem('Export selected dataset(s) to JSON file...',export_datasets);
+
 	m_list_widget.setParent(O);
 	m_dataset_widget.setParent(O);
-
-	m_list_widget.onCurrentDatasetChanged(refresh_dataset);
+	m_menu_bar.setParent(O);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -40,8 +50,11 @@ function MLSDatasetsView(O,options) {
 		var W1=Math.max(200,Math.floor(W/10));
 		var W2=W-W1;
 
+		var H1=40;
+
 		hmarg=5;
-		m_list_widget.setGeometry(hmarg,0,W1-hmarg*2,H);
+		m_menu_bar.setGeometry(hmarg,0,W1-hmarg*2,H1);
+		m_list_widget.setGeometry(hmarg,H1,W1-hmarg*2,H-H1);
 		m_dataset_widget.setGeometry(W1+hmarg,0,W2-hmarg*2,H);
 	}
 
@@ -64,6 +77,96 @@ function MLSDatasetsView(O,options) {
 		*/
 		m_dataset_widget.setDatasetId(ds_id);
 		m_dataset_widget.refresh();
+	}
+
+	function add_dataset() {
+		var dataset_id=prompt('Dataset ID:');
+		if (!dataset_id) return;
+		if (m_manager.study().dataset(dataset_id)) {
+			alert('Error: Dataset with this id already exists.');
+			return;
+		}
+		m_manager.study().setDataset(dataset_id,new MLSDataset());
+		refresh();
+		m_list_widget.setCurrentDatasetId(dataset_id);
+	}
+
+	function remove_selected_datasets() {
+		var ids=m_list_widget.selectedDatasetIds();
+		if (ids.length==0) {
+			alert('No datasets selected.');
+			return;
+		}
+		if (!confirm('Remove '+ids.length+' datasets?'))
+			return;
+		for (var i in ids) {
+			var id=ids[i];
+			m_manager.study().removeDataset(id);
+		}
+		refresh();
+	}
+
+	function export_datasets() {
+		var ids=m_list_widget.selectedDatasetIds();
+		if (ids.length==0) {
+			alert('No datasets selected.');
+			return;
+		}
+		var obj={datasets:{}};
+		for (var i in ids) {
+			var id=ids[i];
+			var DS=obj.datasets[id]=m_manager.study().dataset(id);
+			if (!DS) {
+				alert('Unable to find dataset: '+id);
+				return;
+			}
+			obj.datasets[id]=DS.object();
+		}
+
+		var fname0='';
+		if (ids.length==1) {
+			fname0=ids[0]+'.json';
+		}
+		else {
+			fname0='datasets.json';
+		}
+		fname0=prompt('Download '+ids.length+' datasets into file:',fname0);
+		if (!fname0) return;
+		
+		download(JSON.stringify(obj,null,4),fname0);
+	}
+
+	function import_datasets() {
+		var UP=new FileUploader();
+		UP.uploadTextFile({},function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			var obj=try_parse_json(tmp.text);
+			if (!obj) {
+				alert('Error parsing json');
+				return;
+			}
+			if (!('datasets' in obj)) {
+				alert('Missing json field: datasets');
+				return;
+			}
+			var last_id='';
+			var count=0;
+			for (var id in obj.datasets) {
+				var DD=new MLSDataset();
+				DD.setObject(obj.datasets[id]);
+				m_manager.study().setDataset(id,DD);
+				last_id=id;
+				count++;
+			}
+			refresh();
+			if (last_id) {
+				m_list_widget.setCurrentDatasetId(last_id);
+			}
+			alert('Imported '+count+' datasets.');
+		});
 	}
 
 	function setMLSManager(M) {

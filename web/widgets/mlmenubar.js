@@ -3,7 +3,7 @@ function MLMenuBar(O) {
 	JSQWidget(O);
 	O.div().addClass('MLMenuBar');
 
-	this.addMenu=function(label) {return addMenu(label);};
+	this.addMenu=function(label,opts) {return addMenu(label,opts);};
 	this.addSpacer=function() {return addSpacer();};
 	this.addButton=function(label,handler) {return addButton(label,handler);};
 
@@ -25,12 +25,15 @@ function MLMenuBar(O) {
 		//m_content.css({position:'absolute',left:0,top:0,width:W,height:H});
 	}
 
-	function addMenu(label) {
-		var menu=new MLMenu();
+	function addMenu(label,opts) {
+		if (!opts) opts={};
+		var menu=new MLMenu(opts);
 		var menu_id=menu.menuId();
-		O.div().append(`<a class=mlmenubar-menu-button id=action_dropdown data-jq-dropdown="#action_dropdown_items-"${menu_id}>${label} ▼</a>`);
+		var str='';
+		if (opts.downarrow) str=' ▼';
+		O.div().append(`<a class=mlmenubar-menu-button id=action_dropdown data-jq-dropdown="#action_dropdown_items-${menu_id}">${label}${str}</a>`);
 		var elmt=$(`
-		  <div id="action_dropdown_items-"${O.objectId()} class="jq-dropdown jq-dropdown-tip">
+		  <div id="action_dropdown_items-${menu_id}" class="jq-dropdown jq-dropdown-tip">
 			  <ul class="jq-dropdown-menu">
 			  </ul>
 		  </div>
@@ -57,7 +60,9 @@ function MLMenuBar(O) {
 
 	update_layout();
 
-	function MLMenu() {
+	function MLMenu(opts) {
+		if (!opts) opts={};
+
 		this.menuId=function() {return m_menu_id;};	
 		this.setElement=function(elmt) {m_element=elmt;};
 		this.addItem=function(label,callback) {return addItem(label,callback);};
