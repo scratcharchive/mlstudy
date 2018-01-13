@@ -435,8 +435,8 @@ function BatchJob(O,kulele_client) {
   function start() {
     var _MLS={
       study:JSQ.clone(m_study_object),
-      runProcess:run_process,
-      setResult:set_result
+      runProcess:_run_process,
+      setResult:_set_result
     };
 
     var require=function(str) {
@@ -639,7 +639,7 @@ function BatchJob(O,kulele_client) {
     X.start();
   }
 
-  function run_process(processor_name,inputs,outputs,parameters) {
+  function _run_process(processor_name,inputs,outputs,parameters) {
     if (!parameters) {
       throw new Error('Improper call to runProcess.');
       return;
@@ -659,7 +659,7 @@ function BatchJob(O,kulele_client) {
     return JSQ.clone(outputs);
   }
 
-  function set_result(obj,fname,file) {
+  function _set_result(obj,fname,file) {
     if (!file) {
       file=fname;
       fname=obj;
