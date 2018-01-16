@@ -21,7 +21,7 @@ function MLSBatchScriptsView(O,options) {
 	if (!options) options={};
 
 	this.setProcessorManager=function(PM) {m_batch_script_widget.setProcessorManager(PM);};
-	this.setMLSManager=function(M) {setMLSManager(M);};
+	this.setMLSManager=function(M) {setMLSManager(M); m_results_widget.setMLSManager(M);};
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;

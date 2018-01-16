@@ -24,7 +24,6 @@ function MLSDatasetWidget(O) {
 
 	var m_manager=null;
 	var m_dataset_id='';
-	var m_kbucket_client=new KBucketClient();
 	O.div().css({'overflow-y':'auto'});
 	var m_files_table=new MLTableWidget();
 	var m_params_table=new MLTableWidget();
@@ -386,8 +385,9 @@ function MLSDatasetWidget(O) {
 			var sha1=elmt.attr('data-sha1');
 			var size=elmt.attr('data-size');
 			var name=elmt.attr('data-name');
-			m_kbucket_client.setKBucketUrl(m_manager.kBucketUrl());
-			m_kbucket_client.stat(sha1,size,function(err,stat0) {
+			var KC=new KBucketClient();
+			KC.setKBucketUrl(m_manager.kBucketUrl());
+			KC.stat(sha1,size,function(err,stat0) {
 				if (err) {
 					elmt.html('Error checking');
 					elmt.attr('title',err);

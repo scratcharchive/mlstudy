@@ -20,12 +20,13 @@ function MLSBatchScriptResultsWidget(O) {
 	O.div().addClass('MLSBatchScriptResultsWidget');
 
 	this.setBatchJob=function(BJ) {setBatchJob(BJ);};
+	this.setMLSManager=function(MM) {m_mls_manager=MM;};
 	this.setKuleleClient=function(KC) {m_kulele_client=KC;};
 	
 	var m_table=new MLTableWidget();
 	var m_batch_job=null;
-	var m_kbucket_client=new KBucketClient();
 	var m_kulele_client=null;
+	var m_mls_manager=null;
 
 	m_table.setParent(O);
 
@@ -158,7 +159,9 @@ function MLSBatchScriptResultsWidget(O) {
 	}
 
 	function check_on_kbucket_3(prv,callback) {
-		m_kbucket_client.stat(prv.original_checksum,prv.original_size,function(err,res) {
+		var KC=new KBucketClient();
+		KC.setKBucketUrl(m_mls_manager.kBucketUrl());
+		KC.stat(prv.original_checksum,prv.original_size,function(err,res) {
 			callback(err,res);
 		});
 	}
