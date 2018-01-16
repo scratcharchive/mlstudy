@@ -21,11 +21,9 @@ function MLSBatchScriptResultsWidget(O) {
 
 	this.setBatchJob=function(BJ) {setBatchJob(BJ);};
 	this.setMLSManager=function(MM) {m_mls_manager=MM;};
-	this.setKuleleClient=function(KC) {m_kulele_client=KC;};
 	
 	var m_table=new MLTableWidget();
 	var m_batch_job=null;
-	var m_kulele_client=null;
 	var m_mls_manager=null;
 
 	m_table.setParent(O);
@@ -167,12 +165,17 @@ function MLSBatchScriptResultsWidget(O) {
 	}
 
 	function upload_to_kbucket(prv,callback) {
-		if (!m_kulele_client) {
-			callback('Kulele client has not been set');
+		if (!m_mls_manager) {
+			callback('MLS manager has not been set');
 			return;
 		}
+		if (!m_mls_manager.kuleleClient()) {
+			callback('KuleleClient has not been set');
+			return;
+		}
+		var KC=m_mls_manager.kuleleClient();
 		var process_id='';
-		m_kulele_client.queueJob(
+		KC.queueJob(
 			'kbucket.upload',
 			{file:prv},
 			{},
@@ -224,7 +227,7 @@ function MLSBatchScriptResultsWidget(O) {
 		    }
 		}
 		function send_process_probe() {
-		    var KC=m_kulele_client;
+		    var KC=m_mls_manager.kuleleClient();
 		    KC.probeJob(process_id,function(resp) {
 		      handle_process_probe_response(resp);
 		    });

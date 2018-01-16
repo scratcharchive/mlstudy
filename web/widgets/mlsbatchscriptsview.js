@@ -21,7 +21,7 @@ function MLSBatchScriptsView(O,options) {
 	if (!options) options={};
 
 	this.setProcessorManager=function(PM) {m_batch_script_widget.setProcessorManager(PM);};
-	this.setMLSManager=function(M) {setMLSManager(M); m_results_widget.setMLSManager(M);};
+	this.setMLSManager=function(M) {setMLSManager(M);};
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;
@@ -43,8 +43,10 @@ function MLSBatchScriptsView(O,options) {
 	var m_tab_widget=new JSQTabWidget();
 	var m_log_widget=new MLPLogWidget();
 	var m_results_widget=new MLSBatchScriptResultsWidget();
+	var m_processors_widget=new MLSProcessorsWidget();
 	m_tab_widget.addTab(m_results_widget,'Results');
 	m_tab_widget.addTab(m_log_widget,'Console');
+	m_tab_widget.addTab(m_processors_widget,'Processors');
 	m_tab_widget.setCurrentTabIndex(0);
 
 	m_list_widget.setParent(O);
@@ -226,7 +228,8 @@ function MLSBatchScriptsView(O,options) {
 		m_manager=M;
 		m_batch_script_widget.setJobManager(M.jobManager());
 		m_list_widget.setMLSManager(M);
-		m_results_widget.setKuleleClient(M.kuleleClient());
+		m_results_widget.setMLSManager(M);
+		m_processors_widget.setMLSManager(M);
 		refresh();
 		//m_batch_script_widget.setMLSManager(M);
 	}

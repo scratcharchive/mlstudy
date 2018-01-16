@@ -330,15 +330,20 @@ function KuleleClient(O) {
 		post_to_larinet(url0,req,function(tmp) {
 			if (tmp.success) {
 				m_processor_spec=JSQ.clone(tmp.spec);
+				O.emit('processor_spec_changed');
 			}
 			else {
 				m_processor_spec={};
+				O.emit('processor_spec_changed');
 			}
 			callback(tmp);
 		});
 	}
 
 	function processorSpec(processor_name) {
+		if (!processor_name) {
+			return JSQ.clone(m_processor_spec);
+		}
 		var processors=m_processor_spec.processors||[];
 		for (var i in processors) {
 			var P=processors[i];

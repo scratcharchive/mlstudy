@@ -250,6 +250,7 @@ function jsu_http_post_json(url,data,headers,callback) {
 	}
 
 	function success(tmp) {
+		console.log(tmp);
 		if (callback) callback({success:true,object:tmp});	
 		callback=0;
 	}
