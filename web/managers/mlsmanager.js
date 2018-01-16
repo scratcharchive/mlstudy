@@ -26,7 +26,8 @@ function MLSManager() {
   function kBucketUrl() {
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
     if (on_localhost) return 'http://localhost:5031';
-    else return 'https://river.simonsfoundation.org';
+    //else return 'https://river.simonsfoundation.org';
+    else return 'https://54.219.253.180';
   }
   function user() {
     if (m_login_info.google_profile) {
