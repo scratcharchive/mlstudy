@@ -28,10 +28,12 @@ function MLSMainWindow(O) {
 	m_datasets_view.setParent(O);
 	m_datasets_view.setMLSManager(m_mls_manager);
 
+	/*
 	var m_pipeline_modules_view=new MLSPipelineModulesView();
 	m_pipeline_modules_view.setProcessorManager(m_processor_manager);
 	m_pipeline_modules_view.setParent(O);
 	m_pipeline_modules_view.setMLSManager(m_mls_manager);
+	*/
 
 	var m_batch_scripts_view=new MLSBatchScriptsView();
 	m_batch_scripts_view.setProcessorManager(m_processor_manager);
@@ -57,7 +59,7 @@ function MLSMainWindow(O) {
 	var m_views={};
 	m_views['study_home']=m_home_view;
 	m_views['datasets']=m_datasets_view;
-	m_views['pipeline_modules']=m_pipeline_modules_view;
+	//m_views['pipeline_modules']=m_pipeline_modules_view;
 	m_views['batch_scripts']=m_batch_scripts_view;
 
 	JSQ.connect(m_mls_manager.study(),'changed',O,update_menus);
@@ -82,8 +84,8 @@ function MLSMainWindow(O) {
 	var goto_buttons={};
 	goto_buttons['study_home']=m_menu_bar.addButton('Study home',function() {goto_view('study_home');});
 	goto_buttons['datasets']=m_menu_bar.addButton('Datasets',function() {goto_view('datasets');});
-	goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
-	goto_buttons['batch_scripts']=m_menu_bar.addButton('Batch scripts',function() {goto_view('batch_scripts');});
+	//goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
+	goto_buttons['batch_scripts']=m_menu_bar.addButton('Scripts',function() {goto_view('batch_scripts');});
 
 	m_menu_bar.addSpacer();
 	m_menu_bar.addSpacer();
