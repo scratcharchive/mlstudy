@@ -22,7 +22,7 @@ function MLSMainWindow(O) {
 
 	m_kulele_client.setKuleleUrl('https://kulele.herokuapp.com');
 	m_kulele_client.setCordionUrl('https://cordion.herokuapp.com');
-	m_kulele_client.setSubserverName('dub');
+	m_kulele_client.setSubserverName('river');
 
 	var m_datasets_view=new MLSDatasetsView();
 	m_datasets_view.setParent(O);
