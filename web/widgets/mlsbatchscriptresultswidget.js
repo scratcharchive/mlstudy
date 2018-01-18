@@ -152,7 +152,7 @@ function MLSBatchScriptResultsWidget(O) {
 		function download_result_file() {
 			var prv=row.prv;
 			prv.original_path=rname;
-			O.emit('download_original_file_from_prv',{prv:prv});
+			O.emit('download_kbucket_file_from_prv',{prv:prv});
 		}
 	}
 
