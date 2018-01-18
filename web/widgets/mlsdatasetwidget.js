@@ -99,7 +99,8 @@ function MLSDatasetWidget(O) {
 		m_description_widget.setDescription(ds.properties().description||'');
 		update_tables();
 		setTimeout(function() {
-			refresh_kb_elements();	
+			refresh_kb_elements();
+			refresh_ps_elements();
 		},100);
 		update_layout();
 	}
@@ -112,11 +113,12 @@ function MLSDatasetWidget(O) {
 	}
 
 	function update_tables() {
-		m_files_table.setColumnCount(5);
+		m_files_table.setColumnCount(6);
 		m_files_table.headerRow().cell(1).html('File');
 		m_files_table.headerRow().cell(2).html('Size');
 		m_files_table.headerRow().cell(3).html('Orig. Path');
 		m_files_table.headerRow().cell(4).html('KBucket');
+		m_files_table.headerRow().cell(5).html('Server');
 		
 		m_files_table.clearRows();
 		var ds=get_dataset();
@@ -236,6 +238,9 @@ function MLSDatasetWidget(O) {
 
 			var kb_elmt=$('<span class=kb data-sha1="'+file.prv.original_checksum+'" data-size="'+file.prv.original_size+'" data-name="'+name+'"></span>');
 			row.cell(4).append(kb_elmt);
+
+			var ps_elmt=$('<span class=ps data-sha1="'+file.prv.original_checksum+'" data-size="'+file.prv.original_size+'" data-fcs="'+file.prv.fcs+'" data-name="'+name+'"></span>');
+			row.cell(5).append(ps_elmt);
 		}
 	}
 	function edit_parameter(name) {
@@ -366,12 +371,12 @@ function MLSDatasetWidget(O) {
 		var json=JSON.stringify(prv,null,4);
     	download(json,name+'.prv');
 	}
-	function download_original_file(name) {
+	function download_kbucket_file(name) {
 		var ds=get_dataset();
 		if (!ds) return;
 		var file0=ds.file(name);
 		var prv=file0.prv||{};
-		O.emit('download_original_file_from_prv',{prv:prv});
+		O.emit('download_kbucket_file_from_prv',{prv:prv});
 	}
 	function refresh_kb_elements() {
 		var elmts=O.div().find('.kb');
@@ -411,10 +416,154 @@ function MLSDatasetWidget(O) {
 		//m_top_widget.refresh();
 		//m_bottom_widget.refresh();
 	}
+	function refresh_ps_elements() {
+		var elmts=O.div().find('.ps');
+		for (var i=0; i<elmts.length; i++) {
+			refresh_ps_element($(elmts[i]));
+		}
+		function refresh_ps_element(elmt) {
+			elmt.html('Checking...');
+			elmt.attr('title','');
+			elmt.attr('class','ps unknown');
+			var sha1=elmt.attr('data-sha1');
+			var size=elmt.attr('data-size');
+			var fcs=elmt.attr('data-fcs');
+			var name=elmt.attr('data-name');
+			var prv0={
+				original_checksum:sha1,
+				original_size:size,
+				original_fcs:fcs
+			};
+			var KC=m_manager.kuleleClient();
+			KC.prvLocate(prv0,function(tmp) {
+				if (!tmp.success) {
+					elmt.html('Error checking');
+					elmt.attr('title',tmp.error);
+					elmt.attr('class','ps unknown');
+					return;
+				}
+				if (!tmp.found) {
+					var html0='Not found';
+					html0='<a href=# id=transfer title="Click to transfer from kbucket">'+html0+'</a>';
+					elmt.html(html0);
+					elmt.attr('title','Not found on the processing server.');
+					elmt.attr('class','ps no');
+					elmt.find('#transfer').click(function() {
+						elmt.html('Transferring from kbucket...');
+						transfer_file_from_kbucket_to_processing_server(sha1,function(err) {
+							if (err) {
+								alert(err);
+							}
+							refresh_ps_elements();
+						});
+					});
+					return;
+				}
+				elmt.html('Found');
+				elmt.attr('title','This file was found on the processing server.');
+				elmt.attr('class','kb yes');
+			});
+			/*
+			var KC=new KBucketClient();
+			KC.setKBucketUrl(m_manager.kBucketUrl());
+			KC.stat(sha1,size,function(err,stat0) {
+				if (err) {
+					elmt.html('Error checking');
+					elmt.attr('title',err);
+					elmt.attr('class','kb unknown');
+					return;
+				}
+				if (!stat0.found) {
+					elmt.html('Not found');
+					elmt.attr('title','Not found on the kbucket server.');
+					elmt.attr('class','kb no');
+					return;
+				}
+				elmt.html('');
+				elmt.attr('title','This file was found on the kbucket server.');
+				elmt.attr('class','kb yes');
+				var download_link2=create_original_download_file_link(name);
+				elmt.append(download_link2);
+				elmt.append('&nbsp;Found');
+			});
+			*/
+		}
+		//m_top_widget.refresh();
+		//m_bottom_widget.refresh();
+	}
+	function transfer_file_from_kbucket_to_processing_server(sha1,callback) {
+		if (!m_manager) {
+			callback('MLS manager has not been set');
+			return;
+		}
+		if (!m_manager.kuleleClient()) {
+			callback('KuleleClient has not been set');
+			return;
+		}
+		var KC=m_manager.kuleleClient();
+		var process_id='';
+		KC.queueJob(
+			'kbucket.download',
+			{},
+			{file:true},
+			{sha1:sha1},
+			{},
+			function(resp) {
+			    process_id=resp.process_id||'';
+      			handle_process_probe_response(resp);
+			}
+		);
+		function handle_process_probe_response(resp) {
+			if (!resp.success) {
+		      callback('Error transferring: '+resp.error);
+			  return;
+		    }
+		    if (process_id!=resp.process_id) {
+		      callback('Unexpected: process_id does not match response: '+process_id+'<>'+resp.process_id);
+		      return;
+		    }
+		    if (resp.latest_console_output) {
+		      var lines=resp.latest_console_output.split('\n');
+		      for (var i in lines) {
+		        if (lines[i].trim()) {
+		          var str0='  |kbucket.download| ';
+		          while (str0.length<35) str0+=' ';
+		          mlpLog({text:str0+lines[i]});
+		        }
+		      }
+		    }
+		    if (resp.complete) {
+		      var err0='';
+		      if (!resp.result) {
+		        callback('Unexpected: result not found in process response.');
+		        return;
+		      }
+		      var result=resp.result;
+		      if (!result.success) {
+		        if (!err0)
+		          err0=result.error||'Unknown error';
+		      }
+		      if (err0) {
+		        callback(err0);
+		        return;
+		      }
+		      callback('');
+		    }
+		    else {
+		      setTimeout(send_process_probe,5000);
+		    }
+		}
+		function send_process_probe() {
+		    var KC=m_manager.kuleleClient();
+		    KC.probeJob(process_id,function(resp) {
+		      handle_process_probe_response(resp);
+		    });
+		}
+	}
 	function create_original_download_file_link(name) {
 		var ret=$('<span class=download_button title="Download original file from the kbucket server"></span>');
 		ret.click(function() {
-			download_original_file(name);
+			download_kbucket_file(name);
 		});
 		return ret;
 	}

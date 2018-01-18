@@ -36,7 +36,6 @@ function MLSProcessorsWidget(O) {
 
 	var s_refresh_scheduled=false;
 	function schedule_refresh() {
-		console.log('schedule_refresh');
 		if (s_refresh_scheduled) return;
 		s_refresh_scheduled=true;
 		setTimeout(function() {

@@ -323,6 +323,7 @@ function KuleleClient(O) {
 	}
 
 	function getProcessorSpec(callback) {
+		m_processor_spec={};
 		var url0=m_kulele_url+'/subserver/'+m_subserver_name;
 		var req={
 			a:'processor-spec'

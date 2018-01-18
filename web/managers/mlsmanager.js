@@ -18,16 +18,22 @@ function MLSManager() {
   var m_batch_job_manager=new BatchJobManager();
 
   function kBucketAuthUrl() {
+    return 'https://kbucketauth.herokuapp.com';
+    /*
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
     if (on_localhost) return 'http://localhost:5057';
     else return 'https://kbucketauth.herokuapp.com';
+    */
   }
 
   function kBucketUrl() {
+    return 'https://kbucket.org';
+    /*
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
     if (on_localhost) return 'http://localhost:5031';
     //else return 'https://river.simonsfoundation.org';
     else return 'https://kbucket.org';
+    */
   }
   function user() {
     if (m_login_info.google_profile) {

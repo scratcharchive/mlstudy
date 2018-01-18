@@ -22,7 +22,13 @@ function MLSMainWindow(O) {
 
 	m_kulele_client.setKuleleUrl('https://kulele.herokuapp.com');
 	m_kulele_client.setCordionUrl('https://cordion.herokuapp.com');
-	m_kulele_client.setSubserverName('river');
+
+	var default_pserver='river';
+	var LS=new LocalStorage();
+	var pserver=LS.readObject('mlstudy_processing_server');
+	if (typeof(pserver)!='string') pserver=default_pserver;
+
+	m_kulele_client.setSubserverName(pserver);
 
 	var m_datasets_view=new MLSDatasetsView();
 	m_datasets_view.setParent(O);
@@ -91,15 +97,17 @@ function MLSMainWindow(O) {
 	m_menu_bar.addSpacer();
 	// Tools menu //////////////////////////////////////
 	var menu=m_menu_bar.addMenu('Tools',{downarrow:true});
+	menu.addItem('Set processing server...',set_processing_server);
+	menu.addDivider();
 	menu.addItem('Generate kbucket upload token',generate_kbucket_upload_token);
 	///////////////////////////////////////////////////
 
-	JSQ.connect(m_batch_scripts_view,'download_original_file_from_prv',O,function(sender,args) {
-		download_original_file_from_prv(args.prv);
+	JSQ.connect(m_batch_scripts_view,'download_kbucket_file_from_prv',O,function(sender,args) {
+		download_kbucket_file_from_prv(args.prv);
 	});
 
-	JSQ.connect(m_datasets_view,'download_original_file_from_prv',O,function(sender,args) {
-		download_original_file_from_prv(args.prv);
+	JSQ.connect(m_datasets_view,'download_kbucket_file_from_prv',O,function(sender,args) {
+		download_kbucket_file_from_prv(args.prv);
 	});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
@@ -282,6 +290,18 @@ function MLSMainWindow(O) {
 		update_layout();
 	}
 
+	function set_processing_server() {
+		var server=m_kulele_client.subserverName();
+		server=prompt('Processing server:',server);
+		if (!server) return;
+		m_kulele_client.setSubserverName(server);
+		update_processor_spec();
+		refresh_views();
+
+		var LS=new LocalStorage();
+		LS.writeObject('mlstudy_processing_server',server);
+	}
+
 	function generate_kbucket_upload_token() {
 		var duration=prompt('Duration (sec):');
 		if (!duration) return;
@@ -418,13 +438,24 @@ function MLSMainWindow(O) {
 				console.error('Error logging in to kulele: '+tmp.error);
 				return;
 			}
-			m_kulele_client.getProcessorSpec(function(tmp1) {
-				if (!tmp1.success) {
-					console.error('Error getting processor spec: '+tmp1.error);
-					return;
-				}
-				m_processor_manager.setSpec(tmp1.spec);
-			});
+			update_processor_spec();
+		});
+	}
+
+	function update_processor_spec() {
+		m_processor_manager.setSpec({});
+		m_processor_manager.setSpecHasBeenSet(false);
+		var server_before=m_kulele_client.subserverName();
+		m_kulele_client.getProcessorSpec(function(tmp1) {
+			if (!tmp1.success) {
+				console.error('Error getting processor spec: '+tmp1.error);
+				return;
+			}
+			if (m_kulele_client.subserverName()!=server_before) {
+				//the processing server has changed, so do don't update.
+				return;
+			}
+			m_processor_manager.setSpec(tmp1.spec);
 		});
 	}
 
@@ -498,7 +529,7 @@ function MLSMainWindow(O) {
 		}
 	}
 
-	function download_original_file_from_prv(prv) {
+	function download_kbucket_file_from_prv(prv) {
 		var sha1=prv.original_checksum||'';
 		var size=prv.original_size||0;
 

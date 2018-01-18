@@ -31,6 +31,7 @@ function ProcessorManager(O) {
     this.numProcessors=function() {var num=0; for (var key in m_processor_specs) num++; return num;};
     //this.registerMetaProcessor=function(obj) {registerMetaProcessor(obj);};
     this.specHasBeenSet=function() {return m_spec_has_been_set;};
+    this.setSpecHasBeenSet=function(val) {m_spec_has_been_set=val;};
 
 	var m_processor_specs={};
     var m_spec_has_been_set=false;
