@@ -429,6 +429,8 @@ function BatchJob(O,kulele_client) {
   this.start=function() {start();};
   this.resultNames=function() {return resultNames();};
   this.result=function(name) {return result(name);};
+  this.results=function() {return JSQ.clone(m_results);};
+  this.setResults=function(X) {m_results=JSQ.clone(X);};
 
   var m_id=JSQ.makeRandomId(6);
   var m_script='';

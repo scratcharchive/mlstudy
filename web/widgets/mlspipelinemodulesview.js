@@ -112,7 +112,6 @@ function MLSPipelineModulesView(O,options) {
 				alert(tmp.error);
 				return;
 			}
-			console.log(tmp);
 			var obj=try_parse_json(tmp.text);
 			if (!obj) {
 				alert('Error parsing json');

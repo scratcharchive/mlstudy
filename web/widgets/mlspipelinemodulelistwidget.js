@@ -47,7 +47,6 @@ function MLSPipelineModuleListWidget(O) {
 
 	function setCurrentPipelineModuleName(name) {
 		for (var i=0; i<m_table.rowCount(); i++) {
-			console.log(m_table.row(i).pipeline_module_name);
 			if (m_table.row(i).pipeline_module_name==name) {
 				m_table.setCurrentRow(m_table.row(i));
 				return;

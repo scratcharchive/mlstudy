@@ -47,7 +47,6 @@ function MLSBatchScriptListWidget(O) {
 
 	function setCurrentBatchScriptName(name) {
 		for (var i=0; i<m_table.rowCount(); i++) {
-			console.log(m_table.row(i).batch_script_name);
 			if (m_table.row(i).batch_script_name==name) {
 				m_table.setCurrentRow(m_table.row(i));
 				return;

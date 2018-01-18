@@ -480,10 +480,10 @@ function Job(O) {
 	}
 	function plog(str,aa) {
 		if (using_nodejs) {
-			console.log(str);
+			console.log (str);
 		}
 		else {
-			console.log(str); //not sure if we should do this
+			console.log (str); //not sure if we should do this
 			if (!aa) aa={};
 			aa.text=str;
 			mlpLog(aa);

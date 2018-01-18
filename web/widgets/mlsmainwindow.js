@@ -45,6 +45,7 @@ function MLSMainWindow(O) {
 	m_batch_scripts_view.setProcessorManager(m_processor_manager);
 	m_batch_scripts_view.setParent(O);
 	m_batch_scripts_view.setMLSManager(m_mls_manager);
+	JSQ.connect(m_batch_scripts_view,'results_changed',O,update_menus);
 
 	var m_home_view=new MLSHomeView();
 	m_home_view.setParent(O);
@@ -142,10 +143,10 @@ function MLSMainWindow(O) {
 	            callback('Unable to parse mls file content');
 	            return;
 	        }
-	        m_mls_manager.setMLSObject(obj);
+	        set_mls_object(obj);
 	        refresh_views();
 	        set_file_info('docstor',{owner:owner,title:title})
-	        set_original_study_object(m_mls_manager.study().object());
+	        set_original_study_object(get_mls_object());
 	        callback(null);
 		});
 	}
@@ -164,11 +165,11 @@ function MLSMainWindow(O) {
             callback('Unable to parse mls file content');
             return;
         }
-        m_mls_manager.setMLSObject(obj);
+        set_mls_object(obj);
         refresh_views();
         m_file_source='file_content';
         m_file_path=path;
-        set_original_study_object(m_mls_manager.study().object());
+        set_original_study_object(get_mls_object());
         callback(null);
 	}
 
@@ -178,10 +179,10 @@ function MLSMainWindow(O) {
 		if (!obj) {
 			obj={};
 		}
-		m_mls_manager.setMLSObject(obj);
+		set_mls_object(obj);
 		refresh_views();
 		set_file_info('browser_storage',{title:title});
-        set_original_study_object(m_mls_manager.study().object());
+        set_original_study_object(get_mls_object());
         callback(null);
 	}
 
@@ -206,6 +207,17 @@ function MLSMainWindow(O) {
 		}
 	}
 
+	function get_mls_object() {
+		var obj=m_mls_manager.study().object();
+		obj.results_by_script=m_batch_scripts_view.getResultsByScript();
+		return obj;
+	}
+
+	function set_mls_object(obj) {
+		m_mls_manager.setMLSObject(obj);
+		m_batch_scripts_view.setResultsByScript(obj.results_by_script||{});
+	}
+
 	function save_changes_browser(opts) {
 		if (!opts) opts={};
 		if (!('prompt' in opts)) opts.prompt=true;
@@ -214,7 +226,7 @@ function MLSMainWindow(O) {
 			title=prompt('Saving to browser. Title of document:',title);
 			if (!title) return;
 		}
-		var obj=m_mls_manager.study().object();
+		var obj=get_mls_object();
 		var content=JSON.stringify(obj,null,4);
 		var LS=new LocalStorage();
 		LS.writeObject('mlstudy--'+title,obj);
@@ -233,7 +245,7 @@ function MLSMainWindow(O) {
 			title=prompt('Saving to cloud. Title of document:',title);
 			if (!title) return;
 		}
-		var obj=m_mls_manager.study().object();
+		var obj=get_mls_object();
 		var content=JSON.stringify(obj,null,4);
 		set_document_content_to_docstor(m_docstor_client,owner,title,content,function(err) {
 			if (err) {
@@ -246,7 +258,7 @@ function MLSMainWindow(O) {
 		});
 	}
 	function save_changes_file_content() {
-		var obj=m_mls_manager.study().object();
+		var obj=get_mls_object();
 		var content=JSON.stringify(obj,null,4);
 		download(content,'',m_file_path);
 		set_original_study_object(obj);
@@ -256,7 +268,7 @@ function MLSMainWindow(O) {
 	function create_new_study() {
 		check_proceed_without_saving_changes(create_new_study_2);
 		function create_new_study_2() {
-			m_mls_manager.setMLSObject({});
+			set_mls_object({});
 			refresh_views();
 			set_file_info('',{});
 		}
@@ -361,10 +373,10 @@ function MLSMainWindow(O) {
 					alert('Error parsing json content');
 					return;
 				}
-				m_mls_manager.setMLSObject(obj);
+				set_mls_object(obj);
 				refresh_views();
 				set_file_info('',{});
-		        set_original_study_object(m_mls_manager.study().object());
+		        set_original_study_object(get_mls_object());
 			});
 		}
 	}
@@ -408,7 +420,7 @@ function MLSMainWindow(O) {
 
 	//JSQ.connect(m_top_widget,'download_study',O,download_study);
 	function download_study() {
-		var obj=m_mls_manager.study().object();
+		var obj=get_mls_object();
 		var content=JSON.stringify(obj,null,4);
 		if (m_file_source=='docstor') {
 			fname=m_file_info.title;
@@ -466,7 +478,7 @@ function MLSMainWindow(O) {
 	}
 
 	function is_modified() {
-		return (JSON.stringify(m_original_study_object)!=JSON.stringify(m_mls_manager.study().object()));
+		return (JSON.stringify(m_original_study_object)!=JSON.stringify(get_mls_object()));
 	}
 
 	function update_menus() {

@@ -23,6 +23,8 @@ function MLSBatchScriptsView(O,options) {
 	this.setProcessorManager=function(PM) {m_batch_script_widget.setProcessorManager(PM);};
 	this.setMLSManager=function(M) {setMLSManager(M);};
 	this.refresh=function() {refresh();};
+	this.getResultsByScript=function() {return getResultsByScript();};
+	this.setResultsByScript=function(X) {setResultsByScript(X);};
 
 	var m_manager=null;
 	var m_batch_jobs_by_batch_script_name={};
@@ -103,6 +105,26 @@ function MLSBatchScriptsView(O,options) {
 		update_results_widget();
 	}
 
+	function getResultsByScript() {
+		var ret={};
+		for (var script_name in m_batch_jobs_by_batch_script_name) {
+			var batch_job0=m_batch_jobs_by_batch_script_name[script_name];
+			if (batch_job0) {
+				var results0=batch_job0.results();
+				ret[script_name]=results0;
+			}
+		}
+		return ret;
+	}
+
+	function setResultsByScript(X) {
+		for (var script_name in X) {
+			var dummy_job0=new BatchJob();
+			dummy_job0.setResults(X[script_name]);
+			m_batch_jobs_by_batch_script_name[script_name]=dummy_job0;
+		}
+	}
+
 	function update_results_widget() {
 		var batch_script_name=m_list_widget.currentBatchScriptName();
   		if (!batch_script_name) {
@@ -143,7 +165,6 @@ function MLSBatchScriptsView(O,options) {
 				alert(tmp.error);
 				return;
 			}
-			console.log(tmp);
 			var obj=try_parse_json(tmp.text);
 			if (!obj) {
 				alert('Error parsing json');
@@ -219,6 +240,7 @@ function MLSBatchScriptsView(O,options) {
 			module_scripts[names0[i]]=m_manager.study().batchScript(names0[i]);
 		}
 		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),module_scripts,m_manager.study().object());
+		JSQ.connect(job,'results_changed',O,function() {O.emit('results_changed');});
 		var batch_script_name=m_list_widget.currentBatchScriptName();
 		m_batch_jobs_by_batch_script_name[batch_script_name]=job;
 		update_results_widget();
