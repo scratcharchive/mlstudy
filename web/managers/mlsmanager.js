@@ -603,14 +603,19 @@ function BatchJob(O,kulele_client) {
   function processor_job_ready_to_run(P) {
     for (var iname in P.inputs) {
       var input=P.inputs[iname];
-      if (typeof(input)=='string') {
-        if ((input in m_outputs)&&(m_outputs[input].status=='finished')) {
-          //okay
+      if (is_array(input)) {
+        for (var ii=0; ii<input.length; ii++) {
+          var ifile=get_file_from_input(input[ii]);
+          if (!ifile) {
+            return false;
+          }
         }
-        else return false;
       }
       else {
-        //okay
+        var ifile=get_file_from_input(input);
+        if (!ifile) {
+          return false;
+        }
       }
     }
     return true;
@@ -623,16 +628,25 @@ function BatchJob(O,kulele_client) {
     var input_files={};
     for (var iname in P.inputs) {
       var input=P.inputs[iname];
-      if (typeof(input)=='string') {
-        if ((input in m_outputs)&&(m_outputs[input].status=='finished')) {
-          input_files[iname]=m_outputs[input].value;
+      if (is_array(input)) {
+        var list0=[];
+        for (var ii=0; ii<input.length; ii++) {
+          var ifile=get_file_from_input(input[ii]);
+          if (!ifile) {
+            console.error('Unexpected: unable to get file from input: '+input[ii]);
+            return;
+          }
+          list0.push(ifile);
         }
-        else {
-          console.error('Unexpected: input not in m_outputs: '+input);
-        }
+        input_files[iname]=list0;
       }
       else {
-        input_files[iname]=JSQ.clone(input);
+        var ifile=get_file_from_input(input);
+        if (!ifile) {
+          console.error('Unexpected: unable to get file from input: '+input);
+          return;
+        }
+        input_files[iname]=ifile;
       }
     }
     X.setInputFiles(input_files);
@@ -644,6 +658,27 @@ function BatchJob(O,kulele_client) {
     X.setOutputsToReturn(outputs_to_return);
     X.setParameters(P.parameters);
     X.start();
+  }
+
+  function is_array(a) {
+    if (typeof(a)=='object') {
+      return ('length' in a);
+    }
+    else return false;
+  }
+
+  function get_file_from_input(input) {
+    if (typeof(input)=='string') {
+      if ((input in m_outputs)&&(m_outputs[input].status=='finished')) {
+        return JSQ.clone(m_outputs[input].value);
+      }
+      else {
+        return null;
+      }
+    }
+    else {
+      return JSQ.clone(input);
+    }
   }
 
   function _run_process(processor_name,inputs,outputs,parameters) {
