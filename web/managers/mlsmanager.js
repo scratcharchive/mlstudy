@@ -27,7 +27,8 @@ function MLSManager() {
   }
 
   function kBucketUrl() {
-    return 'https://kbucket.org';
+    //return 'https://kbucket.org';
+    return 'https://river.simonsfoundation.org';
     /*
     var on_localhost=(jsu_starts_with(window.location.href,'http://localhost'));
     if (on_localhost) return 'http://localhost:5031';
@@ -504,6 +505,7 @@ function BatchJob(O,kulele_client) {
           value:rr.value[field]
         };
         set_pending_output_if_available(tmp);
+        rr.value[field]=tmp.value;
         if (tmp.status=='error') {
           rr.status='error';
           rr.error=tmp.error;

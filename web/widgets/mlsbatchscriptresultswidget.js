@@ -60,10 +60,11 @@ function MLSBatchScriptResultsWidget(O) {
 	}
 
 	function do_refresh() {
-		m_table.setColumnCount(3);
+		m_table.setColumnCount(4);
 		m_table.headerRow().cell(0).html('Result');
 		m_table.headerRow().cell(1).html('Status');
 		m_table.headerRow().cell(2).html('Info');
+		m_table.headerRow().cell(3).html('KBucket');
 		m_table.clearRows();
 		if (!m_batch_job) return;
 		var names=m_batch_job.resultNames();
@@ -82,8 +83,9 @@ function MLSBatchScriptResultsWidget(O) {
 		var elmt0=$('<span>'+rname+'</span>');
 		var elmt1=$('<span>'+result.status+'</span>');
 		var elmt2=$('<span></span>');
+		var elmt3=$('<span></span>');
 		if (result.status=='error') {
-			elmt2=$('<span>'+result.error+'</span>');
+			elmt3=$('<span>'+result.error+'</span>');
 		}
 		else if (result.status=='finished') {
 			if (typeof(result.value)=='string') {
@@ -91,15 +93,23 @@ function MLSBatchScriptResultsWidget(O) {
 			}
 			else if (result.value.prv) {
 				row.prv=result.value.prv;
+				elmt2.html(format_file_size(row.prv.original_size));
 			}
 			else {
 				elmt0=$('<a href=#>'+rname+'</a>');
+				elmt0.click(function() {download_result_object(rname,result);});
+				row.result_object=result.value;
 			}
 		}
 		row.cell(0).append(elmt0);
 		row.cell(1).append(elmt1);
 		row.cell(2).append(elmt2);
+		row.cell(3).append(elmt3);
 		return row;
+	}
+
+	function download_result_object(rname,result) {
+		download(JSON.stringify(result.value,null,4),rname);
 	}
 
 	function check_on_kbucket() {
@@ -109,16 +119,39 @@ function MLSBatchScriptResultsWidget(O) {
 			if (row.prv) {
 				check_on_kbucket_2(row);
 			}
+			else if (row.result_object) {
+				var prvs=get_prvs_from_result_object(row.result_object);
+				var total_size=0;
+				for (var aa in prvs) {
+					total_size+=prvs[aa].original_size;
+				}
+				row.cell(2).html(prvs.length+' files, '+format_file_size(total_size));
+			}
 		}
 	}
 
+	function get_prvs_from_result_object(obj) {
+		if (typeof(obj)!='object') return [];
+		if (obj.prv) {
+			return [obj.prv];
+		}
+		var ret=[];
+		for (var field in obj) {
+			var tmp=get_prvs_from_result_object(obj[field]);
+			for (var j in tmp) {
+				ret.push(tmp[j]);
+			}
+		}
+		return ret;
+	}
+
 	function check_on_kbucket_2(row) {
-		row.cell(2).html('checking');
+		row.cell(3).html('checking');
 		var rname=row.rname;
 		check_on_kbucket_3(row.prv,function(err,tmp) {
 			if (err) {
 				console.error('Error checking kbucket: '+err);
-				row.cell(2).html('<span class=unknown>Error checking kbucket</span>');
+				row.cell(3).html('<span class=unknown>Error checking kbucket</span>');
 				return;
 			}
 			if (tmp.found) {
@@ -126,7 +159,7 @@ function MLSBatchScriptResultsWidget(O) {
 				elmt0_download.click(download_result_file);
 				row.cell(0).empty();
 				row.cell(0).append(elmt0_download);
-				row.cell(2).html('<span class=yes>On kbucket</span>');
+				row.cell(3).html('<span class=yes>On kbucket</span>');
 			}
 			else {
 				row.cell(0).empty();
@@ -136,7 +169,7 @@ function MLSBatchScriptResultsWidget(O) {
 					elmt.append(' Error uploading: '+row.upload_error);
 				}
 				elmt.find('a').click(function() {
-					row.cell(2).html('<span class=no>Uploading...</span>');
+					row.cell(3).html('<span class=no>Uploading...</span>');
 					row.upload_error='';
 					upload_to_kbucket(row.prv,function(err) {
 						if (err) console.error(err);
@@ -144,9 +177,9 @@ function MLSBatchScriptResultsWidget(O) {
 						check_on_kbucket_2(row);
 					});
 				})
-				row.cell(2).children().detach();
-				row.cell(2).empty();
-				row.cell(2).append(elmt);
+				row.cell(3).children().detach();
+				row.cell(3).empty();
+				row.cell(3).append(elmt);
 			}
 		});
 		function download_result_file() {
@@ -232,6 +265,33 @@ function MLSBatchScriptResultsWidget(O) {
 		      handle_process_probe_response(resp);
 		    });
 		}
+	}
+
+	function format_file_size(size_bytes) {
+	    var a=1024;
+	    var aa=a*a;
+	    var aaa=a*a*a;
+	    if (size_bytes>aaa) {
+	      return Math.floor(size_bytes/aaa)+' GB';
+	    }
+	    else if (size_bytes>aaa) {
+	      return Math.floor(size_bytes/(aaa/10))/10+' GB';  
+	    }
+	    else if (size_bytes>aa) {
+	      return Math.floor(size_bytes/aa)+' MB';
+	    }
+	    else if (size_bytes>aa) {
+	      return Math.floor(size_bytes/(aa/10))/10+' MB';  
+	    }
+	    else if (size_bytes>10*a) {
+	      return Math.floor(size_bytes/a)+' KB';
+	    }
+	    else if (size_bytes>a) {
+	      return Math.floor(size_bytes/(a/10))/10+' KB';  
+	    }
+	    else {
+	      return size_bytes+' bytes';
+	    }
 	}
 
 
