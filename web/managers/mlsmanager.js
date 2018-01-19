@@ -441,6 +441,7 @@ function BatchJob(O,kulele_client) {
   var m_outputs={};
   var m_results={};
   var m_max_simultaneous_processor_jobs=10;
+  var m_is_completed=false;
 
   function start() {
     var _MLS={
@@ -582,6 +583,7 @@ function BatchJob(O,kulele_client) {
       }
     }
     if (done_with_all) {
+      m_is_completed=true;
       O.emit('completed');
       return;
     }
@@ -626,12 +628,14 @@ function BatchJob(O,kulele_client) {
         }
       }
     }
-    setTimeout(check_queued_processes,100);
+    if (!m_is_completed)
+      setTimeout(check_queued_processes,100);
   }
 
   function report_error(err) {
     O.emit('error',err);
     stop_all_jobs();
+    m_is_completed=true;
     O.emit('completed');
   }
 
@@ -649,6 +653,10 @@ function BatchJob(O,kulele_client) {
   function processor_job_ready_to_run(P) {
     for (var iname in P.inputs) {
       var input=P.inputs[iname];
+      if (!input) {
+        report_error('Input '+iname+' is null for processor '+P.processor_name);
+        return false;
+      }
       if (is_array(input)) {
         for (var ii=0; ii<input.length; ii++) {
           var ifile=get_file_from_input(input[ii]);

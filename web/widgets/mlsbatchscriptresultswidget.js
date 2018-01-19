@@ -102,8 +102,10 @@ function MLSBatchScriptResultsWidget(O) {
 				});
 				row.result_object=result.value;
 				if (row.result_object.type=='tidbits') {
-					//row.result_object.url='https://tidbits1.herokuapp.com';
-					row.result_object.url='http://localhost:5092';
+					if (row.result_object.localhost)
+						row.result_object.url='http://localhost:5092';
+					else
+						row.result_object.url='https://tidbits1.herokuapp.com';
 				}
 				if (row.result_object.url) {
 					var link0=$('<span class=view_button></span>');
