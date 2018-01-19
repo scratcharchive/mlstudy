@@ -80,7 +80,7 @@ function MLSBatchScriptResultsWidget(O) {
 		var row=m_table.createRow();
 		row.rname=rname;
 		
-		var elmt0=$('<span>'+rname+'</span>');
+		var elmt0=$('<span>'+rname+'</span>');;
 		var elmt1=$('<span>'+result.status+'</span>');
 		var elmt2=$('<span></span>');
 		var elmt3=$('<span></span>');
@@ -96,9 +96,22 @@ function MLSBatchScriptResultsWidget(O) {
 				elmt2.html(format_file_size(row.prv.original_size));
 			}
 			else {
-				elmt0=$('<a href=#>'+rname+'</a>');
-				elmt0.click(function() {download_result_object(rname,result);});
+				elmt0=$('<span><span id=open_view></span> <span>'+rname+'</span> <span class=download2_button title="download result object"></span></span>');
+				elmt0.find('.download2_button').click(function() {
+					download_result_object(rname,result);
+				});
 				row.result_object=result.value;
+				if (row.result_object.type=='tidbits') {
+					//row.result_object.url='https://tidbits1.herokuapp.com';
+					row.result_object.url='http://localhost:5092';
+				}
+				if (row.result_object.url) {
+					var link0=$('<span class=view_button></span>');
+					link0.click(function() {
+						open_result_object(row.result_object);
+					});
+					elmt0.find('#open_view').append(link0);					
+				}
 			}
 		}
 		row.cell(0).append(elmt0);
@@ -110,6 +123,24 @@ function MLSBatchScriptResultsWidget(O) {
 
 	function download_result_object(rname,result) {
 		download(JSON.stringify(result.value,null,4),rname);
+	}
+
+	function open_result_object(obj) {
+		jsu_http_post_json(obj.url+'/api/setConfig',{config:JSON.stringify(obj.data)},{},function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			if (!tmp.object.success) {
+				alert(tmp.object.error);
+				return;
+			}
+			if (!tmp.object.id) {
+				alert('Unexpected: Did not receive configuration id.');
+				return;
+			}
+			window.open(obj.url+'?config_id='+tmp.object.id,'_blank');
+		});
 	}
 
 	function check_on_kbucket() {
@@ -126,6 +157,12 @@ function MLSBatchScriptResultsWidget(O) {
 					total_size+=prvs[aa].original_size;
 				}
 				row.cell(2).html(prvs.length+' files, '+format_file_size(total_size));
+				if (prvs.length>0) {
+					check_multiple_on_kbucket_2(row,prvs);
+				}
+				else {
+					row.cell(3).html('');
+				}
 			}
 		}
 	}
@@ -145,6 +182,70 @@ function MLSBatchScriptResultsWidget(O) {
 		return ret;
 	}
 
+	function foreach_async_aa(list,step,callback) {
+		var ii=0;
+		next_step();
+		function next_step() {
+			if (ii>=list.length) {
+				callback();
+				return;
+			}
+			setTimeout(function() {
+				step(list[ii],function() {
+					ii++;
+					next_step();
+				});
+			},10);
+		}
+	}
+
+	function check_multiple_on_kbucket_2(row,prvs) {
+		row.cell(3).html('checking');
+		var rname=row.rname;
+		var num_found=0;
+		var num_not_found=0;
+		var prvs_not_found=[];
+		foreach_async_aa(prvs,function(prv0,cb) {
+			check_on_kbucket_3(prv0,function(err,tmp) {
+				if (err) {
+					row.cell(3).html('Error checking: '+err);
+					return;
+				}
+				if (tmp.found) {
+					num_found++;
+				}
+				else {
+					num_not_found++;
+					prvs_not_found.push(prv0);
+				}
+				cb();
+			});
+		},function() {
+			var txt='Found '+num_found+'/'+(num_found+num_not_found)+' files';
+			var elmt0;
+			if (num_not_found>0) {
+				elmt0=$('<a href=# title="Click to upload to kbucket">'+txt+'</a>');
+				elmt0.click(function() {
+					row.cell(3).html('<span class=no>Uploading...</span>');
+					row.upload_error='';
+					upload_multiple_to_kbucket(prvs_not_found,function(err0) {
+						if (err0) {
+							if (err0) console.error(err0);
+							row.upload_error=err0;
+						}
+						check_multiple_on_kbucket_2(row,prvs);
+					});
+				});
+			}
+			else {
+				elmt0=$('<span>'+txt+'</span>');
+			}
+			row.cell(3).children().detach();
+			row.cell(3).empty();
+			row.cell(3).append(elmt0);
+		});
+	}
+
 	function check_on_kbucket_2(row) {
 		row.cell(3).html('checking');
 		var rname=row.rname;
@@ -155,15 +256,10 @@ function MLSBatchScriptResultsWidget(O) {
 				return;
 			}
 			if (tmp.found) {
-				var elmt0_download=$('<a href=#>'+rname+'</a>');
-				elmt0_download.click(download_result_file);
-				row.cell(0).empty();
-				row.cell(0).append(elmt0_download);
-				row.cell(3).html('<span class=yes>On kbucket</span>');
+				row.cell(3).html('<span class=download_button title="download result file"></span> <span class=yes>On kbucket</span>');
+				row.cell(3).find('.download_button').click(download_result_file);
 			}
 			else {
-				row.cell(0).empty();
-				row.cell(0).append('<span>'+rname+'</span>');
 				var elmt=$('<span><a href=#><span class=no>Upload to kbucket</span></a></span>');
 				if (row.upload_error) {
 					elmt.append(' Error uploading: '+row.upload_error);
@@ -194,6 +290,20 @@ function MLSBatchScriptResultsWidget(O) {
 		KC.setKBucketUrl(m_mls_manager.kBucketUrl());
 		KC.stat(prv.original_checksum,prv.original_size,function(err,res) {
 			callback(err,res);
+		});
+	}
+
+	function upload_multiple_to_kbucket(prvs0,callback) {
+		foreach_async_aa(prvs0,function(prv0,cb) {
+			upload_to_kbucket(prv0,function(err0) {
+				if (err0) {
+					callback(err0);
+					return;
+				}
+				cb();
+			})
+		},function() {
+			callback(null);
 		});
 	}
 

@@ -707,6 +707,7 @@ function BatchJob(O,kulele_client) {
   }
 
   function is_array(a) {
+    if (!a) return false;
     if (typeof(a)=='object') {
       return ('length' in a);
     }
