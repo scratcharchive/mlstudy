@@ -165,10 +165,10 @@ content: '⇣'; /* UTF-8 symbol */
 	background: transparent;
 	padding: 6px 6px 6px 12px;
 	color: #4f6b72;
-    max-width: 150px;
-    overflow: hidden;
-    word-wrap: break-word;
-    font-size: 16px;
+  max-width: 250px;
+  overflow: hidden;
+  word-wrap: break-word;
+  font-size: 16px;
 }
 
 .Table1 > tbody > tr.selected > td {

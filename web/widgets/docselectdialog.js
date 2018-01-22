@@ -16,11 +16,11 @@ function DocSelectDialog(O) {
 	var m_selection={};
 
 	O.div().append('<h3>Select a document:</h3>');
-	var ul=$('<ul />');
-	O.div().append(ul);
+	var table=$('<table class=Table1 />');
+	O.div().append(table);
 
 	function show() {
-		O.setSize(450,450);
+		O.setSize(650,450);
 
 		var W=O.width();
 		var H=O.height();
@@ -33,13 +33,15 @@ function DocSelectDialog(O) {
 		              modal:true,
 		              title:m_label});
 
+		O.div().css({overflow:'auto'});
+
 		load_documents(function(docs) {
-			var ul=O.div().find('ul');
-			ul.empty();
+			table.empty();
+			table.append($('<tr><th>Title</th><th>Owner</th></tr>'));
 			for (var i in docs) {
 				var doc=docs[i];
-				var li=create_li_for_doc(doc);
-				ul.append(li);
+				var row=create_table_row_for_doc(doc);
+				table.append(row);
 			}
 		});
 	}
@@ -90,18 +92,17 @@ function DocSelectDialog(O) {
 		}
 	}
 
-	function create_li_for_doc(doc) {
-		var li=$('<li />');
-		var str=doc.title;
-		if (doc.owner) str+=' ('+doc.owner+')';
-		var aa=$('<a href=#>'+str+'</a>');
-		li.append(aa);
-		aa.click(function() {
+	function create_table_row_for_doc(doc) {
+		var tr=$('<tr />');
+		tr.append('<td><a href=#>'+doc.title+'</a></td>');
+		if (doc.owner)
+			tr.append('<td>'+doc.owner+'</td>');
+		tr.find('a').click(function() {
 			m_selection=JSQ.clone(doc);
 			O.emit('selected');
 			m_dialog.dialog('close');
 		});
-		return li;
+		return tr;
 	}
 
 	function onSelected(callback) {
