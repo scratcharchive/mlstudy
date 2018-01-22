@@ -58,6 +58,9 @@ function DocSelectDialog(O) {
 			};
 			if ((m_options.user)&&(m_options.user!=m_options.owner))
 				obj.and_shared_with=m_options.user;
+			else {
+				obj.shared_with=m_options.user;
+			}
 			m_docstor_client.findDocuments(obj,function(err,docs) {
 				if (err) {
 					alert('Error loading documents from cloud: '+err);
