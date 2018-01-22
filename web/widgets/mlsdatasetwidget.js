@@ -157,7 +157,7 @@ function MLSDatasetWidget(O) {
 			var add_parameter_link=$('<a href=#>Add parameter</a>');
 			add_parameter_link.click(add_param);
 
-			var row=m_files_table.createRow();
+			var row=m_params_table.createRow();
 			row.cell(1).append(add_parameter_link);
 			m_params_table.addRow(row);	
 		}
