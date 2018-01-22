@@ -1,0 +1,16 @@
+action menu for pipeline module view
+action menu for batch script view
+implement batch script view
+
+fix code view, tree view, etc. ugliness
+
+* up/down arrow for MLTableWidget
+* MLTableWidget: fix problem with select all button
+
+DONE
+
+action menu for dataset widget
+When uploading .prv file -- file name should not have .prv
+action menu for dataset view
+mlpipelinemodulesview: don't show anything for null object
+datasetview: don't show anything for null object
