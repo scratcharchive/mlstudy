@@ -70,7 +70,7 @@ function DocSelectDialog(O) {
 				for (var i in docs) {
 					var doc0=docs[i];
 					var doc1={
-						owner:m_options.owner,
+						owner:(doc0.permissions||{}).owner||'',
 						title:(doc0.attributes||{}).title||''
 					};
 					docs0.push(doc1);
