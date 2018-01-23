@@ -72,7 +72,13 @@ opts.SCRIPTS.push(
 );
 opts.STYLESHEETS.push('create.css');
 
-opts.SOURCEPATH.push('widgets')
+opts.SOURCEPATH.push('overview');
+opts.SCRIPTS.push(
+	'mlsoverviewwindow.js'
+);
+opts.STYLESHEETS.push('mlsoverviewwindow.css');
+
+opts.SOURCEPATH.push('widgets');
 opts.SCRIPTS.push(
 	'edittextdlg.js','mlsdatasetlistwidget.js','mlsdatasetwidget.js','mlsdatasetsview.js',
 	'mlsmainwindow.js','mltablewidget.js','docselectdialog.js','docsharedialog.js',

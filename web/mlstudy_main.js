@@ -44,29 +44,37 @@ function jsqmain(query) {
             show_full_browser_message('MLStudy','Error logging in: '+err);
             return;
         }
-        DSC.login(login_info,function(err00) {
+        DSC.login(login_info,function(err00,result) {
             //note: at this time, we don't check the error here
             
+            login_info.user_id=result.user_id||'';
+
             show_full_browser_message('','');
+
+            var OO=new MLSOverviewWindow();
+            OO.setDocStorClient(DSC);
+            OO.setLoginInfo(login_info);
+            OO.refresh();
 
             var Y=new MLSMainWindow();
             Y.setDocStorClient(DSC);
             Y.setLoginInfo(login_info);
 
-            if (window.mls_file_content) {
-                Y.loadFromFileContent(window.mls_file_path,window.mls_file_content,function(err) {
-                    if (err) {
-                        alert(err);
-                        return;
-                    }
-                    Y.showFullBrowser();
-                });
-            }
-            else {
+            JSQ.connect(OO,'open_study',null,function(sender,args) {
+                console.log('open_study');
+                open_study(args.study);
+            });
+
+            JSQ.connect(Y,'goto_overview',null,function() {
+                Y.hide();
+                show_full_browser_message('','');
+                OO.showFullBrowser();
+            });
+
+            {
                 var storage_method=query.storage||'';
                 if (!storage_method) {
                     if (query.owner) storage_method='docstor';
-                    else storage_method='browser';
                 }
                 if (storage_method=='docstor') {
                     DSC.login(login_info,function(err1) {
@@ -74,13 +82,7 @@ function jsqmain(query) {
                             show_full_browser_message('MLStudy','Error logging in to docstor: '+err1);
                             return;       
                         }
-                        Y.loadFromDocStor(query.owner,query.title,function(err) {
-                            if (err) {
-                                alert(err);
-                                return;
-                            }
-                            Y.showFullBrowser();
-                        });
+                        open_study({storage:'docstor',owner:query.owner,title:query.title});
                     });
                 }
                 else if (storage_method=='browser') {
@@ -94,11 +96,34 @@ function jsqmain(query) {
                     })
                 }
                 else {
-                    show_full_browser_message('MLStudy','Unexpected storage method: '+storage_method);
+                    show_full_browser_message('','');
+                    OO.showFullBrowser();
+                }
+            }
+            function open_study(study0) {
+                OO.hide();
+                show_full_browser_message('Loading...','Opening study...');
+                if (!study0.storage) study0.storage='docstor';
+
+                if (study0.storage=='docstor') {
+                    show_full_browser_message('Loading...','Opening study from docstor...');
+                    Y.loadFromDocStor(study0.owner,study0.title,function(err) {
+                        if (err) {
+                            alert(err);
+                            return;
+                        }
+                        show_full_browser_message('','');
+                        Y.showFullBrowser();
+                    });
+                }
+                else {
+                    alert('Unexpected storage method: '+study0.storage);
                 }
             }
         });
     });
+
+
 
 }
 

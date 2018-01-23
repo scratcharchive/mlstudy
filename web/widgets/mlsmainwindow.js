@@ -71,6 +71,19 @@ function MLSMainWindow(O) {
 
 	JSQ.connect(m_mls_manager.study(),'changed',O,update_menus);
 
+	var home_button=create_home_button_element();
+	home_button.attr('title','Return to overview');
+	m_menu_bar.addButton(home_button,goto_overview);
+	m_menu_bar.addSpacer();
+	var goto_buttons={};
+	goto_buttons['study_home']=m_menu_bar.addButton('Study home',function() {goto_view('study_home');});
+	goto_buttons['datasets']=m_menu_bar.addButton('Datasets',function() {goto_view('datasets');});
+	//goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
+	goto_buttons['batch_scripts']=m_menu_bar.addButton('Scripts',function() {goto_view('batch_scripts');});
+
+	m_menu_bar.addSpacer();
+	m_menu_bar.addSpacer();
+
 	// File menu //////////////////////////////////////
 	var menu=m_menu_bar.addMenu('File',{downarrow:true});
 	menu.addItem('New study',create_new_study);
@@ -88,14 +101,8 @@ function MLSMainWindow(O) {
 	///////////////////////////////////////////////////
 
 	m_menu_bar.addSpacer();
-	var goto_buttons={};
-	goto_buttons['study_home']=m_menu_bar.addButton('Study home',function() {goto_view('study_home');});
-	goto_buttons['datasets']=m_menu_bar.addButton('Datasets',function() {goto_view('datasets');});
-	//goto_buttons['pipeline_modules']=m_menu_bar.addButton('Pipeline Modules',function() {goto_view('pipeline_modules');});
-	goto_buttons['batch_scripts']=m_menu_bar.addButton('Scripts',function() {goto_view('batch_scripts');});
+	m_menu_bar.addSpacer();
 
-	m_menu_bar.addSpacer();
-	m_menu_bar.addSpacer();
 	// Tools menu //////////////////////////////////////
 	var menu=m_menu_bar.addMenu('Tools',{downarrow:true});
 	menu.addItem('Set processing server...',set_processing_server);
@@ -116,7 +123,7 @@ function MLSMainWindow(O) {
 		var W=O.width();
 		var H=O.height();
 
-		var top_height=40;
+		var top_height=50;
 		var bottom_height=33;
 		var marg=10;
 
@@ -295,6 +302,13 @@ function MLSMainWindow(O) {
 		});
 	}
 
+	function goto_overview() {
+		check_proceed_without_saving_changes(function() {
+			O.emit('goto_overview');
+			reset_url();
+		});
+	}
+
 	function goto_view(name) {
 		if (name==m_current_view) return;
 		m_current_view=name;
@@ -330,6 +344,26 @@ function MLSMainWindow(O) {
 			console.log (token);
 			alert('The token has been written to the developer console.');
 		});
+	}
+
+	function create_home_button_element() {
+		return $('<a class="back-icon" href="#">'
+  					+'<div class="back-icon__row">'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+  				+'</div>'
+   				+'<div class="back-icon__row">'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+  				+'</div>'
+  				+'<div class="back-icon__row">'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+    				+'<div class="back-icon__elem"></div>'
+  				+'</div>'
+				+'</a>');
 	}
 
 	function open_study_browser() {
@@ -516,6 +550,23 @@ function MLSMainWindow(O) {
 		m_status_bar.setFileInfo(source,info);
 		m_home_view.setFileInfo(source,info);
 		update_url();
+	}
+
+	function reset_url() {
+		var query=parse_url_params0();
+		var querystr='';
+		if ('passcode' in query) {
+			querystr+='&passcode='+query.passcode;
+		}
+		if ('login' in query) {
+			querystr+='&login='+query.login;
+		}
+		try {
+			history.pushState(null, null, '?'+querystr);
+		}
+		catch(err) {
+			console.log ('Unable to update url');
+		}
 	}
 
 	function update_url() {

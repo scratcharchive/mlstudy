@@ -61,7 +61,7 @@ function DocStorClient() {
 				return;
 			}
 			m_user=resp.user||'';
-			callback(null);
+			callback(null,{user_id:m_user});
 		});
 	}
 
@@ -230,6 +230,11 @@ function DocStorClient() {
 	}
 
 	function api_call(name,query,callback) {
+		if (m_docstor_url=='browser') {
+			api_call_browser(name,query,callback);
+			return;
+		}
+
 		jsu_http_post_json(m_docstor_url+'/api/'+name,query,{authorization:m_authorization_header},function(tmp) {
 			if (!tmp.success) {
 				callback('Error making request: '+tmp.error,null);
@@ -242,6 +247,22 @@ function DocStorClient() {
 			}
 			callback(null,tmp);
 		});
+	}
+	function api_call_browser(name,query,callback) {
+		if (name=='findDocuments') {
+			var docs=[];
+			var LS=new LocalStorage();
+			var docs=LS.readObject('docstor_local_documents')||[];
+			var docs2=[];
+			for (var i=0; i<docs.length; i++) {
+				docs2.push(docs[i]);
+			}
+			callback(null,docs2);
+		}
+		else {
+			console.log (name,query);
+			alert('Unexpected browser call: '+name);
+		}
 	}
 	function search_string_to_filter(search_string) {
 		var list=search_string.split(" ");

@@ -117,6 +117,7 @@ function JSQWidget(O) {
 		$('body').append(O.div());
 		set_size();
 		O.setFocus(true);
+		O.show();
 	}
 	function setParent(parent) {
 		JSQObject_setParent(parent);

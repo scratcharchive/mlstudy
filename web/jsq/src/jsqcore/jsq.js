@@ -155,6 +155,12 @@ function JSQConnectionManager() {
 		return m_signals[code];
 	}
 	function connect(sender,signal_name,receiver,callback,connection_type) {
+		if (typeof(callback)=='string') {
+			var signal_name2=callback;
+			callback=function(sender,args) {
+				receiver.emit(signal_name2,args);
+			}
+		}
 		var SS=signal(sender.objectId(),signal_name);
 		var receiver_id=null;
 		if (receiver) receiver_id=receiver.objectId();

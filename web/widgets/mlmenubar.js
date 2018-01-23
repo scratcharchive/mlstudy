@@ -51,7 +51,14 @@ function MLMenuBar(O) {
 	}
 
 	function addButton(label,handler) {
-		var elmt=$('<a href=# class=mlmenubar-button>'+label+'</a>');
+		var elmt;
+		if (typeof(label)=='string')
+			elmt=$('<a href=# class=mlmenubar-button>'+label+'</a>');
+		else {
+			elmt=label;
+			elmt.addClass('mlmenubar-button');
+		}
+
 		O.div().append(elmt);
 		elmt.css({"padding-left":'8px',"padding-right":'8px'});
 		elmt.click(function() {setTimeout(handler,0);});
