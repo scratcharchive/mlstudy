@@ -33,8 +33,10 @@ function jsqmain(query) {
 
     //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
     var DSC=new DocStorClient();
-    if (on_localhost)
-        DSC.setDocStorUrl('http://localhost:5011');
+    if (query.docstor_url)
+        DCS.setDocStorUrl(query.docstor_url);
+    //else if (!on_localhost)
+    //    DSC.setDocStorUrl('http://localhost:5011');
     else
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
 

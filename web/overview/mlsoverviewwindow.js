@@ -95,7 +95,7 @@ function MLSOverviewRightWindow(O) {
 		if (mode=='public_studies') {
 			obj={
 				shared_with:'[public]',
-				filter:'*.mls'
+				filter:'*.mls label:public'
 			};
 		}
 		else if (mode=='my_studies') {

@@ -74,13 +74,13 @@ function MLSHomeViewTopWidget(O,options) {
 	O.div().addClass('MLSHomeViewTopWidget');
 
 	O.div().append('<h1><span id=study_info></span></h1>')
-	O.div().append('<ul><li id=datasets /><li id=pipeline_modules /><li id=batch_scripts /></ul>');
+	O.div().append('<ul><li id=datasets /><li id=batch_scripts /></ul>');
 	O.div().find('#datasets').append('<a href=# id=datasets_link></a>');
-	O.div().find('#pipeline_modules').append('<a href=# id=pipeline_modules_link></a>');
+	//O.div().find('#pipeline_modules').append('<a href=# id=pipeline_modules_link></a>');
 	O.div().find('#batch_scripts').append('<a href=# id=batch_scripts_link></a>');
 
 	O.div().find('#datasets_link').click(function() {O.emit('goto_view',{name:'datasets'})});
-	O.div().find('#pipeline_modules_link').click(function() {O.emit('goto_view',{name:'pipeline_modules'})});
+	//O.div().find('#pipeline_modules_link').click(function() {O.emit('goto_view',{name:'pipeline_modules'})});
 	O.div().find('#batch_scripts_link').click(function() {O.emit('goto_view',{name:'batch_scripts'})});
 
 	if (!options) options={};
@@ -113,10 +113,12 @@ function MLSHomeViewTopWidget(O,options) {
 		if (num_datasets!=1) str+='s';
 		O.div().find('#datasets_link').html(str);
 
+		/*
 		var num_pipeline_modules=m_manager.study().pipelineModuleNames().length;
 		str=num_pipeline_modules+' pipeline module';
 		if (num_pipeline_modules!=1) str+='s';
 		O.div().find('#pipeline_modules_link').html(str);
+		*/
 
 		var num_batch_scripts=m_manager.study().batchScriptNames().length;
 		str=num_batch_scripts+' batch script';
