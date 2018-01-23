@@ -89,7 +89,10 @@ function MLTableWidget(O) {
 	}
 	function createRow() {
 		var row=new MLTableWidgetRow(0,O);
-		row.onSelectedChanged(update_row_highlighting);
+		row.onSelectedChanged(function() {
+			update_row_highlighting();
+			O.emit('selected_rows_changed');
+		});
 		JSQ.connect(row,'clicked',O,function(sender,evt) {
 			if ((m_selection_mode=='single')||(m_selection_mode=='multiple')) {
 				setCurrentRow(row);
