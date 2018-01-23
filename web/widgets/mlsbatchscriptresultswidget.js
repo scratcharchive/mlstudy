@@ -130,11 +130,11 @@ function MLSBatchScriptResultsWidget(O) {
 	function open_result_object(obj) {
 		jsu_http_post_json(obj.url+'/api/setConfig',{config:JSON.stringify(obj.data)},{},function(tmp) {
 			if (!tmp.success) {
-				alert(tmp.error);
+				alert('Error posting data to '+obj.url+': '+tmp.error);
 				return;
 			}
 			if (!tmp.object.success) {
-				alert(tmp.object.error);
+				alert('Error in request to '+obj.url+': '+tmp.object.error);
 				return;
 			}
 			if (!tmp.object.id) {
