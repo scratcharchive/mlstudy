@@ -329,14 +329,12 @@ function MLSOverviewRightWindow(O) {
 			};
 		}
 		else if (mode=='my_studies') {
-			console.log(m_login_info);
 			obj={
 				owned_by:m_login_info.user_id,
 				filter:'*.mls'
 			};
 		}
 		else if (mode=='shared_with_me') {
-			console.log(m_login_info);
 			obj={
 				shared_with:m_login_info.user_id,
 				filter:'*.mls'

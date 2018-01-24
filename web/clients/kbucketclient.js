@@ -4,11 +4,17 @@ var s_kbucket_client_data={
 
 function KBucketClient() {
 	this.setKBucketUrl=function(url) {m_kbucket_url=url;};
+	this.clearCacheForFile=function(sha1) {clearCacheForFile(sha1);};
 	this.clear=function() {s_kbucket_client_data.stats_by_sha1={};};
 	this.stat=function(sha1,size_bytes,callback) {stat(sha1,size_bytes,callback);}
 
 	var m_kbucket_url='https://river.simonsfoundation.org';
 
+	function clearCacheForFile(sha1) {
+		if (sha1 in s_kbucket_client_data.stats_by_sha1) {
+			delete s_kbucket_client_data.stats_by_sha1[sha1];
+		}
+	}
 	function stat(sha1,size_bytes,callback) {
 		if (s_kbucket_client_data.stats_by_sha1[sha1]) {
 			callback(null,s_kbucket_client_data.stats_by_sha1[sha1]);
@@ -27,7 +33,9 @@ function KBucketClient() {
 				return;	
 			}
 			if (!obj.found) {
-				callback(null,{found:false});
+				var stat0={found:false};
+				s_kbucket_client_data.stats_by_sha1[sha1]=stat0;
+				callback(null,stat0);
 				return;
 			}
 			if (size_bytes!=obj.size) {

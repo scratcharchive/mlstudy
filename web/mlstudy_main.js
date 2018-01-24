@@ -63,7 +63,6 @@ function jsqmain(query) {
             Y.setLoginInfo(login_info);
 
             JSQ.connect(OO,'open_study',null,function(sender,args) {
-                console.log('open_study');
                 open_study(args.study);
             });
 

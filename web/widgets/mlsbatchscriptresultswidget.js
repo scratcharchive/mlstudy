@@ -46,17 +46,22 @@ function MLSBatchScriptResultsWidget(O) {
 				}
 			});
 		}
-		do_refresh();
+		schedule_refresh();
 	}
 
 	var s_refresh_scheduled=false;
+	var s_last_schedule_refresh=new Date();
 	function schedule_refresh() {
 		if (s_refresh_scheduled) return;
 		s_refresh_scheduled=true;
+		var elapsed=(new Date())-s_last_schedule_refresh;
+		s_last_schedule_refresh=new Date();
+		var msec=1000;
+		if (elapsed>2000) msec=100;
 		setTimeout(function() {
 			s_refresh_scheduled=false;
 			do_refresh();
-		},100);
+		},msec);
 	}
 
 	function do_refresh() {
@@ -145,28 +150,45 @@ function MLSBatchScriptResultsWidget(O) {
 		});
 	}
 
+	var check_on_kbucket_global_code=0;
 	function check_on_kbucket() {
+		check_on_kbucket_global_code++;
+		var check_on_kbucket_local_code=check_on_kbucket_global_code;
+
 		//todo: in kbucketclient, don't serve all the requests at once
+		var rows0=[];
 		for (var i=0; i<m_table.rowCount(); i++) {
-			var row=m_table.row(i);
-			if (row.prv) {
-				check_on_kbucket_2(row);
+			rows0.push(m_table.row(i));
+			rows0[i].index=i;
+		}
+		foreach_async_aa(rows0,function(row0,cb0) {
+			if (check_on_kbucket_global_code!=check_on_kbucket_local_code)
+				return;
+			if (row0.prv) {
+				check_on_kbucket_2(row0,function() {
+					cb0();
+				});
 			}
-			else if (row.result_object) {
-				var prvs=get_prvs_from_result_object(row.result_object);
+			else if (row0.result_object) {
+				var prvs=get_prvs_from_result_object(row0.result_object);
 				var total_size=0;
 				for (var aa in prvs) {
 					total_size+=prvs[aa].original_size;
 				}
-				row.cell(2).html(prvs.length+' files, '+format_file_size(total_size));
+				row0.cell(2).html(prvs.length+' files, '+format_file_size(total_size));
 				if (prvs.length>0) {
-					check_multiple_on_kbucket_2(row,prvs);
+					check_multiple_on_kbucket_2(row0,prvs,function() {
+						cb0();
+					});
 				}
 				else {
-					row.cell(3).html('');
+					row0.cell(3).html('');
+					cb0();
 				}
 			}
-		}
+		},function() {
+			//done
+		});
 	}
 
 	function get_prvs_from_result_object(obj) {
@@ -201,7 +223,7 @@ function MLSBatchScriptResultsWidget(O) {
 		}
 	}
 
-	function check_multiple_on_kbucket_2(row,prvs) {
+	function check_multiple_on_kbucket_2(row,prvs,callback) {
 		row.cell(3).html('checking');
 		var rname=row.rname;
 		var num_found=0;
@@ -223,11 +245,17 @@ function MLSBatchScriptResultsWidget(O) {
 				cb();
 			});
 		},function() {
-			var txt='Found '+num_found+'/'+(num_found+num_not_found)+' files';
+			var txt;
+			if (num_found>0) {
+				txt='Found '+num_found+'/'+(num_found+num_not_found)+' files';
+			}
+			else {
+				txt='';
+			}
 			var elmt0;
 			if (num_not_found>0) {
-				elmt0=$('<a href=# title="Click to upload to kbucket">'+txt+'</a>');
-				elmt0.click(function() {
+				elmt1=$('<a href=# title="Click to transfer from processing server to kbucket">Transfer to kbucket</a>');
+				elmt1.click(function() {
 					row.cell(3).html('<span class=no>Uploading...</span>');
 					row.upload_error='';
 					upload_multiple_to_kbucket(prvs_not_found,function(err0) {
@@ -235,9 +263,11 @@ function MLSBatchScriptResultsWidget(O) {
 							if (err0) console.error(err0);
 							row.upload_error=err0;
 						}
-						check_multiple_on_kbucket_2(row,prvs);
+						check_multiple_on_kbucket_2(row,prvs,null);
 					});
 				});
+				elmt0=$('<span>'+txt+' </span>');
+				elmt0.append(elmt1);
 			}
 			else {
 				elmt0=$('<span>'+txt+'</span>');
@@ -245,10 +275,11 @@ function MLSBatchScriptResultsWidget(O) {
 			row.cell(3).children().detach();
 			row.cell(3).empty();
 			row.cell(3).append(elmt0);
+			if (callback) callback();
 		});
 	}
 
-	function check_on_kbucket_2(row) {
+	function check_on_kbucket_2(row,callback) {
 		row.cell(3).html('checking');
 		var rname=row.rname;
 		check_on_kbucket_3(row.prv,function(err,tmp) {
@@ -262,23 +293,24 @@ function MLSBatchScriptResultsWidget(O) {
 				row.cell(3).find('.download_button').click(download_result_file);
 			}
 			else {
-				var elmt=$('<span><a href=#><span class=no>Upload to kbucket</span></a></span>');
+				var elmt=$('<span><a href=#><span class=no>Transfer to kbucket</span></a></span>');
 				if (row.upload_error) {
 					elmt.append(' Error uploading: '+row.upload_error);
 				}
 				elmt.find('a').click(function() {
 					row.cell(3).html('<span class=no>Uploading...</span>');
 					row.upload_error='';
-					upload_to_kbucket(row.prv,function(err) {
+					transfer_to_kbucket(row.prv,function(err) {
 						if (err) console.error(err);
 						row.upload_error=err;
-						check_on_kbucket_2(row);
+						check_on_kbucket_2(row,null);
 					});
 				})
 				row.cell(3).children().detach();
 				row.cell(3).empty();
 				row.cell(3).append(elmt);
 			}
+			if (callback) callback();
 		});
 		function download_result_file() {
 			var prv=row.prv;
@@ -297,7 +329,7 @@ function MLSBatchScriptResultsWidget(O) {
 
 	function upload_multiple_to_kbucket(prvs0,callback) {
 		foreach_async_aa(prvs0,function(prv0,cb) {
-			upload_to_kbucket(prv0,function(err0) {
+			transfer_to_kbucket(prv0,function(err0) {
 				if (err0) {
 					callback(err0);
 					return;
@@ -309,7 +341,7 @@ function MLSBatchScriptResultsWidget(O) {
 		});
 	}
 
-	function upload_to_kbucket(prv,callback) {
+	function transfer_to_kbucket(prv,callback) {
 		if (!m_mls_manager) {
 			callback('MLS manager has not been set');
 			return;
@@ -365,6 +397,9 @@ function MLSBatchScriptResultsWidget(O) {
 		        callback(err0);
 		        return;
 		      }
+		      var KC=new KBucketClient();
+		      KC.setKBucketUrl(m_mls_manager.kBucketUrl());
+		      KC.clearCacheForFile(prv.original_checksum);
 		      callback('');
 		    }
 		    else {
