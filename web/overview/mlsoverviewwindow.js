@@ -476,11 +476,14 @@ function MLSOverviewLeftWindow(O) {
 	ul.append('<li id=shared_with_me>Shared with me</li>');
 	ul.append('<li id=on_this_browser>On this browser</li>');
 	O.div().append(ul);
+	O.div().append('<a href=# id=set_configuration>Configuration...</a>');
 
 	ul.find('#public_studies').click(function() {set_current_selection('public_studies')});
 	ul.find('#my_studies').click(function() {set_current_selection('my_studies')});
 	ul.find('#shared_with_me').click(function() {set_current_selection('shared_with_me')});
 	ul.find('#on_this_browser').click(function() {set_current_selection('on_this_browser')});
+
+	O.div().find('#set_configuration').click(set_configuration);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -504,6 +507,24 @@ function MLSOverviewLeftWindow(O) {
 		m_current_selection=selection;
 		update_layout();
 		O.emit('selection_changed');
+	}
+
+	function set_configuration() {
+		var LS=new LocalStorage();
+		var obj=LS.readObject('mls_config')||{};
+		var dlg=new EditTextDlg();
+		dlg.setText(JSON.stringify(obj,null,4));
+		dlg.show();
+		dlg.onAccepted(function() {
+			var json=dlg.text();
+			var obj2=jsu_try_parse_json(json);
+			if (!obj2) {
+				alert('Error parsing json.');
+				return;
+			}
+			LS.writeObject('mls_config',obj2);
+			alert('Configuration saved. You should now reload the page.');
+		});
 	}
 
 	update_layout();

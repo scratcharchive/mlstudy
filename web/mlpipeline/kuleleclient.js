@@ -78,15 +78,6 @@ function KuleleClient(O) {
 	var m_local_mode=false;
 	var m_processor_spec={};
 
-	if (jsu_starts_with(document.documentURI,'http://localhost')) {
-		m_kulele_url='http://localhost:5004';
-    	m_cordion_url='http://localhost:5006';	
-	}
-	else {
-		m_kulele_url='https://kulele.herokuapp.com';
-    	m_cordion_url='https://cordion.herokuapp.com';	
-	}
-
 	var prv_locate_found_cache={};
 	function prvLocate(prv,callback) {
 	    if ((!m_subserver_name)&&(!m_local_mode)) {
@@ -97,6 +88,10 @@ function KuleleClient(O) {
 	    	callback({success:false,error:'prv is null or undefined'});
 	    	return;
 	    };
+	    if (!m_kulele_url) {
+	    	callback({success:false,error:'kulele url not set in KuleleClient'});
+	    	return;
+	    }
 
 	    var url0=m_kulele_url+'/subserver/'+m_subserver_name;
 		var req={
@@ -171,6 +166,12 @@ function KuleleClient(O) {
 		if (typeof opts == 'string') {
 			opts={passcode:opts};
 		}
+
+		if (!m_cordion_url) {
+			callback({success:false,error:'cordion url not set in KuleleClient'});
+			return;
+		}
+
 		m_authorization_jwt='';
 		O.emit('changed');
 		var url0=m_cordion_url+'/api/getauth';
@@ -287,7 +288,8 @@ function KuleleClient(O) {
 			spec:spec, //will include the version
 			inputs:inputs,
 			outputs:outputs_to_return,
-			parameters:params
+			parameters:params,
+			package_url:opts.package_url||''
 		};
 		var process_id=sha1(JSON.stringify(object_for_id));
 
@@ -323,6 +325,10 @@ function KuleleClient(O) {
 	}
 
 	function getProcessorSpec(callback) {
+		if (!m_kulele_url) {
+	    	callback({success:false,error:'kulele url not set in KuleleClient'});
+	    	return;
+	    }
 		m_processor_spec={};
 		var url0=m_kulele_url+'/subserver/'+m_subserver_name;
 		var req={
@@ -389,6 +395,11 @@ function KuleleClient(O) {
 			return;
 		}
 		*/
+		if (!m_kulele_url) {
+	    	callback({success:false,error:'kulele url not set in KuleleClient'});
+	    	return;
+	    }
+
 		var kulele_url=m_kulele_url;
 		var server=m_subserver_name;
 		/*
@@ -428,6 +439,11 @@ function KuleleClient(O) {
 			return;
 		}
 		*/
+		if (!m_kulele_url) {
+	    	callback({success:false,error:'kulele url not set in KuleleClient'});
+	    	return;
+	    }
+
 		var kulele_url=m_kulele_url;
 		var server=m_subserver_name;
 
@@ -459,6 +475,11 @@ function KuleleClient(O) {
 	    */
 	    //var data_base64=btoa(String.fromCharCode.apply(null, new Uint8Array(file_data)));
 	    //var data_base64=btoa(new Uint8Array(file_data).reduce((data,byte)=>data+String.fromCharCode(byte),''));
+
+	    if (!m_kulele_url) {
+	    	callback({success:false,error:'kulele url not set in KuleleClient'});
+	    	return;
+	    }
 
 	    var data_base64=btoa(new Uint8Array(file_data).reduce(function(data,byte) {return data+String.fromCharCode(byte)},''));
 

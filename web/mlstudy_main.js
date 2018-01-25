@@ -31,14 +31,13 @@ function jsqmain(query) {
         }
     }
 
+    var mls_manager=new MLSManager();
+    var mls_config=mls_manager.mlsConfig();
+
     //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
     var DSC=new DocStorClient();
-    if (query.docstor_url)
-        DCS.setDocStorUrl(query.docstor_url);
-    //else if (!on_localhost)
-    //    DSC.setDocStorUrl('http://localhost:5011');
-    else
-        DSC.setDocStorUrl('https://docstor1.herokuapp.com');
+    var docstor_url=mls_config.docstor_url;
+    DSC.setDocStorUrl(docstor_url);
 
     show_full_browser_message('MLStudy','Logging in...');
     Authenticate({passcode:query.passcode||'',login_method:query.login||''},function(err,login_info) {
@@ -58,7 +57,7 @@ function jsqmain(query) {
             OO.setLoginInfo(login_info);
             OO.refresh();
 
-            var Y=new MLSMainWindow();
+            var Y=new MLSMainWindow(null,mls_manager);
             Y.setDocStorClient(DSC);
             Y.setLoginInfo(login_info);
 

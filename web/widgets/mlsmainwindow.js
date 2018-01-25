@@ -1,15 +1,16 @@
-function MLSMainWindow(O) {
+function MLSMainWindow(O,mls_manager) {
 	O=O||this;
 	JSQWidget(O);
 	O.div().addClass('MLSMainWindow');
 
-	this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
+	this.setDocStorClient=function(DSC) {m_docstor_client=DSC; m_mls_manager.setDocStorClient(DSC);};
 	this.loadFromDocStor=function(owner,title,callback) {loadFromDocStor(owner,title,callback);};
 	this.loadFromFileContent=function(path,content,callback) {loadFromFileContent(path,content,callback);};
 	this.loadFromBrowserStorage=function(title,callback) {loadFromBrowserStorage(title,callback);};
 	this.setLoginInfo=function(info) {setLoginInfo(info);};
+	this.mlsManager=function() {return m_mls_manager;};
 
-	var m_mls_manager=new MLSManager();
+	var m_mls_manager=mls_manager;
 	var m_job_manager=new JobManager();
 	var m_processor_manager=new ProcessorManager();
 	var m_kulele_client=new KuleleClient();
@@ -20,8 +21,10 @@ function MLSMainWindow(O) {
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
 
-	m_kulele_client.setKuleleUrl('https://kulele.herokuapp.com');
-	m_kulele_client.setCordionUrl('https://cordion.herokuapp.com');
+	var kulele_url=m_mls_manager.mlsConfig().kulele_url;
+	var cordion_url=m_mls_manager.mlsConfig().cordion_url;
+	m_kulele_client.setKuleleUrl(kulele_url);
+	m_kulele_client.setCordionUrl(cordion_url);
 
 	var default_pserver='river';
 	var LS=new LocalStorage();

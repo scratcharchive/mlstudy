@@ -22,15 +22,20 @@ function MLSBatchScriptWidget(O) {
 	this.setProcessorManager=function(PM) {m_processor_manager=PM;};
 	this.setJobManager=function(JM) {m_job_manager=JM;};
 	this.batchScript=function() {return m_batch_script;};
+	this.setScriptIsRunning=function(val) {setScriptIsRunning(val);};
 
 	var m_batch_script=null;
 	var m_processor_manager=null;
 	var m_job_manager=null;
 
-	var m_button_bar=$('<div class="MLSBatchScriptWidget-buttonbar"><span class=start_button></span></div>')
+	var m_button_bar=$('<div class="MLSBatchScriptWidget-buttonbar"><span class=start_button></span><span class=stop_button></span></div>')
 	m_button_bar.find('.start_button').attr('title','Run batch script');
 	m_button_bar.find('.start_button').click(run_script);
+	m_button_bar.find('.stop_button').attr('title','Stop batch script');
+	m_button_bar.find('.stop_button').click(stop_script);
 	O.div().append(m_button_bar);
+
+	setScriptIsRunning(false);
 
 	var m_script_editor_div=$('<div><textarea /></div>');
 	var m_script_editor=CodeMirror.fromTextArea(m_script_editor_div.find('textarea')[0], {
@@ -62,6 +67,17 @@ function MLSBatchScriptWidget(O) {
 		else {
 			m_button_bar.css({visibility:'hidden'});
 			m_script_editor_div.css({visibility:'hidden'});
+		}
+	}
+
+	function setScriptIsRunning(val) {
+		if (val) {
+			m_button_bar.find('.start_button').css({visibility:'hidden'});
+			m_button_bar.find('.stop_button').css({visibility:''});
+		}
+		else {
+			m_button_bar.find('.start_button').css({visibility:''});
+			m_button_bar.find('.stop_button').css({visibility:'hidden'});	
 		}
 	}
 
@@ -103,6 +119,10 @@ function MLSBatchScriptWidget(O) {
 			}
 		}	
 		O.emit('run_script');
+	}
+
+	function stop_script() {
+		O.emit('stop_script');
 	}
 
 	update_layout();

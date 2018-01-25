@@ -267,6 +267,15 @@ function jsu_http_post_json(url,data,headers,callback) {
     */
 }
 
+function jsu_try_parse_json(str) {
+	try {
+		return JSON.parse(str);
+	}
+	catch(err) {
+		return null;
+	}
+}
+
 function jsu_download_text(text,fname) {
 	
 }

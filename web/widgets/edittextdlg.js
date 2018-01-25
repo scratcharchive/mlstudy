@@ -22,6 +22,7 @@ function EditTextDlg(O) {
 	this.show=function() {show();};
 	this.setText=function(text) {m_textarea.val(text);};
 	this.text=function() {return m_textarea.val();};
+	this.onAccepted=function(callback) {JSQ.connect(O,'accepted',O,callback);};
 
 	var m_label='Edit text';
 	var m_text='';

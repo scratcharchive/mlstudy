@@ -32,6 +32,7 @@ function MLSBatchScriptsView(O,options) {
 	var m_list_widget=new MLSBatchScriptListWidget();
 	var m_batch_script_widget=new MLSBatchScriptWidget();
 	JSQ.connect(m_batch_script_widget,'run_script',O,run_script);
+	JSQ.connect(m_batch_script_widget,'stop_script',O,stop_script);
 
 	var m_menu_bar=new MLMenuBar();
 	var menu=m_menu_bar.addMenu('...');
@@ -241,9 +242,18 @@ function MLSBatchScriptsView(O,options) {
 		}
 		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),module_scripts,m_manager.study().object());
 		JSQ.connect(job,'results_changed',O,function() {O.emit('results_changed');});
+		JSQ.connect(job,'completed',O,function() {m_batch_script_widget.setScriptIsRunning(false);});
 		var batch_script_name=m_list_widget.currentBatchScriptName();
 		m_batch_jobs_by_batch_script_name[batch_script_name]=job;
 		update_results_widget();
+		m_batch_script_widget.setScriptIsRunning(true);
+	}
+
+	function stop_script() {
+		var BJM=m_manager.batchJobManager();
+		var batch_script_name=m_list_widget.currentBatchScriptName();
+		var job=m_batch_jobs_by_batch_script_name[batch_script_name];
+		job.stop();
 	}
 
 	function setMLSManager(M) {

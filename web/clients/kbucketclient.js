@@ -8,7 +8,7 @@ function KBucketClient() {
 	this.clear=function() {s_kbucket_client_data.stats_by_sha1={};};
 	this.stat=function(sha1,size_bytes,callback) {stat(sha1,size_bytes,callback);}
 
-	var m_kbucket_url='https://river.simonsfoundation.org';
+	var m_kbucket_url='';
 
 	function clearCacheForFile(sha1) {
 		if (sha1 in s_kbucket_client_data.stats_by_sha1) {
@@ -18,6 +18,10 @@ function KBucketClient() {
 	function stat(sha1,size_bytes,callback) {
 		if (s_kbucket_client_data.stats_by_sha1[sha1]) {
 			callback(null,s_kbucket_client_data.stats_by_sha1[sha1]);
+			return;
+		}
+		if (!m_kbucket_url) {
+			callback('KBucketClient: kbucket url not set.');
 			return;
 		}
 		var url0=m_kbucket_url;

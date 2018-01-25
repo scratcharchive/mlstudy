@@ -329,40 +329,6 @@ function MLSDatasetWidget(O) {
 		set_dataset(ds);
 		refresh();
 	}
-	/*
-	function upload_prv_file(name) {
-		var UP=new FileUploader();
-		UP.uploadTextFile({},function(tmp) {
-			if (!tmp.success) {
-				alert(tmp.error);
-				return;
-			}
-			if (ends_with(tmp.file_name,'.prv')) {
-				var prv=try_parse_json(tmp.text);
-				if (!prv) {
-					alert('Error parsing JSON in prv file.');
-					return;
-				}
-				if (!prv.original_checksum) {
-					alert('Invalid prv file. Field not found: original_checksum.');
-					return;
-				}
-				var ds=get_dataset();
-				if (!ds) return;
-				ds.setFile(name,{prv:prv});
-				set_dataset(ds);
-				refresh();
-			}
-			else {
-				if (confirm('This is not a .prv file. Would you like to upload it in exchange for a .prv file?')) {
-					var expiration=Date.now()+1000*60*5;
-					var url='https://river.simonsfoundation.org/web/upload?max_size_bytes='+tmp.text.length+'&identity=mls&expiration='+expiration+'&priority=1';
-					window.open(url,'_blank');
-				}
-			}
-		});
-	}
-	*/
 	function download_prv_file(name) {
 		var ds=get_dataset();
 		if (!ds) return;

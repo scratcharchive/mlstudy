@@ -113,7 +113,7 @@ opts.STYLESHEETS.push(
 
 opts.SOURCEPATH.push('managers')
 opts.SCRIPTS.push(
-	'mlsmanager.js'
+	'mlsmanager.js','batchjob.js'
 );
 
 opts.SOURCEPATH.push('clients')
