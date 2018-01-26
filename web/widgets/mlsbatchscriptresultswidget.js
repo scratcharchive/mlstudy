@@ -355,7 +355,7 @@ function MLSBatchScriptResultsWidget(O) {
 			'kbucket.upload',
 			{file:prv},
 			{},
-			{force_run:JSQ.makeRandomId(6)},
+			{},
 			{},
 			function(resp) {
 			    process_id=resp.process_id||'';

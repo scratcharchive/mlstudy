@@ -12,30 +12,39 @@ function MLSManager() {
   this.setKuleleClient=function(KC) {m_batch_job_manager.setKuleleClient(KC);};
   this.kuleleClient=function() {return m_batch_job_manager.kuleleClient();};
   this.setDocStorClient=function(DSC) {m_batch_job_manager.setDocStorClient(DSC);};
-  this.mlsConfig=function() {return m_mls_config;};
+  this.mlsConfig=function() {return mlsConfig();};
+  this.setMLSConfig=function(config) {setMLSConfig(config);};
 
 	var m_study=new MLStudy(null);
   var m_login_info={};
   var m_job_manager=null;
   var m_batch_job_manager=new BatchJobManager();
-  var LS=new LocalStorage();
 
-  var obj=LS.readObject('mls_config')||{};
+  var obj=mlsConfig();
   obj.kulele_url=obj.kulele_url||'https://kulele.herokuapp.com';
-  obj.cordion_url=obj.cordion_url||'https://cordion.herokuapp.com';
-  obj.kbucketauth_url=obj.kbucketauth_url||'https://kbucketauth.herokuapp.com';
   obj.kbucket_url=obj.kbucket_url||'https://river.simonsfoundation.org';
   obj.docstor_url=obj.docstor_url||'https://docstor1.herokuapp.com';
   obj.tidbits_url=obj.tidbits_url||'https://tidbits1.herokuapp.com';
-  LS.writeObject('mls_config',obj);
-  var m_mls_config=obj;
+  obj.processing_server=obj.processing_server||'river';
+  setMLSConfig(obj);
+  
+  function mlsConfig() {
+    var LS=new LocalStorage();
+    var obj=LS.readObject('mls_config')||{};
+    return obj;
+  }
+
+  function setMLSConfig(obj) {
+    var LS=new LocalStorage();
+    LS.writeObject('mls_config',obj);
+  }
 
   function kBucketAuthUrl() {
-    return m_mls_config.kbucketauth_url;
+    return mlsConfig().kbucketauth_url;
   }
 
   function kBucketUrl() {
-    return m_mls_config.kbucket_url;
+    return mlsConfig().kbucket_url;
   }
   function user() {
     if (m_login_info.google_profile) {

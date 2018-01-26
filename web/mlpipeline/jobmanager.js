@@ -810,7 +810,7 @@ function Job(O) {
 				if ((jsu_starts_with(val,'${')&&(jsu_ends_with(val,'}')))) {
 					var str=val.slice(2,val.length-1);
 					if (str=='processing_server') {
-						content[key]=m_job_manager.kuleleClient().subserverName();
+						content[key]=m_job_manager.kuleleClient().processingServer();
 					}
 					else if (str in m_parameters) {
 						content[key]=m_parameters[str];

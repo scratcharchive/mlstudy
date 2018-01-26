@@ -46,7 +46,10 @@ function jsqmain(query) {
             return;
         }
         DSC.login(login_info,function(err00,result) {
-            //note: at this time, we don't check the error here
+            if (err00) {
+                alert('Error logging in: '+err00);
+                return;
+            }
             
             login_info.user_id=result.user_id||'';
 

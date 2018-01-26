@@ -52,7 +52,9 @@ function DocStorClient() {
 			m_authorization_header='Bearer '+info.id_token;	
 		}
 		else {
-			callback('Invalid info for login in DocStorClient');
+			//callback('Invalid info for login in DocStorClient');
+			m_user='[anonymous]';
+			callback(null,{user_id:m_user});
 			return;
 		}
 		api_call('getUser',{},function(err,resp) {
@@ -339,8 +341,9 @@ function nodejs_http_post_json(url,data,headers,callback) {
 	var options={
 		method: "POST",
 		//url: url
-		hostname: url_parts.host,
-		path:url_parts.path
+		hostname: url_parts.hostname,
+		path:url_parts.path,
+		port:url_parts.port
 	};
 
 	var http_module;

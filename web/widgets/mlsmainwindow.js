@@ -14,6 +14,7 @@ function MLSMainWindow(O,mls_manager) {
 	var m_job_manager=new JobManager();
 	var m_processor_manager=new ProcessorManager();
 	var m_kulele_client=new KuleleClient();
+	m_kulele_client.setKuleleUrl(m_mls_manager.mlsConfig().kulele_url);
 	m_mls_manager.setJobManager(m_job_manager);
 	m_mls_manager.setKuleleClient(m_kulele_client);
 	var m_docstor_client=null;
@@ -21,17 +22,8 @@ function MLSMainWindow(O,mls_manager) {
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
 
-	var kulele_url=m_mls_manager.mlsConfig().kulele_url;
-	var cordion_url=m_mls_manager.mlsConfig().cordion_url;
-	m_kulele_client.setKuleleUrl(kulele_url);
-	m_kulele_client.setCordionUrl(cordion_url);
-
-	var default_pserver='river';
-	var LS=new LocalStorage();
-	var pserver=LS.readObject('mlstudy_processing_server');
-	if (typeof(pserver)!='string') pserver=default_pserver;
-
-	m_kulele_client.setSubserverName(pserver);
+	var server=m_mls_manager.mlsConfig().processing_server;
+	m_kulele_client.setProcessingServer(server);
 
 	var m_datasets_view=new MLSDatasetsView();
 	m_datasets_view.setParent(O);
@@ -320,15 +312,15 @@ function MLSMainWindow(O,mls_manager) {
 	}
 
 	function set_processing_server() {
-		var server=m_kulele_client.subserverName();
+		var config=m_mls_manager.mlsConfig();
+		var server=config.processing_server;
 		server=prompt('Processing server:',server);
 		if (!server) return;
-		m_kulele_client.setSubserverName(server);
+		config.processing_server=server;
+		m_mls_manager.setMLSConfig(config);
+		m_kulele_client.setProcessingServer(server);
 		update_processor_spec();
 		refresh_views();
-
-		var LS=new LocalStorage();
-		LS.writeObject('mlstudy_processing_server',server);
 	}
 
 	function generate_kbucket_upload_token() {
@@ -481,7 +473,7 @@ function MLSMainWindow(O,mls_manager) {
 	function setLoginInfo(info) {
 		m_mls_manager.setLoginInfo(info);
 		var opts=JSQ.clone(info);
-		opts.processing_server=m_kulele_client.subserverName();
+		opts.processing_server=m_kulele_client.processingServer();
 		m_kulele_client.login(opts,function(tmp) {
 			if (!tmp.success) {
 				console.error('Error logging in to kulele: '+tmp.error);
@@ -494,13 +486,13 @@ function MLSMainWindow(O,mls_manager) {
 	function update_processor_spec() {
 		m_processor_manager.setSpec({});
 		m_processor_manager.setSpecHasBeenSet(false);
-		var server_before=m_kulele_client.subserverName();
+		var server_before=m_kulele_client.processingServer();
 		m_kulele_client.getProcessorSpec(function(tmp1) {
 			if (!tmp1.success) {
 				console.error('Error getting processor spec: '+tmp1.error);
 				return;
 			}
-			if (m_kulele_client.subserverName()!=server_before) {
+			if (m_kulele_client.processingServer()!=server_before) {
 				//the processing server has changed, so do don't update.
 				return;
 			}
@@ -683,7 +675,7 @@ function MLSStatusBar(O) {
 		O.div().find('#file_info').html(str);
 
 		if ((m_kulele_client)&&(m_processor_manager)) {
-			var server=m_kulele_client.subserverName();
+			var server=m_kulele_client.processingServer();
 			var num_processors=m_processor_manager.numProcessors();
 			var str=`Processing server: ${server} (${num_processors} processors)`;
 			O.div().find('#processing_server_info').html(str);

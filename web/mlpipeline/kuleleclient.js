@@ -38,16 +38,14 @@ function KuleleClient(O) {
 	JSQObject(O);
 
 	this.setKuleleUrl=function(url) {if (m_kulele_url==url) return; m_kulele_url=url; O.emit('changed');};
-	this.setCordionUrl=function(url) {if (m_cordion_url==url) return; m_cordion_url=url; O.emit('changed');};
 	this.login=function(opts,callback) {login(opts,callback);};
 	this.loginWithLastSuccessful=function(callback) {loginWithLastSuccessful(callback);};
 	this.authorization=function() {return m_authorization;};
 	this.authorizationHeaders=function() {return authorization_headers();};
 	this.userId=function() {return m_authorization.userid||'';};
-	this.setSubserverName=function(name) {if (m_subserver_name==name) return; m_subserver_name=name; O.emit('changed');};
+	this.setProcessingServer=function(name) {if (m_processing_server==name) return; m_processing_server=name; O.emit('changed');};
 	this.kuleleUrl=function() {return m_kulele_url;};
-	this.cordionUrl=function() {return m_cordion_url;};
-	this.subserverName=function() {return m_subserver_name;};
+	this.processingServer=function() {return m_processing_server;};
 	this.prvLocate=function(prv,callback) {prvLocate(prv,callback);};
 	this.prvLocateInUserStorage=function(userid,filename,callback) {prvLocateInUserStorage(userid,filename,callback);};
 	this.prvUpload=function(file_data,callback) {prvUpload(file_data,callback);};
@@ -68,8 +66,7 @@ function KuleleClient(O) {
 	this.localMode=function() {return m_local_mode;};
 
 	var m_kulele_url='';
-	var m_cordion_url='';
-	var m_subserver_name='';
+	var m_processing_server='';
 	//var m_processor_manager=null;
 	var m_authorization_jwt='';
 	var m_authorization={};
@@ -80,8 +77,8 @@ function KuleleClient(O) {
 
 	var prv_locate_found_cache={};
 	function prvLocate(prv,callback) {
-	    if ((!m_subserver_name)&&(!m_local_mode)) {
-	      callback({success:false,error:'subserver has not been set (prvLocate)'});
+	    if ((!m_processing_server)&&(!m_local_mode)) {
+	      callback({success:false,error:'processing server has not been set (prvLocate)'});
 	      return;
 	    }
 	    if (!prv) {
@@ -93,7 +90,7 @@ function KuleleClient(O) {
 	    	return;
 	    }
 
-	    var url0=m_kulele_url+'/subserver/'+m_subserver_name;
+	    var url0=m_kulele_url+'/subserver/'+m_processing_server;
 		var req={
 			a:'prv-locate',
 			checksum:prv.original_checksum,
@@ -114,32 +111,11 @@ function KuleleClient(O) {
 				prv_locate_found_cache[code]=tmp;
 			callback(tmp);
 		});
-
-	    /*
-	    var url=m_kulele_url+'/subserver/'+m_subserver_name+'?a=prv-locate&checksum='+prv.original_checksum+'&size='+prv.original_size+'&fcs='+prv.original_fcs;   
-	    if (url in prv_locate_found_cache) {
-	    	callback(prv_locate_found_cache[url]);
-	    	return;
-	    }
-	    jsu_http_get_json(url,authorization_headers(),function(tmp) {
-	    	if (!tmp.success) {
-	    		callback(tmp);
-	    		return;
-	    	}
-	    	if (tmp.object.url) {
-	    		tmp.object.url=tmp.object.url.split('${base}').join(m_kulele_url+'/subserver/'+m_subserver_name);
-	    	}
-	    	if (tmp.object.found) {
-	    		prv_locate_found_cache[url]=tmp.object;
-	    	}
-	    	callback(tmp.object);
-	    });
-	    */
 	}
 
 	function prvLocateInUserStorage(userid,filename,callback) {
-	    if ((!m_subserver_name)&&(!m_local_mode)) {
-	      callback({success:false,error:'subserver has not been set (prvLocateInUserStorage)'});
+	    if ((!m_processing_server)&&(!m_local_mode)) {
+	      callback({success:false,error:'processing server has not been set (prvLocateInUserStorage)'});
 	      return;
 	    }
 	    var req={
@@ -148,33 +124,36 @@ function KuleleClient(O) {
 	    	userid:userid,
 	    	filename:filename
 	    }
-	    var url0=m_kulele_url+'/subserver/'+m_subserver_name;   
+	    var url0=m_kulele_url+'/subserver/'+m_processing_server;   
 	    jsu_http_post_json(url0,req,authorization_headers(),function(tmp) {
 			if (!tmp.success) {
 				callback({success:false,error:tmp.error});
 				return;
 			}
 			if (tmp.object.url) {
-				tmp.object.url=tmp.object.url.split('${base}').join(m_kulele_url+'/subserver/'+m_subserver_name);
+				tmp.object.url=tmp.object.url.split('${base}').join(m_kulele_url+'/subserver/'+m_processing_server);
 			}
 			var object=tmp.object;
 			callback(tmp.object);	
 		});
 	}
 
+	var m_login_opts=null;
 	function login(opts,callback) {
 		if (typeof opts == 'string') {
 			opts={passcode:opts};
 		}
 
-		if (!m_cordion_url) {
-			callback({success:false,error:'cordion url not set in KuleleClient'});
+		if (!m_kulele_url) {
+			callback({success:false,error:'kulele url not set in KuleleClient'});
 			return;
 		}
 
+		m_login_opts=JSQ.clone(opts);
+
 		m_authorization_jwt='';
 		O.emit('changed');
-		var url0=m_cordion_url+'/api/getauth';
+		var url0=m_kulele_url+'/api/getauth';
 		var req0=opts;
 		var headers0={};
 		jsu_http_post_json(url0,req0,headers0,function(tmp) {
@@ -206,6 +185,16 @@ function KuleleClient(O) {
 			O.emit('login_info_changed');
 			LS.writeObject('last-successful-login-info',{opts:opts});
 			callback({success:true});
+
+			setTimeout(function() {
+				//refresh the login token
+				login(m_login_opts,function(tmp) {
+					if (!tmp.success) {
+						console.error('Error logging in (refreshing token): '+tmp.error);
+						return;
+					}
+				});
+			},8*60*1000); // refresh every 8 minutes (token should expire in 10 -- kuleleauth.js on server)
 		});
 	}
 
@@ -269,7 +258,7 @@ function KuleleClient(O) {
 
 		var prv_inputs={};
 		var kulele_url=m_kulele_url;
-		var server=m_subserver_name;
+		var server=m_processing_server;
 
 		var url0=kulele_url+'/subserver/'+server;
 		var resources={
@@ -330,7 +319,7 @@ function KuleleClient(O) {
 	    	return;
 	    }
 		m_processor_spec={};
-		var url0=m_kulele_url+'/subserver/'+m_subserver_name;
+		var url0=m_kulele_url+'/subserver/'+m_processing_server;
 		var req={
 			a:'processor-spec'
 		};
@@ -367,7 +356,7 @@ function KuleleClient(O) {
 			m_larinetserver(req,onclose,callback);
 		}
 		else {
-			if (m_subserver_name) {
+			if (m_processing_server) {
 				jsu_http_post_json(url0,req,authorization_headers(),function(tmp) {
 				  if (!tmp.success) {
 				    callback({success:false,error:tmp.error});
@@ -378,7 +367,7 @@ function KuleleClient(O) {
 				});
 			}
 			else {
-				callback({success:false,error:'Subserver name has not been set.'});
+				callback({success:false,error:'Processing server has not been set.'});
 				return;
 			}
 		}
@@ -401,13 +390,7 @@ function KuleleClient(O) {
 	    }
 
 		var kulele_url=m_kulele_url;
-		var server=m_subserver_name;
-		/*
-		if (!m_subserver_name) {
-			callback({success:false,error:'Subserver name has not been set.'});
-			return;
-		}
-		*/
+		var server=m_processing_server;
 
 		var url0=kulele_url+'/subserver/'+server;
 		var req={
@@ -445,7 +428,7 @@ function KuleleClient(O) {
 	    }
 
 		var kulele_url=m_kulele_url;
-		var server=m_subserver_name;
+		var server=m_processing_server;
 
 		var url0=kulele_url+'/subserver/'+server;
 		var req={
@@ -467,14 +450,6 @@ function KuleleClient(O) {
 	}
 
 	function prvUpload(file_data,callback) {
-		/*
-	    if (!m_subserver_name) {
-	      callback({success:false,error:'subserver has not been set (prvUpload)'});
-	      return;
-	    }
-	    */
-	    //var data_base64=btoa(String.fromCharCode.apply(null, new Uint8Array(file_data)));
-	    //var data_base64=btoa(new Uint8Array(file_data).reduce((data,byte)=>data+String.fromCharCode(byte),''));
 
 	    if (!m_kulele_url) {
 	    	callback({success:false,error:'kulele url not set in KuleleClient'});
@@ -483,7 +458,7 @@ function KuleleClient(O) {
 
 	    var data_base64=btoa(new Uint8Array(file_data).reduce(function(data,byte) {return data+String.fromCharCode(byte)},''));
 
-	    var url=m_kulele_url+'/subserver/'+m_subserver_name;
+	    var url=m_kulele_url+'/subserver/'+m_processing_server;
 	    var req={
 	    	a:'prv-upload',
 	    	size:file_data.byteLength,
@@ -504,14 +479,14 @@ function KuleleClient(O) {
 	}
 
 	function prvUploadToUserStorage(userid,filename,file_data,callback) {
-	    if ((!m_subserver_name)&&(!m_local_mode)) {
-	      callback({success:false,error:'subserver has not been set (prvUploadToUserStorage)'});
+	    if ((!m_processing_server)&&(!m_local_mode)) {
+	      callback({success:false,error:'processing server has not been set (prvUploadToUserStorage)'});
 	      return;
 	    }
 	    //var data_base64=btoa(String.fromCharCode.apply(null, new Uint8Array(file_data)));
 	    //var data_base64=btoa(new Uint8Array(file_data).reduce((data,byte)=>data+String.fromCharCode(byte),''));
 	    var data_base64=btoa(new Uint8Array(file_data).reduce(function(data,byte) {return data+String.fromCharCode(byte)},''));
-	    var url=m_kulele_url+'/subserver/'+m_subserver_name;
+	    var url=m_kulele_url+'/subserver/'+m_processing_server;
 	    var req={
 	    	a:'prv-upload',
 	    	size:file_data.byteLength,
@@ -572,7 +547,7 @@ function KuleleClient(O) {
 		  if (m_local_mode)
 		  	url0=tmp.full_path;
 		  else
-		  	url0=url0.split('${base}').join(m_kulele_url+'/subserver/'+m_subserver_name);
+		  	url0=url0.split('${base}').join(m_kulele_url+'/subserver/'+m_processing_server);
 		  console.log ('Opening: '+url0);
 		  window.open(url0,'_blank');
 		});
