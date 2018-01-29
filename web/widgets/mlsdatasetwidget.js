@@ -76,7 +76,7 @@ function MLSDatasetWidget(O) {
 
 		var W=O.width();
 		var H=O.height();
-		var W1=Math.min(700,2*W/3);
+		var W1=Math.min(1000,2*W/3);
 		var Htop=50;
 		var Hbottom=0;
 		var H1=Math.max(400,(H-Htop-Hbottom)*2/3);

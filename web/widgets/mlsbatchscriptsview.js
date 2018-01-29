@@ -45,9 +45,11 @@ function MLSBatchScriptsView(O,options) {
 
 	var m_tab_widget=new JSQTabWidget();
 	var m_log_widget=new MLPLogWidget();
+	var m_results_container=new ResultsContainer();
 	var m_results_widget=new MLSBatchScriptResultsWidget();
+	m_results_container.setResultsWidget(m_results_widget);
 	var m_processors_widget=new MLSProcessorsWidget();
-	m_tab_widget.addTab(m_results_widget,'Results');
+	m_tab_widget.addTab(m_results_container,'Results');
 	m_tab_widget.addTab(m_log_widget,'Console');
 	m_tab_widget.addTab(m_processors_widget,'Processors');
 	m_tab_widget.setCurrentTabIndex(0);
@@ -269,3 +271,35 @@ function MLSBatchScriptsView(O,options) {
 	update_layout();
 }
 
+function ResultsContainer(O) {
+	O=O||this;
+	JSQWidget(O);
+
+	this.setResultsWidget=function(W) {setResultsWidget(W);};
+
+	var m_results_widget=null;
+	var m_log_widget=new MLPLogWidget();
+	m_log_widget.setParent(O);
+
+	O.div().addClass('ResultsContainer');
+
+	JSQ.connect(O,'sizeChanged',O,update_layout);
+	function update_layout() {
+		var W=O.width();
+		var H=O.height();
+
+		yspace=20;
+		var H2=Math.min(H/2,Math.max(100,H/6));
+		var H1=H-H2-yspace;
+		
+		if (m_results_widget) 
+			m_results_widget.setGeometry(0,0,W,H1);
+		m_log_widget.setGeometry(0,H1+yspace,W,H2);
+	}
+
+	function setResultsWidget(W) {
+		m_results_widget=W;
+		W.setParent(O);
+		update_layout();
+	}
+}
