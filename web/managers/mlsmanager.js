@@ -23,6 +23,7 @@ function MLSManager() {
   var obj=mlsConfig();
   obj.kulele_url=obj.kulele_url||'https://kulele.herokuapp.com';
   obj.kbucket_url=obj.kbucket_url||'https://river.simonsfoundation.org';
+  obj.kbucketauth_url=obj.kbucketauth_url||'https://kbucketauth.herokuapp.com';
   obj.docstor_url=obj.docstor_url||'https://docstor1.herokuapp.com';
   obj.tidbits_url=obj.tidbits_url||'https://tidbits1.herokuapp.com';
   obj.processing_server=obj.processing_server||'river';
