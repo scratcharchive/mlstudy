@@ -534,42 +534,68 @@ function ProcessorJob(O,kulele_client) {
   function start() {
     var KC=kulele_client;
     var spec=KC.processorSpec(m_processor_name);
-    if (!spec) {
-      report_error('Unable to find processor: '+m_processor_name);
+    
+    if ((!spec)&&(!m_options.package_uri)) {
+      report_error('Unable to find processor (and no package_uri has been specified): '+m_processor_name);
       return;
     }
+
     var inputs={};
-    for (var i in spec.inputs) {
-      var spec_input=spec.inputs[i];
-      if (m_input_files[spec_input.name]) {
-        var tmp=m_input_files[spec_input.name];
+    if (spec) {
+      for (var i in spec.inputs) {
+        var spec_input=spec.inputs[i];
+        if (m_input_files[spec_input.name]) {
+          var tmp=m_input_files[spec_input.name];
+          if (tmp.prv)
+            inputs[spec_input.name]=tmp.prv;
+          else {
+            var tmp2=[];
+            for (var i in tmp) tmp2.push(tmp[i].prv);
+            inputs[spec_input.name]=tmp2;
+          }
+        }
+        else {
+          if (spec_input.optional!=true) {
+            report_error('Missing required input: '+spec_input.name);
+            return;
+          }
+        }
+      }
+    }
+    else {
+      for (var input_name in m_input_files) {
+        var tmp=m_input_files[input_name];
         if (tmp.prv)
-          inputs[spec_input.name]=tmp.prv;
+          inputs[input_name]=tmp.prv;
         else {
           var tmp2=[];
           for (var i in tmp) tmp2.push(tmp[i].prv);
-          inputs[spec_input.name]=tmp2;
-        }
+          inputs[input_name]=tmp2;
+        }   
       }
-      else {
-        if (spec_input.optional!=true) {
-          report_error('Missing required input: '+spec_input.name);
-          return;
+    }
+
+    var outputs_to_return={};
+    if (spec) {
+      for (var i in spec.outputs) {
+        var spec_output=spec.outputs[i];
+        if (m_outputs_to_return[spec_output.name]) {
+          outputs_to_return[spec_output.name]=true;
+        }
+        else {
+          if (spec_output.optional!=true) {
+            report_error('Missing required output: '+spec_output.name);
+            return;
+          }
         }
       }
     }
-    var outputs_to_return={};
-    for (var i in spec.outputs) {
-      var spec_output=spec.outputs[i];
-      if (m_outputs_to_return[spec_output.name]) {
-        outputs_to_return[spec_output.name]=true;
-      }
-      else {
-        if (spec_output.optional!=true) {
-          report_error('Missing required output: '+spec_output.name);
-          return;
+    else {
+      for (var output_name in m_outputs_to_return) {
+        if (m_outputs_to_return[output_name]) {
+          outputs_to_return[output_name]=true;
         }
-      }
+      }  
     }
     outputs_to_return.console_out=true;
     plog('----------------------------------------------------------------------------');
@@ -589,6 +615,8 @@ function ProcessorJob(O,kulele_client) {
       plog('  '+params_str);
     }
     plog('----------------------------------------------------------------------------');
+    plog('queueJob: '+m_processor_name);
+    plog(JSON.stringify(m_options));
     KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,m_options,function(resp) {
       if (!resp.success) {
         report_error(resp.error);

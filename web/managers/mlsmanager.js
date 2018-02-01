@@ -1,3 +1,11 @@
+if (typeof module !== 'undefined' && module.exports) {
+  //using nodejs
+  exports.MLSManager=MLSManager;
+
+  JSQObject=require(__dirname+'/../jsq/src/jsqcore/jsqobject.js').JSQObject;
+  LocalStorage=require(__dirname+'/../jsutils/localstorage.js').LocalStorage;
+}
+
 function MLSManager() {
 	this.setMLSObject=function(X) {m_study.setObject(X);};
   this.study=function() {return m_study;};
@@ -73,12 +81,6 @@ function MLStudy(O) {
   this.removeDataset=function(id) {removeDataset(id);};
   this.changeDatasetId=function(id,id_new) {changeDatasetId(id,id_new);};
 
-  this.pipelineModuleNames=function() {return pipelineModuleNames();};
-  this.pipelineModule=function(name) {return pipelineModule(name);};
-  this.setPipelineModule=function(name,X) {setPipelineModule(name,X);};
-  this.removePipelineModule=function(name) {removePipelineModule(name);};
-  this.changePipelineModuleName=function(name,new_name) {changePipelineModuleName(name,new_name);};
-
   this.batchScriptNames=function() {return batchScriptNames();};
   this.batchScript=function(name) {return batchScript(name);};
   this.setBatchScript=function(name,X) {setBatchScript(name,X);};
@@ -87,7 +89,6 @@ function MLStudy(O) {
 
   var m_object={
     datasets:{},
-    pipeline_modules:{},
     batch_scripts:{}
   };
 
@@ -95,13 +96,7 @@ function MLStudy(O) {
     if (JSON.stringify(m_object)==JSON.stringify(obj)) return;
     m_object=JSQ.clone(obj);
 
-    if ('pipelines' in m_object) {
-      m_object.pipeline_modules=m_object.pipelines;
-      delete m_object['pipelines'];
-    }
-
     m_object.datasets=m_object.datasets||{};
-    m_object.pipeline_modules=m_object.pipeline_modules||{};
     m_object.batch_scripts=m_object.batch_scripts||{};
     O.emit('changed');
   }
@@ -115,17 +110,6 @@ function MLStudy(O) {
     if (!(id in m_object.datasets)) return null;
     var obj=m_object.datasets[id];
     var ret=new MLSDataset(obj);
-    return ret;
-  }
-  function pipelineModuleNames() {
-    var ret=Object.keys(m_object.pipeline_modules);
-    ret.sort();
-    return ret;
-  }
-  function pipelineModule(name) {
-    if (!(name in m_object.pipeline_modules)) return null;
-    var obj=m_object.pipeline_modules[name];
-    var ret=new MLSPipelineModule(obj);
     return ret;
   }
   function batchScriptNames() {
@@ -155,23 +139,6 @@ function MLStudy(O) {
     if (!X) return;
     removeDataset(id);
     setDataset(id_new,X); 
-  }
-  function setPipelineModule(name,X) {
-    m_object.pipeline_modules[name]=X.object();
-    O.emit('changed');
-  }
-  function removePipelineModule(name) {
-    if (name in m_object.pipeline_modules) {
-      delete m_object.pipeline_modules[name];
-      O.emit('changed');
-    }
-  }
-  function changePipelineModuleName(name,new_name) {
-    if (name==new_name) return;
-    var X=pipelineModule(name);
-    if (!X) return;
-    removePipelineModule(name);
-    setPipelineModule(new_name,X); 
   }
   function setBatchScript(name,X) {
     m_object.batch_scripts[name]=X.object();
@@ -239,118 +206,6 @@ function MLSDataset(obj) {
     if (name in m_object.files) {
       delete m_object.files[name];
     }
-  }
-
-  that.setObject(obj||{});
-}
-
-function MLSPipelineModule(obj) {
-  var that=this;
-  this.setObject=function(obj) {setObject(obj);};
-  this.object=function() {return JSQ.clone(m_object);};
-  this.onChanged=function(handler) {m_changed_handlers.push(handler);};
-  this.pipelineCount=function() {return pipelineCount();};
-  this.pipeline=function(i) {return pipeline(i);};
-  this.pipelineByName=function(name) {return pipelineByName(name);};
-  this.setPipelineByName=function(X) {setPipelineByName(X);};
-  this.removePipelineByName=function(name) {removePipelineByName(name);};
-  this.reorderPipelines=function(new_pipeline_order) {reorderPipelines(new_pipeline_order);};
-  this.addPipeline=function(X) {addPipeline(X);};
-
-  var m_object={};
-  var m_changed_handlers=[];
-
-  function setObject(obj) {
-    if (JSON.stringify(obj)==JSON.stringify(m_object)) return;
-    m_object=JSQ.clone(obj);
-    for (var i in m_changed_handlers) {
-      m_changed_handlers[i]();
-    }
-  }
-
-  function pipelineCount() {
-    var pipelines=m_object.pipelines||[];
-    return pipelines.length;
-  }
-  function pipeline(i) {
-    var pipelines=m_object.pipelines||[];
-    var obj=pipelines[i]||{};
-    var MLP=pipeline_from_object(obj);
-    return MLP;
-  }
-
-  function pipeline_from_object(obj) {
-    var MLP;
-    if (obj.script)
-      MLP=new MLPipelineScript();
-    else
-      MLP=new MLPipeline();
-    MLP.setObject(obj);
-    return MLP;
-  }
-
-  function pipelineByName(name) {
-    var pipelines=m_object.pipelines||[];
-    var found=false;
-    for (var i=0; i<pipelines.length; i++) {
-      var MLP=pipeline_from_object(pipelines[i]);
-      if (MLP.name()==name) {
-        return MLP;
-      }
-    }
-    return null;
-  }
-
-  function removePipelineByName(name) {
-    var pipelines=JSQ.clone(m_object.pipelines||[]);
-    for (var i=0; i<pipelines.length; i++) {
-      var MLP=pipeline_from_object(pipelines[i]);
-      if (MLP.name()==name) {
-        pipelines.splice(i,1);
-        break;
-      }
-    }
-    var obj=JSQ.clone(m_object);
-    obj.pipelines=pipelines;
-    setObject(obj);
-  }
-
-  function addPipeline(X) {
-    setPipelineByName(X);
-  }
-
-  function setPipelineByName(X) {
-    var pipelines=JSQ.clone(m_object.pipelines||[]);
-    var found=false;
-    for (var i=0; i<pipelines.length; i++) {
-      var MLP=pipeline_from_object(pipelines[i]);
-      if (MLP.name()==X.name()) {
-        pipelines[i]=X.object();
-        found=true;
-        break;
-      }
-    }
-    if (!found) {
-      pipelines.push(X.object());
-    }
-    var obj=JSQ.clone(m_object);
-    obj.pipelines=pipelines;
-    setObject(obj);
-  }
-
-  function reorderPipelines(new_pipeline_order) {
-    var pipelines=JSQ.clone(m_object.pipelines||[]);
-    if (new_pipeline_order.length!=pipelines.length) {
-      console.error('Incorrect length of new_pipeline_order in reorderPipelines');
-      return;
-    }
-    var new_pipelines=[];
-    for (var i=0; i<new_pipeline_order.length; i++) {
-      new_pipelines.push(pipelines[new_pipeline_order[i]]);
-    }
-    var obj=JSQ.clone(m_object);
-    obj.pipelines=new_pipelines;
-    setObject(obj);
   }
 
   that.setObject(obj||{});

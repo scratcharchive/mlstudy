@@ -82,6 +82,7 @@ function MLSBatchScriptResultsWidget(O) {
 	}
 
 	function create_result_row(rname,result) {
+		console.log(rname);
 		var row=m_table.createRow();
 		row.rname=rname;
 		
@@ -111,6 +112,7 @@ function MLSBatchScriptResultsWidget(O) {
 					//if (row.result_object.localhost)
 					//	row.result_object.url='http://localhost:5092';
 				}
+				console.log(row.result_object);
 				if (row.result_object.url) {
 					var link0=$('<span class=view_button></span>');
 					link0.click(function() {

@@ -238,15 +238,17 @@ function KuleleClient(O) {
 		var logtxt='Queuing processor job: '+processor_name+' '+JSON.stringify(params);
 		//mlpLog({text:logtxt});
 		var spec=O.processorSpec(processor_name);
-		if (!spec) {
-			callback({success:false,error:'Processor is not registered: '+processor_name});
+		if ((!spec)&&(!opts_in.package_uri)) {
+			callback({success:false,error:'Processor is not registered (and no package_uri specified): '+processor_name});
 			return;
 		}
 
 		var opts=JSQ.clone(opts_in);
 
-		if (('opts' in spec)&&('cache_output' in spec.opts)) {
-			opts.cache_output=spec.opts.cache_output;
+		if (spec) {
+			if (('opts' in spec)&&('cache_output' in spec.opts)) {
+				opts.cache_output=spec.opts.cache_output;
+			}
 		}
 
 		/*
@@ -274,11 +276,11 @@ function KuleleClient(O) {
 		}
 
 		var object_for_id={
-			spec:spec, //will include the version
+			spec:spec||{}, //will include the version
 			inputs:inputs,
 			outputs:outputs_to_return,
 			parameters:params,
-			package_url:opts.package_url||''
+			package_uri:opts.package_uri||''
 		};
 		var process_id=sha1(JSON.stringify(object_for_id));
 
