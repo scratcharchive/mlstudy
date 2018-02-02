@@ -102,6 +102,8 @@ function MLSMainWindow(O,mls_manager) {
 	var menu=m_menu_bar.addMenu('Tools',{downarrow:true});
 	menu.addItem('Set processing server...',set_processing_server);
 	menu.addDivider();
+	menu.addItem('Log in...',log_in);
+	menu.addDivider();
 	menu.addItem('Generate kbucket upload token',generate_kbucket_upload_token);
 	///////////////////////////////////////////////////
 
@@ -321,6 +323,10 @@ function MLSMainWindow(O,mls_manager) {
 		m_kulele_client.setProcessingServer(server);
 		update_processor_spec();
 		refresh_views();
+	}
+
+	function log_in() {
+		O.emit('log_in');
 	}
 
 	function generate_kbucket_upload_token() {

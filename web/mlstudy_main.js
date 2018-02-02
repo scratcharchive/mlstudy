@@ -63,6 +63,23 @@ function jsqmain(query) {
             var Y=new MLSMainWindow(null,mls_manager);
             Y.setDocStorClient(DSC);
             Y.setLoginInfo(login_info);
+            JSQ.connect(Y,'log_in',Y,function() {
+                Authenticate({passcode:query.passcode||'',login_method:query.login||''},function(err1,login_info2) {
+                    if (err1) {
+                        alert('Error authenticating: '+err1);
+                        return;
+                    }
+                    login_info=login_info2;
+                    DSC.login(login_info2,function(err2,result) {
+                        if (err2) {
+                            alert('Error logging in to docstor: '+err2);
+                            return;
+                        }
+                        Y.setLoginInfo(login_info2);
+                        OO.setLoginInfo(login_info2);
+                    });
+                });
+            });
 
             JSQ.connect(OO,'open_study',null,function(sender,args) {
                 open_study(args.study);
