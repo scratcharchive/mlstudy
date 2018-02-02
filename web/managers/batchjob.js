@@ -24,6 +24,7 @@ function BatchJob(O,kulele_client) {
   var m_max_simultaneous_processor_jobs=10;
   var m_is_completed=false;
   var m_load_study_tasks=[];
+  var m_load_file_tasks=[];
   var m_docstor_client=null;
 
   function start() {
@@ -31,7 +32,8 @@ function BatchJob(O,kulele_client) {
       study:JSQ.clone(m_study_object),
       runProcess:_run_process,
       setResult:_set_result,
-      loadStudy:_load_study
+      loadStudy:_load_study,
+      loadFile:_load_file
     };
 
     var require=function(str) {
@@ -188,6 +190,22 @@ function BatchJob(O,kulele_client) {
         done_with_all=false;
       }
     }
+    for (var i=0; i<m_load_file_tasks.length; i++) {
+      if (m_load_file_tasks[i].isFinished()) {
+        if (m_load_file_tasks[i].error()) {
+          report_error('Error loading file: '+m_load_file_tasks[i].error());
+          return;
+        }
+      }
+      else {
+        if (!m_load_file_tasks[i].isRunning()) {
+          if (check_load_file_task_ready_to_run(m_load_file_tasks[i])) {
+            m_load_file_tasks[i].start();
+          }
+        }
+        done_with_all=false;
+      }
+    }
     if (done_with_all) {
       if (!m_is_completed) {
         m_is_completed=true;
@@ -245,7 +263,6 @@ function BatchJob(O,kulele_client) {
     O.emit('error',err);
     stop_all_jobs();
     m_is_completed=true;
-    console.log('emit completed');
     O.emit('completed');
   }
 
@@ -281,6 +298,17 @@ function BatchJob(O,kulele_client) {
           return false;
         }
       }
+    }
+    return true;
+  }
+
+  function check_load_file_task_ready_to_run(LFT) {
+    var file_obj=LFT.fileObject();
+    if (file_obj._mls_pending_output) {
+      var file0=get_file_from_input(file_obj);
+      if (!file0) return false;
+      console.log('setFileObject: '+JSON.stringify(file0));
+      LFT.setFileObject(file0);
     }
     return true;
   }
@@ -412,6 +440,7 @@ function BatchJob(O,kulele_client) {
     LST.onFinished(function(err,study0) {
       if (err) {
         console.error('Error loading study: '+err);
+        report_error('Error loading study: '+err);
         return;
       }
       try {
@@ -424,6 +453,26 @@ function BatchJob(O,kulele_client) {
       }
     });
     LST.start();
+  }
+  function _load_file(file_obj,opts,callback) {
+    var LFT=new LoadFileTask(opts,kulele_client);
+    LFT.setFileObject(file_obj);
+    m_load_file_tasks.push(LFT);
+    LFT.onFinished(function(err,resp) {
+      if (err) {
+        console.error('Error loading file: '+err);
+        report_error('Error loading file: '+err);
+        return;
+      }
+      try {
+        callback(resp);
+      }
+      catch(err) {
+        console.error(err);
+        report_error(err.message);
+        return;
+      }
+    });
   }
 }
 
@@ -501,6 +550,85 @@ function LoadStudyTask(opts,docstor_client) {
     });
   }
 
+}
+
+function LoadFileTask(opts,kulele_client) {
+  this.onFinished=function(handler) {m_finished_handlers.push(handler);};
+  this.start=function() {start();};
+  this.isFinished=function() {return m_is_finished;};
+  this.isRunning=function() {return ((m_is_started)&&(!m_is_finished));};
+  this.error=function() {return m_error;};
+  this.setFileObject=function(obj) {m_file_object=JSQ.clone(obj);};
+  this.fileObject=function() {return JSQ.clone(m_file_object);};
+
+  var m_finished_handlers=[];
+  var m_error=null;
+  var m_is_started=false;
+  var m_is_finished=false;
+
+  function start() {
+    if (!kulele_client) {
+      finalize('kulele_client is null.');
+      return;
+    }
+    var format=opts.format||'text';
+    if (!m_file_object.prv) {
+      finalize('LoadFileTask: file object is not a prv.');
+      return;
+    }
+    m_is_started=true;
+    kulele_client.prvLocate(m_file_object.prv,function(tmp) {
+      if (!tmp.success) {
+        finalize('Error locating prv file: '+tmp.error);
+        return;
+      }
+      if (!tmp.found) {
+        finalize('Prv file not found.');
+        return;  
+      }
+      if (!tmp.url) {
+        finalize('prvLocate: unexpected... url is empty.');
+        return;
+      }
+      jsu_http_get_text(tmp.url,{},function(tmp2) {
+        if (!tmp2.success) {
+          finalize('Failed to download prv file: '+tmp2.error);
+          return;
+        }
+        var txt=tmp2.text;
+        if (format=='text') {
+          finalize(null,txt);
+          return;
+        }
+        else if (format=='json') {
+          var obj=try_parse_json(txt);
+          if (!obj) {
+            finalize('Error parsing JSON in prv file.');
+            return;
+          }
+          finalize(null,obj);
+          return;
+        }
+      });
+    });
+
+    function try_parse_json(str) {
+      try {
+        return JSON.parse(str);
+      }
+      catch(err) {
+        return null;
+      }
+    }
+  }
+
+  function finalize(err,study0) {
+    for (var i=0; i<m_finished_handlers.length; i++) {
+      m_finished_handlers[i](err,study0);
+    }
+    m_error=err;
+    m_is_finished=true;
+  }
 }
 
 function ProcessorJob(O,kulele_client) {

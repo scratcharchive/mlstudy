@@ -107,8 +107,12 @@ function KuleleClient(O) {
 				callback(tmp);
 				return;
 			}
-			if (tmp.found)
+			if (tmp.found) {
+				if (tmp.url) {
+					tmp.url=tmp.url.split('${base}').join(url0);
+				}
 				prv_locate_found_cache[code]=tmp;
+			}
 			callback(tmp);
 		});
 	}
