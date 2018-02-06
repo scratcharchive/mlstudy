@@ -90,7 +90,7 @@ function MLStudy(O) {
 
   var m_object={
     datasets:{},
-    batch_scripts:{}
+    scripts:{}
   };
 
   function setObject(obj) {
@@ -98,7 +98,8 @@ function MLStudy(O) {
     m_object=JSQ.clone(obj);
 
     m_object.datasets=m_object.datasets||{};
-    m_object.batch_scripts=m_object.batch_scripts||{};
+    m_object.scripts=m_object.scripts||m_object.batch_scripts||{};
+    if (m_object.batch_scripts) delete m_object.batch_scripts
     O.emit('changed');
   }
 
@@ -114,13 +115,13 @@ function MLStudy(O) {
     return ret;
   }
   function batchScriptNames() {
-    var ret=Object.keys(m_object.batch_scripts);
+    var ret=Object.keys(m_object.scripts);
     ret.sort();
     return ret;
   }
   function batchScript(name) {
-    if (!(name in m_object.batch_scripts)) return null;
-    var obj=m_object.batch_scripts[name];
+    if (!(name in m_object.scripts)) return null;
+    var obj=m_object.scripts[name];
     var ret=new MLSBatchScript(obj);
     return ret;
   }
@@ -142,12 +143,12 @@ function MLStudy(O) {
     setDataset(id_new,X); 
   }
   function setBatchScript(name,X) {
-    m_object.batch_scripts[name]=X.object();
+    m_object.scripts[name]=X.object();
     O.emit('changed');
   }
   function removeBatchScript(name) {
-    if (name in m_object.batch_scripts) {
-      delete m_object.batch_scripts[name];
+    if (name in m_object.scripts) {
+      delete m_object.scripts[name];
       O.emit('changed');
     }
   }
