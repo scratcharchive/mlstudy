@@ -191,6 +191,7 @@ function MLSBatchScriptResultsWidget(O) {
 	}
 
 	function get_prvs_from_result_object(obj) {
+		if (!obj) return [];
 		if (typeof(obj)!='object') return [];
 		if (obj.prv) {
 			return [obj.prv];

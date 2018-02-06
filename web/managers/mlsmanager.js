@@ -46,6 +46,7 @@ function MLSManager() {
   function setMLSConfig(obj) {
     var LS=new LocalStorage();
     LS.writeObject('mls_config',obj);
+    m_batch_job_manager.setKBucketUrl(obj.kbucket_url);
   }
 
   function kBucketAuthUrl() {
@@ -248,10 +249,12 @@ function BatchJobManager(O) {
   this.kuleleClient=function() {return m_kulele_client;};
   this.runningJobCount=function() {return m_running_jobs.length;};
   this.setDocStorClient=function(DSC) {return m_docstor_client=DSC;};
+  this.setKBucketUrl=function(url) {m_kbucket_url=url;};
 
   var m_running_jobs=[];
   var m_kulele_client=null;
   var m_docstor_client=null;
+  var m_kbucket_url='';
 
   function startBatchJob(batch_script,module_scripts,study_object) {
     var has_error=false;
@@ -259,6 +262,7 @@ function BatchJobManager(O) {
     var J=new BatchJob(null,m_kulele_client);
     J.setDocStorClient(m_docstor_client);
     J.setBatchScript(batch_script.script());
+    J.setKBucketUrl(m_kbucket_url);
     var all_scripts={};
     for (var name0 in module_scripts) {
       all_scripts[name0]=module_scripts[name0].script();

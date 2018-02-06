@@ -13,6 +13,7 @@ function BatchJob(O,kulele_client) {
   this.results=function() {return JSQ.clone(m_results);};
   this.setResults=function(X) {m_results=JSQ.clone(X);};
   this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
+  this.setKBucketUrl=function(url) {m_kbucket_url=url;};
 
   var m_id=JSQ.makeRandomId(6);
   var m_script='';
@@ -25,7 +26,9 @@ function BatchJob(O,kulele_client) {
   var m_is_completed=false;
   var m_load_study_tasks=[];
   var m_load_file_tasks=[];
+  var m_wait_callbacks=[];
   var m_docstor_client=null;
+  var m_kbucket_url='';
 
   function start() {
     var _MLS={
@@ -33,7 +36,9 @@ function BatchJob(O,kulele_client) {
       runProcess:_run_process,
       setResult:_set_result,
       loadStudy:_load_study,
-      loadFile:_load_file
+      loadFile:_load_file,
+      wait:_wait,
+      prvToUrl: _prv_to_url
     };
 
     var require=function(str) {
@@ -90,9 +95,11 @@ function BatchJob(O,kulele_client) {
   }
 
   function set_pending_output_if_available(rr) {
+    if (!rr) return;
     if (typeof(rr)!='object') return true;
+    if (!rr.value) return true;
     if (!rr.value._mls_pending_output) {
-      if (typeof(rr.value)!='object') {
+      if ((!rr.value)||(typeof(rr.value)!='object')) {
         rr.status='finished';
         return;
       }
@@ -129,7 +136,16 @@ function BatchJob(O,kulele_client) {
     if (rr.value._mls_pending_output in m_outputs) {
       var aa=m_outputs[rr.value._mls_pending_output];
       if (aa.status=='finished') {
-        rr.value=JSQ.clone(aa.value);
+        //rr.value=JSQ.clone(aa.value);
+        if (typeof(aa.value)=='object') {
+          for (var key0 in aa.value) { //important to do it this way so that the actual file object gets updated
+            rr.value[key0]=JSQ.clone(aa.value[key0]);
+          }
+          delete rr.value._mls_pending_output;
+        }
+        else {
+          rr.value=JSQ.clone(aa.value);
+        }
         rr.status='finished';
         O.emit('results_changed');  
       }
@@ -207,11 +223,20 @@ function BatchJob(O,kulele_client) {
       }
     }
     if (done_with_all) {
+      if (m_wait_callbacks.length>0) {
+        done_with_all=false;
+        var callbacks=m_wait_callbacks;
+        m_wait_callbacks=[];
+        for (var i=0; i<callbacks.length; i++) {
+          callbacks[i]();
+        }
+      }
+    }
+    if (done_with_all) {
       if (!m_is_completed) {
         m_is_completed=true;
         O.emit('completed');
       }
-      return;
     }
     for (var i in m_queued_processes) {
       var P=m_queued_processes[i];
@@ -249,6 +274,10 @@ function BatchJob(O,kulele_client) {
               return;
             }
             m_outputs[P.outputs[oname]._mls_pending_output]={value:JSQ.clone(ofile),status:'finished'};
+            for (var key in ofile) {
+              P.outputs[oname][key]=JSQ.clone(ofile[key]);
+            }
+            delete P.outputs[oname]._mls_pending_output;
           }
           P.handled_outputs=true;
         }
@@ -307,7 +336,6 @@ function BatchJob(O,kulele_client) {
     if (file_obj._mls_pending_output) {
       var file0=get_file_from_input(file_obj);
       if (!file0) return false;
-      console.log('setFileObject: '+JSON.stringify(file0));
       LFT.setFileObject(file0);
     }
     return true;
@@ -362,6 +390,7 @@ function BatchJob(O,kulele_client) {
   }
 
   function get_file_from_input(input) {
+    if (!input) return null;
     if (input._mls_pending_output) {
       if ((input._mls_pending_output in m_outputs)&&(m_outputs[input._mls_pending_output].status=='finished')) {
         return JSQ.clone(m_outputs[input._mls_pending_output].value);
@@ -405,10 +434,11 @@ function BatchJob(O,kulele_client) {
       opts:JSQ.clone(opts)
     };
     m_queued_processes.push(PP);
-    return JSQ.clone(outputs);
+    return PP.outputs;
   }
 
   function object_has_pending_outputs(obj) {
+    if (!obj) return false;
     if (typeof(obj)!='object') return false;
     if (obj._mls_pending_output) return true;
     for (var field in obj) {
@@ -427,7 +457,7 @@ function BatchJob(O,kulele_client) {
     }
     if (obj) fname=obj.id+'/'+fname;
     if (object_has_pending_outputs(file)) {
-      m_results[fname]={value:file,status:'pending'};
+      m_results[fname]={value:JSQ.clone(file),status:'pending'};
     }
     else {
       m_results[fname]={value:JSQ.clone(file),status:'finished'};
@@ -454,6 +484,17 @@ function BatchJob(O,kulele_client) {
     });
     LST.start();
   }
+  function _prv_to_url(prv) {
+    if (!m_kbucket_url) {
+      console.error('kbucket url not set.');
+      return null;
+    }
+    if (!prv.original_checksum) {
+      console.error('Missing field in prv object: original_checksum');
+      return null;  
+    }
+    return m_kbucket_url+'/download/'+prv.original_checksum;
+  }
   function _load_file(file_obj,opts,callback) {
     var LFT=new LoadFileTask(opts,kulele_client);
     LFT.setFileObject(file_obj);
@@ -473,6 +514,9 @@ function BatchJob(O,kulele_client) {
         return;
       }
     });
+  }
+  function _wait(callback) {
+    m_wait_callbacks.push(callback);
   }
 }
 
