@@ -7,7 +7,7 @@ function BatchJob(O,kulele_client) {
   this.setStudyObject=function(obj) {m_study_object=obj;};
   this.id=function() {return m_id;};
   this.start=function() {start();};
-  this.stop=function() {stop();};
+  this.stop=function() {_stop();};
   this.resultNames=function() {return resultNames();};
   this.result=function(name) {return result(name);};
   this.results=function() {return JSQ.clone(m_results);};
@@ -24,6 +24,7 @@ function BatchJob(O,kulele_client) {
   var m_results={};
   var m_max_simultaneous_processor_jobs=10;
   var m_is_completed=false;
+  var m_reported_error='';
   var m_load_study_tasks=[];
   var m_load_file_tasks=[];
   var m_wait_callbacks=[];
@@ -54,7 +55,9 @@ function BatchJob(O,kulele_client) {
       }
       var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
       try {
-        var ret=eval(script0);
+        var ret=run_some_code(function() {
+          return eval(script0);
+        });
         return ret;
       }
       catch(err) {
@@ -64,14 +67,12 @@ function BatchJob(O,kulele_client) {
       }
     }
 
-    function stop() {
-      report_error('Stopped.');
-    }
-
     var script2='(function() {'+m_script+'\n})()';
 
     try {
-      eval(script2);
+      run_some_code(function() {
+        eval(script2);
+      });
     }
     catch(err) {
       console.error(err);
@@ -80,6 +81,10 @@ function BatchJob(O,kulele_client) {
     }
 
     setTimeout(check_queued_processes,100);
+  }
+
+  function _stop() {
+    report_error('Stopped.');
   }
 
   function resultNames() {
@@ -168,6 +173,9 @@ function BatchJob(O,kulele_client) {
   }
 
   function check_queued_processes() {
+    if (m_is_completed) {
+      return;
+    }
     var done_with_all=true;
     var num_running=0;
     for (var i in m_queued_processes) {
@@ -228,7 +236,9 @@ function BatchJob(O,kulele_client) {
         var callbacks=m_wait_callbacks;
         m_wait_callbacks=[];
         for (var i=0; i<callbacks.length; i++) {
-          callbacks[i]();
+          run_some_code(function() {
+            callbacks[i]();
+          });
         }
       }
     }
@@ -290,12 +300,13 @@ function BatchJob(O,kulele_client) {
   function report_error(err) {
     if (m_is_completed) return;
     O.emit('error',err);
-    stop_all_jobs();
+    stop_all_jobs_and_tasks();
     m_is_completed=true;
+    m_reported_error=err;
     O.emit('completed');
   }
 
-  function stop_all_jobs() {
+  function stop_all_jobs_and_tasks() {
     for (var i in m_queued_processes) {
       var P=m_queued_processes[i];
       if (P.job) {
@@ -303,6 +314,12 @@ function BatchJob(O,kulele_client) {
           P.job.stop();
         }
       }
+    }
+    for (var i in m_load_study_tasks) {
+      m_load_study_tasks[i].stop();
+    }
+    for (var i in m_load_file_tasks) {
+      m_load_file_tasks[i].stop();
     }
   }
 
@@ -474,7 +491,9 @@ function BatchJob(O,kulele_client) {
         return;
       }
       try {
-        callback(study0);
+        run_some_code(function() {
+          callback(study0);
+        });
       }
       catch(err) {
         console.error(err);
@@ -510,7 +529,9 @@ function BatchJob(O,kulele_client) {
         return;
       }
       try {
-        callback(resp);
+        run_some_code(function() {
+          callback(resp);
+        });
       }
       catch(err) {
         console.error(err);
@@ -527,6 +548,7 @@ function BatchJob(O,kulele_client) {
 function LoadStudyTask(opts,docstor_client) {
   this.onFinished=function(handler) {m_finished_handlers.push(handler);};
   this.start=function() {start();};
+  this.stop=function() {stop();};
   this.isFinished=function() {return m_is_finished;};
   this.error=function() {return m_error;};
 
@@ -540,6 +562,7 @@ function LoadStudyTask(opts,docstor_client) {
       return;
     }
     download_document_content_from_docstor(docstor_client,opts.owner,opts.title,function(err,content) {
+      if (m_is_finished) return;
       if (err) {
         finalize(err);
         return;
@@ -564,6 +587,12 @@ function LoadStudyTask(opts,docstor_client) {
     }
   }
 
+  function stop() {
+    if (m_is_finished) return;
+    m_is_finished=true;
+    m_error='Stopped.';
+  }
+
   function finalize(err,study0) {
     for (var i=0; i<m_finished_handlers.length; i++) {
       m_finished_handlers[i](err,study0);
@@ -576,33 +605,35 @@ function LoadStudyTask(opts,docstor_client) {
     if (DSC.user()!=owner)
       query.and_shared_with=DSC.user();
     DSC.findDocuments(query,function(err,docs) {
+      if (m_is_finished) return;
+      if (err) {
+          callback('Problem finding document: '+err);
+          return;
+      }
+      if (docs.length==0) {
+          callback('Document not found.');
+          return; 
+      }
+      if (docs.length>1) {
+          callback('Error: more than one document with this title and owner found.');
+          return; 
+      }
+      DSC.getDocument(docs[0]._id,{include_content:true},function(err,doc0) {
+        if (m_is_finished) return;
         if (err) {
-            callback('Problem finding document: '+err);
+            callback('Problem getting document content: '+err);
             return;
         }
-        if (docs.length==0) {
-            callback('Document not found.');
-            return; 
-        }
-        if (docs.length>1) {
-            callback('Error: more than one document with this title and owner found.');
-            return; 
-        }
-        DSC.getDocument(docs[0]._id,{include_content:true},function(err,doc0) {
-            if (err) {
-                callback('Problem getting document content: '+err);
-                return;
-            }
-            callback(null,doc0.content,docs[0]._id);
-        });
+        callback(null,doc0.content,docs[0]._id);
+      });
     });
   }
-
 }
 
 function LoadFileTask(opts,kulele_client) {
   this.onFinished=function(handler) {m_finished_handlers.push(handler);};
   this.start=function() {start();};
+  this.stop=function() {stop();};
   this.isFinished=function() {return m_is_finished;};
   this.isRunning=function() {return ((m_is_started)&&(!m_is_finished));};
   this.error=function() {return m_error;};
@@ -626,6 +657,9 @@ function LoadFileTask(opts,kulele_client) {
     }
     m_is_started=true;
     kulele_client.prvLocate(m_file_object.prv,function(tmp) {
+      if (m_is_finished) {
+        return;
+      }
       if (!tmp.success) {
         finalize('Error locating prv file: '+tmp.error);
         return;
@@ -639,6 +673,9 @@ function LoadFileTask(opts,kulele_client) {
         return;
       }
       jsu_http_get_text(tmp.url,{},function(tmp2) {
+        if (m_is_finished) {
+          return;
+        }
         if (!tmp2.success) {
           finalize('Failed to download prv file: '+tmp2.error);
           return;
@@ -670,7 +707,14 @@ function LoadFileTask(opts,kulele_client) {
     }
   }
 
+  function stop() {
+    if (m_is_finished) return;
+    m_is_finished=true;
+    m_error='Stopped.';
+  }
+
   function finalize(err,study0) {
+    if (m_is_finished) return;
     for (var i=0; i<m_finished_handlers.length; i++) {
       m_finished_handlers[i](err,study0);
     }
@@ -791,11 +835,9 @@ function ProcessorJob(O,kulele_client) {
       plog('  '+params_str);
     }
     plog('----------------------------------------------------------------------------');
-    plog('queueJob: '+m_processor_name);
-    plog(JSON.stringify(m_options));
     KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,m_options,function(resp) {
       if (!resp.success) {
-        report_error(resp.error);
+        report_error('Error in queueJob: '+resp.error);
         return;
       }
       m_process_id=resp.process_id;
@@ -804,7 +846,7 @@ function ProcessorJob(O,kulele_client) {
   }
   function handle_process_probe_response(resp) {
     if (!resp.success) {
-      report_error(resp.error);
+      report_error('Error in process probe response: '+resp.error);
       return;
     }
     if (m_process_id!=resp.process_id) {
@@ -877,7 +919,7 @@ function ProcessorJob(O,kulele_client) {
         plog('Error canceling job: '+resp.error,{error:true});
         return;
       }
-    })
+    });
   }
   function plog(str,obj) {
     obj=obj||{};
@@ -890,5 +932,29 @@ function ProcessorJob(O,kulele_client) {
   }
   function report_finished() {
     m_is_completed=true;
+  }
+}
+
+function run_some_code(func) {
+  var original_console={};
+  for (var key in console)
+    original_console[key]=console[key];
+  try {
+    console.log=function(a) {
+      original_console.log (a);
+      mlpLog({text:'CONSOLE: '+a,color:'yellow'});
+    }
+    var ret=func();
+    restore();
+  }
+  catch(err) {
+    restore();
+    throw err;
+  }
+  return ret;
+
+  function restore() {
+    for (var key in original_console)
+      console[key]=original_console[key];
   }
 }

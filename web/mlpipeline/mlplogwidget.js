@@ -64,6 +64,9 @@ function MLPLogWidget(O) {
 		if (msg.bold) {
 			elmt.addClass('bold');
 		}
+		if (msg.color) {
+			elmt.css({color:msg.color});
+		}
 
 		var tr=$('<tr></tr>');
 		var td=$('<td></td>'); tr.append(td);
