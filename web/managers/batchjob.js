@@ -484,7 +484,7 @@ function BatchJob(O,kulele_client) {
     });
     LST.start();
   }
-  function _prv_to_url(prv) {
+  function _prv_to_url(prv,fname) {
     if (!m_kbucket_url) {
       console.error('kbucket url not set.');
       return null;
@@ -493,7 +493,11 @@ function BatchJob(O,kulele_client) {
       console.error('Missing field in prv object: original_checksum');
       return null;  
     }
-    return m_kbucket_url+'/download/'+prv.original_checksum;
+    var url=m_kbucket_url+'/download/'+prv.original_checksum;
+    if (fname) {
+      url+='/'+fname;
+    }
+    return url;
   }
   function _load_file(file_obj,opts,callback) {
     var LFT=new LoadFileTask(opts,kulele_client);
