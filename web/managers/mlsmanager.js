@@ -99,7 +99,7 @@ function MLStudy(O) {
 
     m_object.datasets=m_object.datasets||{};
     m_object.scripts=m_object.scripts||m_object.batch_scripts||{};
-    if (m_object.batch_scripts) delete m_object.batch_scripts
+    if (m_object.batch_scripts) delete m_object.batch_scripts;
     O.emit('changed');
   }
 
