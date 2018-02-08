@@ -352,6 +352,7 @@ function MLSBatchScriptResultsWidget(O) {
 		}
 		var KC=m_mls_manager.kuleleClient();
 		var process_id='';
+		console.log('kbucket_upload: '+JSON.stringify(prv));
 		KC.queueJob(
 			'kbucket.upload',
 			{file:prv},
@@ -359,6 +360,7 @@ function MLSBatchScriptResultsWidget(O) {
 			{},
 			{},
 			function(resp) {
+				console.log(resp);
 			    process_id=resp.process_id||'';
       			handle_process_probe_response(resp);
 			}

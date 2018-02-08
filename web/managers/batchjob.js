@@ -99,6 +99,9 @@ function BatchJob(O,kulele_client) {
     return JSQ.clone(m_results[name]||null);
   }
 
+  
+
+  /*
   function set_pending_output_if_available(rr) {
     if (!rr) return;
     if (typeof(rr)!='object') return true;
@@ -128,8 +131,10 @@ function BatchJob(O,kulele_client) {
           if (!rr.processor_name)
               rr.processor_name=tmp.processor_name;
         }
-        if (tmp.status!='finished') {
-          all_fields_finished=false;
+        if (tmp.status) {
+          if (tmp.status!='finished') {
+            all_fields_finished=false;
+          }
         }
       }
       if (all_fields_finished) {
@@ -171,6 +176,7 @@ function BatchJob(O,kulele_client) {
       done_with_all=false;
     }
   }
+  */
 
   function check_queued_processes() {
     if (m_is_completed) {
@@ -197,10 +203,25 @@ function BatchJob(O,kulele_client) {
     for (var rname in m_results) {
       var rr=m_results[rname];
       if (rr.value) {
+        if (object_has_pending_outputs(rr)) {
+          done_with_all=false;
+          if (rr.status!='pending') {
+            rr.status='pending';
+            O.emit('results_changed');
+          }
+        }
+        else {
+          if (rr.status!='finished') {
+            rr.status='finished';
+            O.emit('results_changed');
+          }
+        }
+        /*
         if (rr.status!='finished')
           set_pending_output_if_available(rr);
         if (rr.status!='finished')
           done_with_all=false;
+        */
       }
     }
     for (var i=0; i<m_load_study_tasks.length; i++) {
@@ -466,6 +487,21 @@ function BatchJob(O,kulele_client) {
     return false;
   }
 
+  /*
+  function result_is_complete(rr) {
+    if (!rr) return;
+    if (typeof(rr)!='object') return true;
+    if (!rr.value) return true;
+    if (rr.value._mls_pending_output) {
+      return false;
+    }
+    for (var field in rr.value) {
+      if (!result_is_complete(rr.value[field]))
+        return false;
+    }
+  }
+  */
+
   function _set_result(obj,fname,file) {
     if (!file) {
       file=fname;
@@ -474,10 +510,10 @@ function BatchJob(O,kulele_client) {
     }
     if (obj) fname=obj.id+'/'+fname;
     if (object_has_pending_outputs(file)) {
-      m_results[fname]={value:JSQ.clone(file),status:'pending'};
+      m_results[fname]={value:file,status:'pending'};
     }
     else {
-      m_results[fname]={value:JSQ.clone(file),status:'finished'};
+      m_results[fname]={value:file,status:'finished'};
     }
     O.emit('results_changed');
   }

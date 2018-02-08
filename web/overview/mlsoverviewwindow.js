@@ -511,7 +511,7 @@ function MLSOverviewLeftWindow(O) {
 
 	function set_configuration() {
 		var LS=new LocalStorage();
-		var obj=LS.readObject('mls_config')||{};
+		var obj=LS.readObject('mls_config2')||{};
 		var dlg=new EditTextDlg();
 		dlg.setText(JSON.stringify(obj,null,4));
 		dlg.show();
@@ -522,7 +522,7 @@ function MLSOverviewLeftWindow(O) {
 				alert('Error parsing json.');
 				return;
 			}
-			LS.writeObject('mls_config',obj2);
+			LS.writeObject('mls_config2',obj2);
 			alert('Configuration saved. You should now reload the page.');
 		});
 	}
