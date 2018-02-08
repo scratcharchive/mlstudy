@@ -180,9 +180,13 @@ function BatchJob(O,kulele_client) {
 
   function check_queued_processes() {
     if (m_is_completed) {
+      //we are already done
       return;
     }
-    var done_with_all=true;
+
+    var done_with_all=true; //this will be set to false if something is not yet done
+
+    // count how many running and check whether we are done with all the processes
     var num_running=0;
     for (var i in m_queued_processes) {
       var P=m_queued_processes[i];
@@ -200,30 +204,41 @@ function BatchJob(O,kulele_client) {
         done_with_all=false;
       }
     }
+
+    // update the pending results and the statuses
     for (var rname in m_results) {
       var rr=m_results[rname];
+      update_pending_outputs(rr);
       if (rr.value) {
         if (object_has_pending_outputs(rr)) {
           done_with_all=false;
-          if (rr.status!='pending') {
-            rr.status='pending';
-            O.emit('results_changed');
+          var running_outputs=get_running_outputs_for_object(rr);
+          if (running_outputs.length==0) {
+            if (rr.status!='pending') {
+              rr.status='pending';
+              rr.running_outputs=[];
+              O.emit('results_changed');
+            }
+          }
+          else {
+            if ((rr.status!='running')||(rr.running_outputs.length!=running_outputs.length)) {
+              rr.status='running';
+              rr.running_outputs=JSQ.clone(running_outputs);
+              O.emit('results_changed');
+            }  
           }
         }
         else {
           if (rr.status!='finished') {
             rr.status='finished';
+            rr.running_outputs=[];
             O.emit('results_changed');
           }
         }
-        /*
-        if (rr.status!='finished')
-          set_pending_output_if_available(rr);
-        if (rr.status!='finished')
-          done_with_all=false;
-        */
       }
     }
+
+    // Check on the load study tasks
     for (var i=0; i<m_load_study_tasks.length; i++) {
       if (m_load_study_tasks[i].isFinished()) {
         if (m_load_study_tasks[i].error()) {
@@ -235,6 +250,8 @@ function BatchJob(O,kulele_client) {
         done_with_all=false;
       }
     }
+
+    // Check on the load file tasks
     for (var i=0; i<m_load_file_tasks.length; i++) {
       if (m_load_file_tasks[i].isFinished()) {
         if (m_load_file_tasks[i].error()) {
@@ -251,6 +268,8 @@ function BatchJob(O,kulele_client) {
         done_with_all=false;
       }
     }
+
+    // If we are done with all, then we should run the _MLS.wait callbacks
     if (done_with_all) {
       if (m_wait_callbacks.length>0) {
         done_with_all=false;
@@ -263,12 +282,16 @@ function BatchJob(O,kulele_client) {
         }
       }
     }
+
+    // If we are still done with all, then we are really done!
     if (done_with_all) {
       if (!m_is_completed) {
         m_is_completed=true;
         O.emit('completed');
       }
     }
+
+    // Manage the queued and running processes, and update the output files
     for (var i in m_queued_processes) {
       var P=m_queued_processes[i];
       if (!P.job) {
@@ -289,7 +312,11 @@ function BatchJob(O,kulele_client) {
         if (!P.handled_outputs) {
           var output_files=P.job.outputFiles();
           for (var oname in P.outputs) {
-            m_outputs[P.outputs[oname]._mls_pending_output]={status:'error',error:P.job.error(),processor_name:P.processor_name};
+            m_outputs[P.outputs[oname]._mls_pending_output]={
+              status:'error',
+              error:P.job.error(),
+              processor_name:P.processor_name
+            };
           }
           P.handled_outputs=true;
         }
@@ -314,6 +341,7 @@ function BatchJob(O,kulele_client) {
         }
       }
     }
+
     if (!m_is_completed)
       setTimeout(check_queued_processes,100);
   }
@@ -487,6 +515,55 @@ function BatchJob(O,kulele_client) {
     return false;
   }
 
+  function get_running_outputs_for_object(obj) {
+    if (!obj) return [];
+    if (typeof(obj)!='object') return false;
+    if (obj._mls_pending_output) {
+      if (obj._mls_pending_output in m_outputs) {
+        var out=JSQ.clone(m_outputs[obj._mls_pending_output]);
+        return [out];
+      }
+      else {
+        return [];
+      }
+    }
+    var ret=[];
+    for (var field in obj) {
+      var running_outputs0=get_running_outputs_for_object(obj[field]);
+      for (var k in running_outputs0) {
+        ret.push(running_outputs0[k]);
+      }
+    }
+    return ret;
+  }
+
+  function update_pending_outputs(obj) {
+    if (!obj) return [];
+    if (typeof(obj)!='object') return false;
+    if (obj._mls_pending_output) {
+      if (obj._mls_pending_output in m_outputs) {
+        var out=m_outputs[obj._mls_pending_output];
+        if (out.status=='finished') {
+          if (typeof(out.value)=='object') {
+            for (var field in out.value) {
+              obj[field]=JSQ.clone(out.value[field]);
+            }
+          }
+          else {
+            report_error('update_pending_outputs: out.value is not an object: '+out.value);
+            return;
+          }
+          delete obj._mls_pending_output;
+        }
+      }
+      return;
+    }
+    var ret=[];
+    for (var field in obj) {
+      update_pending_outputs(obj[field]);
+    }
+  }
+
   /*
   function result_is_complete(rr) {
     if (!rr) return;
@@ -510,10 +587,10 @@ function BatchJob(O,kulele_client) {
     }
     if (obj) fname=obj.id+'/'+fname;
     if (object_has_pending_outputs(file)) {
-      m_results[fname]={value:file,status:'pending'};
+      m_results[fname]={value:JSQ.clone(file),status:'pending'};
     }
     else {
-      m_results[fname]={value:file,status:'finished'};
+      m_results[fname]={value:JSQ.clone(file),status:'finished'};
     }
     O.emit('results_changed');
   }
