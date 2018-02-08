@@ -31,7 +31,8 @@ function MLSManager() {
 
   var default_config={
     kulele_url:'https://kulele.herokuapp.com',
-    kbucket_url:'https://kbucket.flatironinstitute.org',
+    //kbucket_url:'https://kbucket.flatironinstitute.org',
+    kbucket_url:'https://river.simonsfoundation.org',
     kbucketauth_url:'https://kbucketauth.herokuapp.com',
     docstor_url:'https://docstor1.herokuapp.com',
     tidbits_url:'https://tidbits1.herokuapp.com',
