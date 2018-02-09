@@ -48,10 +48,13 @@ function MLSBatchScriptsView(O,options) {
 	var m_results_container=new ResultsContainer();
 	var m_results_widget=new MLSBatchScriptResultsWidget();
 	m_results_container.setResultsWidget(m_results_widget);
-	var m_processors_widget=new MLSProcessorsWidget();
+	var m_jobs_widget=new MLSBatchScriptJobsWidget();
+
+	//var m_processors_widget=new MLSProcessorsWidget();
 	m_tab_widget.addTab(m_results_container,'Results');
 	m_tab_widget.addTab(m_log_widget,'Console');
-	m_tab_widget.addTab(m_processors_widget,'Processors');
+	m_tab_widget.addTab(m_jobs_widget,'Jobs');
+	//m_tab_widget.addTab(m_processors_widget,'Processors');
 	m_tab_widget.setCurrentTabIndex(0);
 
 	m_list_widget.setParent(O);
@@ -132,10 +135,12 @@ function MLSBatchScriptsView(O,options) {
 		var batch_script_name=m_list_widget.currentBatchScriptName();
   		if (!batch_script_name) {
   			m_results_widget.setBatchJob(null);
+  			m_jobs_widget.setBatchJob(null);
   			return;
   		}
   		var job=m_batch_jobs_by_batch_script_name[batch_script_name]||null;
   		m_results_widget.setBatchJob(job);
+  		m_jobs_widget.setBatchJob(job);
 	}
 
 	function add_new_batch_script() {
@@ -263,7 +268,8 @@ function MLSBatchScriptsView(O,options) {
 		m_batch_script_widget.setJobManager(M.jobManager());
 		m_list_widget.setMLSManager(M);
 		m_results_widget.setMLSManager(M);
-		m_processors_widget.setMLSManager(M);
+		m_jobs_widget.setMLSManager(M);
+		//m_processors_widget.setMLSManager(M);
 		refresh();
 		//m_batch_script_widget.setMLSManager(M);
 	}

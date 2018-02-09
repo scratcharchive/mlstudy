@@ -22,6 +22,7 @@ function EditTextDlg(O) {
 	this.show=function() {show();};
 	this.setText=function(text) {m_textarea.val(text);};
 	this.text=function() {return m_textarea.val();};
+	this.setReadOnly=function(val) {setReadOnly(val);};
 	this.onAccepted=function(callback) {JSQ.connect(O,'accepted',O,callback);};
 
 	var m_label='Edit text';
@@ -59,6 +60,15 @@ function EditTextDlg(O) {
 		              resizable:false,
 		              modal:true,
 		              title:m_label});
+	}
+
+	function setReadOnly(val) {
+		if (val) {
+			m_textarea.attr('readonly','readonly');
+		}
+		else {
+			m_textarea.attr('readonly','');	
+		}
 	}
 
 	function on_cancel() {

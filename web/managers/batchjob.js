@@ -14,6 +14,9 @@ function BatchJob(O,lari_client) {
   this.setResults=function(X) {m_results=JSQ.clone(X);};
   this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
   this.setKBucketUrl=function(url) {m_kbucket_url=url;};
+  this.queuedProcessCount=function() {return m_queued_processes.length;};
+  this.queuedProcessInfo=function(i) {return queuedProcessInfo(i);};
+  this.processorJob=function(job_id) {return m_processor_jobs_by_id[job_id]||null;}
 
   var m_id=JSQ.makeRandomId(6);
   var m_script='';
@@ -30,6 +33,7 @@ function BatchJob(O,lari_client) {
   var m_wait_callbacks=[];
   var m_docstor_client=null;
   var m_kbucket_url='';
+  var m_processor_jobs_by_id={};
 
   function start() {
     var _MLS={
@@ -99,6 +103,30 @@ function BatchJob(O,lari_client) {
     return JSQ.clone(m_results[name]||null);
   }
 
+
+  function queuedProcessInfo(i) {
+    var PP=m_queued_processes[i];
+    var ret=JSQ.clone(PP);
+    if (PP.job) {
+      ret.job_id=PP.job.id();
+      if (PP.job.isCompleted()) {
+        if (PP.job.error()) {
+          ret.status='error';
+          ret.error=PP.job.error();
+        }
+        else {
+          ret.status='finished';
+        }
+      }
+      else {
+        ret.status='running';
+      }
+    }
+    else {
+      ret.status='not started';
+    }
+    return ret;
+  }
   
 
   /*
@@ -299,6 +327,7 @@ function BatchJob(O,lari_client) {
         if (num_running<m_max_simultaneous_processor_jobs) {
           if (processor_job_ready_to_run(P)) {
             start_processor(P);
+            O.emit('jobs_changed');
             num_running++;
           }
         }
@@ -319,6 +348,7 @@ function BatchJob(O,lari_client) {
             };
           }
           P.handled_outputs=true;
+          O.emit('jobs_changed');
         }
       }
       else {
@@ -338,6 +368,7 @@ function BatchJob(O,lari_client) {
             delete P.outputs[oname]._mls_pending_output;
           }
           P.handled_outputs=true;
+          O.emit('jobs_changed');
         }
       }
     }
@@ -420,6 +451,7 @@ function BatchJob(O,lari_client) {
 
   function start_processor(P) {
     var X=new ProcessorJob(null,lari_client);
+    m_processor_jobs_by_id[X.id()]=X;
     P.job=X;
     X.setProcessorName(P.processor_name);
     var input_files={};
@@ -511,6 +543,7 @@ function BatchJob(O,lari_client) {
       opts:JSQ.clone(opts)
     };
     m_queued_processes.push(PP);
+    O.emit('jobs_changed');
     return PP.outputs;
   }
 
@@ -850,6 +883,7 @@ function ProcessorJob(O,lari_client) {
   this.stop=function() {stop();};
   this.isCompleted=function() {return m_is_completed;};
   this.error=function() {return m_error;};
+  this.consoleOutput=function() {return m_console_output;};
 
   var m_id=JSQ.makeRandomId(6);
   var m_processor_name='';
@@ -860,12 +894,17 @@ function ProcessorJob(O,lari_client) {
   var m_is_completed=false;
   var m_error='';
   var m_job_id=''; //returned from lari
+  var m_console_output='';
 
   var m_output_files={};
 
   function start() {
     var LC=lari_client;
-    LC.getSpec({processor_name:m_processor_name},{},function(err,spec) {
+    var query={processor_name:m_processor_name};
+    if (m_options.package_uri) {
+      query.package_uri=m_options.package_uri;
+    }
+    LC.getSpec(query,{},function(err,spec) {
       if (err) {
         report_error('Unable to get spec for processor: '+m_processor_name+': '+err);
         return;
@@ -931,6 +970,8 @@ function ProcessorJob(O,lari_client) {
         parameters:m_parameters,
         opts:m_options
       };
+      console.log('queueProcess');
+      console.log(qq);
       LC.queueProcess(qq,{},function(err2,resp) {
         if (err2) {
           report_error('Error in queueJob: '+err2);
@@ -951,6 +992,7 @@ function ProcessorJob(O,lari_client) {
       return;
     }
     if (resp.latest_console_output) {
+      m_console_output+=resp.latest_console_output+'\n';
       var lines=resp.latest_console_output.split('\n');
       for (var i in lines) {
         if (lines[i].trim()) {
@@ -1004,7 +1046,7 @@ function ProcessorJob(O,lari_client) {
       else if (num==1) msec=1000;
       else if (num==2) msec=3000;
       else if (num<=10) msec=5000;
-      else msec=10000;
+      else msec=5000;
       setTimeout(function() {
         var LC=lari_client;
         LC.probeProcess(m_job_id,{},function(err,resp) {

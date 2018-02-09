@@ -85,7 +85,7 @@ opts.SCRIPTS.push(
 	'mlshomeview.js','descriptionwidget.js','mlspipelinemodulesview.js','mlspipelinemodulelistwidget.js',
 	'mlspipelinemodulewidget.js',
 	'mlsbatchscriptsview.js','mlsbatchscriptlistwidget.js','mlsbatchscriptwidget.js',
-	'mlsbatchscriptresultswidget.js','mlsprocessorswidget.js'
+	'mlsbatchscriptresultswidget.js','mlsbatchscriptjobswidget.js','mlsprocessorswidget.js'
 );
 opts.STYLESHEETS.push(
 	'mltablewidget.css',
