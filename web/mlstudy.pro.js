@@ -118,7 +118,7 @@ opts.SCRIPTS.push(
 
 opts.SOURCEPATH.push('clients')
 opts.SCRIPTS.push(
-	'docstorclient.js','kbucketclient.js'
+	'docstorclient.js','kbucketclient.js','lariclient.js'
 );
 
 opts.SOURCEPATH.push('kbucket');

@@ -1,4 +1,4 @@
-function BatchJob(O,kulele_client) {
+function BatchJob(O,lari_client) {
   O=O||this;
   JSQObject(O);
 
@@ -408,7 +408,7 @@ function BatchJob(O,kulele_client) {
   }
 
   function start_processor(P) {
-    var X=new ProcessorJob(null,kulele_client);
+    var X=new ProcessorJob(null,lari_client);
     P.job=X;
     X.setProcessorName(P.processor_name);
     var input_files={};
@@ -632,7 +632,7 @@ function BatchJob(O,kulele_client) {
     return url;
   }
   function _load_file(file_obj,opts,callback) {
-    var LFT=new LoadFileTask(opts,kulele_client);
+    var LFT=new LoadFileTask(opts,lari_client);
     LFT.setFileObject(file_obj);
     m_load_file_tasks.push(LFT);
     LFT.onFinished(function(err,resp) {
@@ -743,7 +743,7 @@ function LoadStudyTask(opts,docstor_client) {
   }
 }
 
-function LoadFileTask(opts,kulele_client) {
+function LoadFileTask(opts,lari_client) {
   this.onFinished=function(handler) {m_finished_handlers.push(handler);};
   this.start=function() {start();};
   this.stop=function() {stop();};
@@ -759,8 +759,8 @@ function LoadFileTask(opts,kulele_client) {
   var m_is_finished=false;
 
   function start() {
-    if (!kulele_client) {
-      finalize('kulele_client is null.');
+    if (!lari_client) {
+      finalize('lari_client is null.');
       return;
     }
     var format=opts.format||'text';
@@ -769,45 +769,33 @@ function LoadFileTask(opts,kulele_client) {
       return;
     }
     m_is_started=true;
-    kulele_client.prvLocate(m_file_object.prv,function(tmp) {
+    lari_client.getFileContent(m_file_object.prv,{},function(err,tmp) {
       if (m_is_finished) {
         return;
       }
-      if (!tmp.success) {
+      if (err) {
         finalize('Error locating prv file: '+tmp.error);
         return;
       }
-      if (!tmp.found) {
-        finalize('Prv file not found.');
-        return;  
-      }
-      if (!tmp.url) {
-        finalize('prvLocate: unexpected... url is empty.');
+      if (!tmp.success) {
+        finalize('Error locating prv file (*): '+tmp.error);
         return;
       }
-      jsu_http_get_text(tmp.url,{},function(tmp2) {
-        if (m_is_finished) {
+      
+      var txt=tmp.content;
+      if (format=='text') {
+        finalize(null,txt);
+        return;
+      }
+      else if (format=='json') {
+        var obj=try_parse_json(txt);
+        if (!obj) {
+          finalize('Error parsing JSON in prv file.');
           return;
         }
-        if (!tmp2.success) {
-          finalize('Failed to download prv file: '+tmp2.error);
-          return;
-        }
-        var txt=tmp2.text;
-        if (format=='text') {
-          finalize(null,txt);
-          return;
-        }
-        else if (format=='json') {
-          var obj=try_parse_json(txt);
-          if (!obj) {
-            finalize('Error parsing JSON in prv file.');
-            return;
-          }
-          finalize(null,obj);
-          return;
-        }
-      });
+        finalize(null,obj);
+        return;
+      }
     });
 
     function try_parse_json(str) {
@@ -836,7 +824,7 @@ function LoadFileTask(opts,kulele_client) {
   }
 }
 
-function ProcessorJob(O,kulele_client) {
+function ProcessorJob(O,lari_client) {
   O=O||this;
   JSQObject(O);
 
@@ -860,21 +848,18 @@ function ProcessorJob(O,kulele_client) {
   var m_options={};
   var m_is_completed=false;
   var m_error='';
-  var m_process_id=''; //returned from kulele
+  var m_job_id=''; //returned from lari
 
   var m_output_files={};
 
   function start() {
-    var KC=kulele_client;
-    var spec=KC.processorSpec(m_processor_name);
-    
-    if ((!spec)&&(!m_options.package_uri)) {
-      report_error('Unable to find processor (and no package_uri has been specified): '+m_processor_name);
-      return;
-    }
-
-    var inputs={};
-    if (spec) {
+    var LC=lari_client;
+    LC.getSpec({processor_name:m_processor_name},{},function(err,spec) {
+      if (err) {
+        report_error('Unable to get spec for processor: '+m_processor_name+': '+err);
+        return;
+      }
+      var inputs={};
       for (var i in spec.inputs) {
         var spec_input=spec.inputs[i];
         if (m_input_files[spec_input.name]) {
@@ -894,22 +879,9 @@ function ProcessorJob(O,kulele_client) {
           }
         }
       }
-    }
-    else {
-      for (var input_name in m_input_files) {
-        var tmp=m_input_files[input_name];
-        if (tmp.prv)
-          inputs[input_name]=tmp.prv;
-        else {
-          var tmp2=[];
-          for (var i in tmp) tmp2.push(tmp[i].prv);
-          inputs[input_name]=tmp2;
-        }   
-      }
-    }
 
-    var outputs_to_return={};
-    if (spec) {
+      var outputs_to_return={};
+      
       for (var i in spec.outputs) {
         var spec_output=spec.outputs[i];
         if (m_outputs_to_return[spec_output.name]) {
@@ -922,39 +894,40 @@ function ProcessorJob(O,kulele_client) {
           }
         }
       }
-    }
-    else {
-      for (var output_name in m_outputs_to_return) {
-        if (m_outputs_to_return[output_name]) {
-          outputs_to_return[output_name]=true;
+
+      outputs_to_return.console_out=true;
+      plog('----------------------------------------------------------------------------');
+      plog('Queueing job: '+m_processor_name);
+      {
+        var inputs_str='INPUTS: ';
+        for (var iname in inputs) {
+          inputs_str+=iname+'='+inputs[iname]+'  ';
         }
-      }  
-    }
-    outputs_to_return.console_out=true;
-    plog('----------------------------------------------------------------------------');
-    plog('Queueing job: '+m_processor_name);
-    {
-      var inputs_str='INPUTS: ';
-      for (var iname in inputs) {
-        inputs_str+=iname+'='+inputs[iname]+'  ';
+        plog('  '+inputs_str);
       }
-      plog('  '+inputs_str);
-    }
-    {
-      var params_str='PARAMS: ';
-      for (var pname in m_parameters) {
-        params_str+=pname+'='+m_parameters[pname]+'  ';
+      {
+        var params_str='PARAMS: ';
+        for (var pname in m_parameters) {
+          params_str+=pname+'='+m_parameters[pname]+'  ';
+        }
+        plog('  '+params_str);
       }
-      plog('  '+params_str);
-    }
-    plog('----------------------------------------------------------------------------');
-    KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,m_options,function(resp) {
-      if (!resp.success) {
-        report_error('Error in queueJob: '+resp.error);
-        return;
-      }
-      m_process_id=resp.process_id;
-      handle_process_probe_response(resp);
+      plog('----------------------------------------------------------------------------');
+      var qq={
+        processor_name:m_processor_name,
+        inputs:inputs,
+        outputs:outputs_to_return,
+        parameters:m_parameters,
+        opts:m_options
+      };
+      LC.queueProcess(qq,{},function(err2,resp) {
+        if (err2) {
+          report_error('Error in queueJob: '+err2);
+          return;
+        }
+        m_job_id=resp.job_id;
+        handle_process_probe_response(resp);
+      });
     });
   }
   function handle_process_probe_response(resp) {
@@ -962,8 +935,8 @@ function ProcessorJob(O,kulele_client) {
       report_error('Error in process probe response: '+resp.error);
       return;
     }
-    if (m_process_id!=resp.process_id) {
-      report_error('Unexpected: process_id does not match response: '+m_process_id+'<>'+resp.process_id);
+    if (m_job_id!=resp.job_id) {
+      report_error('Unexpected: job_id does not match response: '+m_job_id+'<>'+resp.job_id);
       return;
     }
     if (resp.latest_console_output) {
@@ -1019,17 +992,18 @@ function ProcessorJob(O,kulele_client) {
   }
   
   function send_process_probe() {
-    var KC=kulele_client;
-    KC.probeJob(m_process_id,function(resp) {
+    var LC=lari_client;
+    LC.probeProcess(m_job_id,{},function(err,resp) {
+      if (err) return;
       handle_process_probe_response(resp);
     });
   }
   function stop() {
     plog('Canceling job');
-    var KC=kulele_client;
-    KC.cancelJob(m_process_id,function(resp) {
-      if (!resp.success) {
-        plog('Error canceling job: '+resp.error,{error:true});
+    var LC=lari_client;
+    LC.cancelProcess(m_job_id,{},function(err,resp) {
+      if (err) {
+        plog('Error canceling job: '+err,{error:true});
         return;
       }
     });

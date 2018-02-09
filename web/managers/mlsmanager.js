@@ -23,14 +23,20 @@ function MLSManager() {
   this.mlsConfig=function() {return mlsConfig();};
   this.setMLSConfig=function(config) {setMLSConfig(config);};
   this.defaultMLSConfig=function() {return JSQ.clone(default_config);};
+  this.lariClient=function() {return m_lari_client;};
 
 	var m_study=new MLStudy(null);
   var m_login_info={};
   var m_job_manager=null;
   var m_batch_job_manager=new BatchJobManager();
 
+  var m_lari_client=new LariClient();
+  m_lari_client.setContainerId('child');
+  m_batch_job_manager.setLariClient(m_lari_client);
+
   var default_config={
     kulele_url:'https://kulele.herokuapp.com',
+    lari_url:'https://lari1.herokuapp.com',
     kbucket_url:'https://kbucket.flatironinstitute.org',
     //kbucket_url:'https://river.simonsfoundation.org',
     kbucketauth_url:'https://kbucketauth.herokuapp.com',
@@ -66,6 +72,7 @@ function MLSManager() {
     var LS=new LocalStorage();
     LS.writeObject('mls_config2',obj);
     m_batch_job_manager.setKBucketUrl(mlsConfig().kbucket_url);
+    m_lari_client.setLariServerUrl(mlsConfig().lari_url);
   }
 
   function kBucketAuthUrl() {
@@ -267,19 +274,22 @@ function BatchJobManager(O) {
   this.startBatchJob=function(batch_script,module_scripts,study_object) {return startBatchJob(batch_script,module_scripts,study_object);};
   this.setKuleleClient=function(KC) {m_kulele_client=KC;};
   this.kuleleClient=function() {return m_kulele_client;};
+  this.setLariClient=function(LC) {m_lari_client=LC;};
+  this.lariClient=function() {return m_lari_client;};
   this.runningJobCount=function() {return m_running_jobs.length;};
   this.setDocStorClient=function(DSC) {return m_docstor_client=DSC;};
   this.setKBucketUrl=function(url) {m_kbucket_url=url;};
 
   var m_running_jobs=[];
   var m_kulele_client=null;
+  var m_lari_client=null;
   var m_docstor_client=null;
   var m_kbucket_url='';
 
   function startBatchJob(batch_script,module_scripts,study_object) {
     var has_error=false;
     mlpLog({bold:true,text:'Starting batch job...'});
-    var J=new BatchJob(null,m_kulele_client);
+    var J=new BatchJob(null,m_lari_client);
     J.setDocStorClient(m_docstor_client);
     J.setBatchScript(batch_script.script());
     J.setKBucketUrl(m_kbucket_url);
