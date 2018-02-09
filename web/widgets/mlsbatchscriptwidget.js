@@ -112,12 +112,14 @@ function MLSBatchScriptWidget(O) {
 		}
 	}
 	function run_script() {
+		/*
 		if (m_processor_manager) {
 			if (!m_processor_manager.specHasBeenSet()) {
 				alert('The processor specification has not yet been downloaded from the server. Please try again in a few seconds.');
 				return;
 			}
-		}	
+		}
+		*/	
 		O.emit('run_script');
 	}
 

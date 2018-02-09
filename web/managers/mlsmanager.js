@@ -17,11 +17,12 @@ function MLSManager() {
   this.setJobManager=function(JM) {m_job_manager=JM;};
   this.jobManager=function() {return m_job_manager;};
   this.batchJobManager=function() {return m_batch_job_manager;};
-  this.setKuleleClient=function(KC) {m_batch_job_manager.setKuleleClient(KC);};
-  this.kuleleClient=function() {return m_batch_job_manager.kuleleClient();};
+  //this.setKuleleClient=function(KC) {m_batch_job_manager.setKuleleClient(KC);};
+  //this.kuleleClient=function() {return m_batch_job_manager.kuleleClient();};
   this.setDocStorClient=function(DSC) {m_batch_job_manager.setDocStorClient(DSC);};
   this.mlsConfig=function() {return mlsConfig();};
   this.setMLSConfig=function(config) {setMLSConfig(config);};
+  this.onConfigChanged=function(handler) {m_config_changed_handlers.push(handler);};
   this.defaultMLSConfig=function() {return JSQ.clone(default_config);};
   this.lariClient=function() {return m_lari_client;};
 
@@ -29,20 +30,21 @@ function MLSManager() {
   var m_login_info={};
   var m_job_manager=null;
   var m_batch_job_manager=new BatchJobManager();
+  var m_config_changed_handlers=[];
 
   var m_lari_client=new LariClient();
   m_lari_client.setContainerId('child');
   m_batch_job_manager.setLariClient(m_lari_client);
 
   var default_config={
-    kulele_url:'https://kulele.herokuapp.com',
+    //kulele_url:'https://kulele.herokuapp.com',
     lari_url:'https://lari1.herokuapp.com',
     kbucket_url:'https://kbucket.flatironinstitute.org',
     //kbucket_url:'https://river.simonsfoundation.org',
     kbucketauth_url:'https://kbucketauth.herokuapp.com',
     docstor_url:'https://docstor1.herokuapp.com',
     tidbits_url:'https://tidbits1.herokuapp.com',
-    processing_server:'river'
+    processing_server:'default'
   };
 
   var obj=mlsConfig();  
@@ -73,6 +75,11 @@ function MLSManager() {
     LS.writeObject('mls_config2',obj);
     m_batch_job_manager.setKBucketUrl(mlsConfig().kbucket_url);
     m_lari_client.setLariServerUrl(mlsConfig().lari_url);
+    m_lari_client.setContainerId(mlsConfig().processing_server);
+
+    for (var i in m_config_changed_handlers) {
+      m_config_changed_handlers[i]();
+    }
   }
 
   function kBucketAuthUrl() {
@@ -272,8 +279,8 @@ function BatchJobManager(O) {
   JSQObject(O);
 
   this.startBatchJob=function(batch_script,module_scripts,study_object) {return startBatchJob(batch_script,module_scripts,study_object);};
-  this.setKuleleClient=function(KC) {m_kulele_client=KC;};
-  this.kuleleClient=function() {return m_kulele_client;};
+  //this.setKuleleClient=function(KC) {m_kulele_client=KC;};
+  //this.kuleleClient=function() {return m_kulele_client;};
   this.setLariClient=function(LC) {m_lari_client=LC;};
   this.lariClient=function() {return m_lari_client;};
   this.runningJobCount=function() {return m_running_jobs.length;};
@@ -281,7 +288,7 @@ function BatchJobManager(O) {
   this.setKBucketUrl=function(url) {m_kbucket_url=url;};
 
   var m_running_jobs=[];
-  var m_kulele_client=null;
+  //var m_kulele_client=null;
   var m_lari_client=null;
   var m_docstor_client=null;
   var m_kbucket_url='';

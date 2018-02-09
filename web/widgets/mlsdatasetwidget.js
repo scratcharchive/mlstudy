@@ -400,11 +400,11 @@ function MLSDatasetWidget(O) {
 				original_size:size,
 				original_fcs:fcs
 			};
-			var KC=m_manager.kuleleClient();
-			KC.prvLocate(prv0,function(tmp) {
-				if (!tmp.success) {
+			var LC=m_manager.lariClient();
+			LC.findFile(prv0,{},function(err,tmp) {
+				if (err) {
 					elmt.html('Error checking');
-					elmt.attr('title',tmp.error);
+					elmt.attr('title',err);
 					elmt.attr('class','ps unknown');
 					return;
 				}
@@ -462,20 +462,28 @@ function MLSDatasetWidget(O) {
 			callback('MLS manager has not been set');
 			return;
 		}
+		/*
 		if (!m_manager.kuleleClient()) {
 			callback('KuleleClient has not been set');
 			return;
 		}
-		var KC=m_manager.kuleleClient();
-		var process_id='';
-		KC.queueJob(
-			'kbucket.download',
-			{},
-			{file:true},
-			{sha1:sha1},
-			{},
-			function(resp) {
-			    process_id=resp.process_id||'';
+		*/
+		var LC=m_manager.lariClient();
+		var job_id='';
+		var qq={
+			processor_name:'kbucket.download',
+			inputs:{},
+			outputs:{file:true},
+			parameters:{sha1:sha1},
+			opts:{}
+		};
+		LC.queueProcess(qq,{},
+			function(err,resp) {
+				if (err) {
+					console.error('Error queuing process: '+err);
+					return;
+				}
+			    job_id=resp.job_id||'';
       			handle_process_probe_response(resp);
 			}
 		);
@@ -484,8 +492,8 @@ function MLSDatasetWidget(O) {
 		      callback('Error transferring: '+resp.error);
 			  return;
 		    }
-		    if (process_id!=resp.process_id) {
-		      callback('Unexpected: process_id does not match response: '+process_id+'<>'+resp.process_id);
+		    if (job_id!=resp.job_id) {
+		      callback('Unexpected: job_id does not match response: '+job_id+'<>'+resp.job_id);
 		      return;
 		    }
 		    if (resp.latest_console_output) {
@@ -520,9 +528,13 @@ function MLSDatasetWidget(O) {
 		    }
 		}
 		function send_process_probe() {
-		    var KC=m_manager.kuleleClient();
-		    KC.probeJob(process_id,function(resp) {
-		      handle_process_probe_response(resp);
+		    var LC=m_manager.lariClient();
+		    LC.probeProcess(job_id,{},function(err,resp) {
+				if (err) {
+					console.error('Error probing processing: '+err);
+					return;
+				}
+				handle_process_probe_response(resp);
 		    });
 		}
 	}

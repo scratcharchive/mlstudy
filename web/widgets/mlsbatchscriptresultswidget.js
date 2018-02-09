@@ -346,20 +346,28 @@ function MLSBatchScriptResultsWidget(O) {
 			callback('MLS manager has not been set');
 			return;
 		}
+		/*
 		if (!m_mls_manager.kuleleClient()) {
 			callback('KuleleClient has not been set');
 			return;
 		}
-		var KC=m_mls_manager.kuleleClient();
-		var process_id='';
-		KC.queueJob(
-			'kbucket.upload',
-			{file:prv},
-			{},
-			{},
-			{},
-			function(resp) {
-			    process_id=resp.process_id||'';
+		*/
+		var LC=m_mls_manager.lariClient();
+		var job_id='';
+		var qq={
+			processor_name:'kbucket.upload',
+			inputs:{file:prv},
+			outputs:{},
+			parameters:{},
+			opts:{}
+		};
+		LC.queueProcess(qq,{},
+			function(err,resp) {
+				if (err) {
+					console.error('Error queuing process: '+err);
+					return;
+				}
+			    job_id=resp.job_id||'';
       			handle_process_probe_response(resp);
 			}
 		);
@@ -368,8 +376,8 @@ function MLSBatchScriptResultsWidget(O) {
 		      callback('Error uploading: '+resp.error);
 			  return;
 		    }
-		    if (process_id!=resp.process_id) {
-		      callback('Unexpected: process_id does not match response: '+process_id+'<>'+resp.process_id);
+		    if (job_id!=resp.job_id) {
+		      callback('Unexpected: job_id does not match response: '+job_id+'<>'+resp.job_id);
 		      return;
 		    }
 		    if (resp.latest_console_output) {
@@ -407,9 +415,13 @@ function MLSBatchScriptResultsWidget(O) {
 		    }
 		}
 		function send_process_probe() {
-		    var KC=m_mls_manager.kuleleClient();
-		    KC.probeJob(process_id,function(resp) {
-		      handle_process_probe_response(resp);
+		    var LC=m_mls_manager.lariClient();
+		    LC.probeProcess(job_id,{},function(err,resp) {
+				if (err) {
+					console.error('Error probing processing: '+err);
+					return;
+				}
+				handle_process_probe_response(resp);
 		    });
 		}
 	}

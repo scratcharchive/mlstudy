@@ -12,18 +12,18 @@ function MLSMainWindow(O,mls_manager) {
 
 	var m_mls_manager=mls_manager;
 	var m_job_manager=new JobManager();
-	var m_processor_manager=new ProcessorManager();
-	var m_kulele_client=new KuleleClient();
-	m_kulele_client.setKuleleUrl(m_mls_manager.mlsConfig().kulele_url);
+	//var m_processor_manager=new ProcessorManager();
+	//var m_kulele_client=new KuleleClient();
+	//m_kulele_client.setKuleleUrl(m_mls_manager.mlsConfig().kulele_url);
 	m_mls_manager.setJobManager(m_job_manager);
-	m_mls_manager.setKuleleClient(m_kulele_client);
+	//m_mls_manager.setKuleleClient(m_kulele_client);
 	var m_docstor_client=null;
 	var m_file_source=''; //e.g., docstor
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
 
-	var server=m_mls_manager.mlsConfig().processing_server;
-	m_kulele_client.setProcessingServer(server);
+	//var server=m_mls_manager.mlsConfig().processing_server;
+	//m_kulele_client.setProcessingServer(server);
 
 	var m_datasets_view=new MLSDatasetsView();
 	m_datasets_view.setParent(O);
@@ -37,7 +37,7 @@ function MLSMainWindow(O,mls_manager) {
 	*/
 
 	var m_batch_scripts_view=new MLSBatchScriptsView();
-	m_batch_scripts_view.setProcessorManager(m_processor_manager);
+	//m_batch_scripts_view.setProcessorManager(m_processor_manager);
 	m_batch_scripts_view.setParent(O);
 	m_batch_scripts_view.setMLSManager(m_mls_manager);
 	JSQ.connect(m_batch_scripts_view,'results_changed',O,update_menus);
@@ -52,8 +52,9 @@ function MLSMainWindow(O,mls_manager) {
 	var m_original_study_object={};
 	var m_menu_bar=new MLMenuBar();
 	var m_status_bar=new MLSStatusBar();
-	m_status_bar.setKuleleClient(m_kulele_client);
-	m_status_bar.setProcessorManager(m_processor_manager);
+	//m_status_bar.setKuleleClient(m_kulele_client);
+	//m_status_bar.setProcessorManager(m_processor_manager);
+	m_status_bar.setMLSManager(m_mls_manager);
 	m_menu_bar.setParent(O);
 	m_status_bar.setParent(O);
 	var m_current_view='study_home';
@@ -320,7 +321,7 @@ function MLSMainWindow(O,mls_manager) {
 		if (!server) return;
 		config.processing_server=server;
 		m_mls_manager.setMLSConfig(config);
-		m_kulele_client.setProcessingServer(server);
+		//m_kulele_client.setProcessingServer(server);
 		update_processor_spec();
 		refresh_views();
 	}
@@ -478,6 +479,7 @@ function MLSMainWindow(O,mls_manager) {
 
 	function setLoginInfo(info) {
 		m_mls_manager.setLoginInfo(info);
+		/*
 		var opts=JSQ.clone(info);
 		opts.processing_server=m_kulele_client.processingServer();
 		m_kulele_client.login(opts,function(tmp) {
@@ -487,9 +489,11 @@ function MLSMainWindow(O,mls_manager) {
 			}
 			update_processor_spec();
 		});
+		*/
 	}
 
 	function update_processor_spec() {
+		/*
 		m_processor_manager.setSpec({});
 		m_processor_manager.setSpecHasBeenSet(false);
 		var server_before=m_kulele_client.processingServer();
@@ -504,6 +508,9 @@ function MLSMainWindow(O,mls_manager) {
 			}
 			m_processor_manager.setSpec(tmp1.spec);
 		});
+		*/
+		//m_processor_manager.setSpec({});
+		//m_processor_manager.setSpecHasBeenSet(true);
 	}
 
 
@@ -648,15 +655,17 @@ function MLSStatusBar(O) {
 	O.div().addClass('MLSStatusBar');
 
 	this.setFileInfo=function(source,info) {setFileInfo(source,info);};
-	this.setKuleleClient=function(KC) {m_kulele_client=KC;};
-	this.setProcessorManager=function(PM) {m_processor_manager=PM;};
+	//this.setKuleleClient=function(KC) {m_kulele_client=KC;};
+	//this.setProcessorManager=function(PM) {m_processor_manager=PM;};
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
 
 	var m_file_source='';
 	var m_file_info={};
 	var m_processor_manager=null;
-	var m_kulele_client=null;
+	var m_mls_manager=null;
+	//var m_kulele_client=null;
 
-	O.div().append('<span id=file_info></span> | <span id=processing_server_info></span>');
+	O.div().append('<span id=file_info></span> | Processing server: <span id=processing_server_info></span>');
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -664,6 +673,11 @@ function MLSStatusBar(O) {
 		var H=O.height();
 		
 		//m_content.css({position:'absolute',left:0,top:0,width:W,height:H});
+	}
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		manager.onConfigChanged(refresh);
 	}
 
 	function setFileInfo(source,info) {
@@ -680,12 +694,20 @@ function MLSStatusBar(O) {
 			str='Cloud document: '+m_file_info.title+' ('+m_file_info.owner+')';
 		O.div().find('#file_info').html(str);
 
+		if (m_mls_manager) {
+			var config=m_mls_manager.mlsConfig();
+			var processing_server=config.processing_server||'<none>';	
+			O.div().find('#processing_server_info').html(processing_server);
+		}
+
+		/*
 		if ((m_kulele_client)&&(m_processor_manager)) {
 			var server=m_kulele_client.processingServer();
 			var num_processors=m_processor_manager.numProcessors();
 			var str=`Processing server: ${server} (${num_processors} processors)`;
 			O.div().find('#processing_server_info').html(str);
 		}
+		*/
 	}
 
 	function periodic_refresh() {

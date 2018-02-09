@@ -80,7 +80,7 @@ function BatchJob(O,lari_client) {
       return;
     }
 
-    setTimeout(check_queued_processes,100);
+    schedule_check_queued_processes();
   }
 
   function _stop() {
@@ -210,9 +210,9 @@ function BatchJob(O,lari_client) {
       var rr=m_results[rname];
       update_pending_outputs(rr);
       if (rr.value) {
-        if (object_has_pending_outputs(rr)) {
+        if (object_has_pending_outputs(rr.value)) {
           done_with_all=false;
-          var running_outputs=get_running_outputs_for_object(rr);
+          var running_outputs=get_running_outputs_for_object(rr.value);
           if (running_outputs.length==0) {
             if (rr.status!='pending') {
               rr.status='pending';
@@ -342,8 +342,19 @@ function BatchJob(O,lari_client) {
       }
     }
 
-    if (!m_is_completed)
-      setTimeout(check_queued_processes,100);
+    if (!m_is_completed) {
+      schedule_check_queued_processes();
+    }
+  }
+
+  var s_check_queued_processes_scheduled=false;
+  function schedule_check_queued_processes() {
+    if (s_check_queued_processes_scheduled) return;
+    s_check_queued_processes_scheduled=true;
+    setTimeout(function() {
+      s_check_queued_processes_scheduled=false;
+      check_queued_processes();
+    },100);
   }
 
   function report_error(err) {
@@ -926,11 +937,11 @@ function ProcessorJob(O,lari_client) {
           return;
         }
         m_job_id=resp.job_id;
-        handle_process_probe_response(resp);
+        handle_process_probe_response(resp,0);
       });
     });
   }
-  function handle_process_probe_response(resp) {
+  function handle_process_probe_response(resp,num) {
     if (!resp.success) {
       report_error('Error in process probe response: '+resp.error);
       return;
@@ -986,17 +997,22 @@ function ProcessorJob(O,lari_client) {
       }
       report_finished();
     }
-    else {
-      setTimeout(send_process_probe,5000);
+    else { 
+      //decide how long to wait based on the number of this probe
+      var msec;
+      if (num==0) msec=100;
+      else if (num==1) msec=1000;
+      else if (num==2) msec=3000;
+      else if (num<=10) msec=5000;
+      else msec=10000;
+      setTimeout(function() {
+        var LC=lari_client;
+        LC.probeProcess(m_job_id,{},function(err,resp) {
+          if (err) return;
+          handle_process_probe_response(resp,num+1);
+        });
+      },msec);
     }
-  }
-  
-  function send_process_probe() {
-    var LC=lari_client;
-    LC.probeProcess(m_job_id,{},function(err,resp) {
-      if (err) return;
-      handle_process_probe_response(resp);
-    });
   }
   function stop() {
     plog('Canceling job');

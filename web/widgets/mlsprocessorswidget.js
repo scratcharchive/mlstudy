@@ -53,6 +53,8 @@ function MLSProcessorsWidget(O) {
 		m_table.clearRows();
 
 		if (!m_mls_manager) return;
+
+		/*
 		var KC=m_mls_manager.kuleleClient();
 		if (!KC) return;
 
@@ -63,6 +65,7 @@ function MLSProcessorsWidget(O) {
 			var row0=create_processor_row(P);
 			m_table.addRow(row0);
 		}
+		*/
 	}
 
 	function create_processor_row(P) {
@@ -109,9 +112,11 @@ function MLSProcessorsWidget(O) {
 
 	function setMLSManager(MM) {
 		m_mls_manager=MM;
+		/*
 		if (MM.kuleleClient()) {
 			JSQ.connect(MM.kuleleClient(),'processor_spec_changed',O,schedule_refresh);
 		}
+		*/
 		schedule_refresh();
 	}
 
