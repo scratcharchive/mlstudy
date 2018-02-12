@@ -58,7 +58,7 @@ if (lari_server_url) {
 }
 else {
 	if (!process.env.LARI_SOURCE_DIRECTORY) {
-		if (require('fs').existsSync(__dirname+'/../../lari/lariserver.js')) {
+		if (require('fs').existsSync(__dirname+'/../../lari/lariapi.js')) {
 			process.env.LARI_SOURCE_DIRECTORY=__dirname+'/../../lari';
 			console.log ('Using lari source directory: '+process.env.LARI_SOURCE_DIRECTORY);
 		}
@@ -67,10 +67,8 @@ else {
 			process.exit(-1);
 		}
 	}
-	process.env.LISTEN_PORT=0;
-	process.env.PARENT_LARI_URL='';
 	process.env.DATA_DIRECTORY=process.env.DATA_DIRECTORY||'*';
-	var direct_lari_call=require(process.env.LARI_SOURCE_DIRECTORY+'/lariserver.js').directCall;
+	var direct_lari_call=require(process.env.LARI_SOURCE_DIRECTORY+'/lariapi.js').directCall;
 	lari_client.setDirectLariCall(direct_lari_call);
 }
 
