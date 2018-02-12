@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-var BatchJob=require(__dirname+'/../managers/batchjob.js').BatchJob;
-var DocStorClient=require(__dirname+'/../clients/docstorclient.js').DocStorClient;
-var LariClient=require(__dirname+'/../clients/lariclient.js').LariClient;
-var JSQ=require(__dirname+'/../jsq/src/jsqcore/jsq.js').JSQ;
+var BatchJob=require(__dirname+'/../web/managers/batchjob.js').BatchJob;
+var DocStorClient=require(__dirname+'/../web/clients/docstorclient.js').DocStorClient;
+var LariClient=require(__dirname+'/../web/clients/lariclient.js').LariClient;
+var JSQ=require(__dirname+'/../web/jsq/src/jsqcore/jsq.js').JSQ;
 
 function print_usage() {
 	console.log ('Usage:');
 	console.log ('    ml-run [script.ml]');
 	console.log ('Optional arguments:');
 	console.log ('    --_results=[/path/to/output]');
-	console.log ('    --_server=[url of lari server]');
+	console.log ('    --_server=[url of lari server, use * for default]');
 	console.log ('    --_container=[container id for processing server]');
 }
 
@@ -22,7 +22,14 @@ if (!arg1) {
 }
 
 var results_path=CLP.namedParameters._results||'results';
+var lari_server_url=CLP.namedParameters._server||'';
+if (lari_server_url=='*') lari_server_url='https://lari1.herokuapp.com';
+var container_id=CLP.namedParameters._container||'';
 
+if ((lari_server_url)&&(!container_id)) {
+	console.log ('Missing required parameter when connecting to remote server: --_container');
+	process.exit(-1);
+}
 
 if (require('fs').existsSync(results_path)) {
 	remove_directory('results');	
@@ -45,8 +52,25 @@ var study={scripts:{},datasets:{}};
 var DSC=new DocStorClient(); //todo
 var lari_client=new LariClient();
 
-lari_client.setLariServerUrl('http://localhost:8054'); //todo
-lari_client.setContainerId('dub_c1');
+if (lari_server_url) {
+	lari_client.setLariServerUrl(lari_server_url);
+	lari_client.setContainerId(container_id);
+}
+else {
+	if (!process.env.LARI_SOURCE_DIRECTORY) {
+		if (require('fs').existsSync(__dirname+'/../../lari/lariserver.js')) {
+			process.env.LARI_SOURCE_DIRECTORY=__dirname+'/../../lari';
+			console.log ('Using lari source directory: '+process.env.LARI_SOURCE_DIRECTORY);
+		}
+		else {
+			console.error('You must either specify the LARI_SOURCE_DIRECTORY environment variable or put the lari source code in a directory adjacent to mlstudy.');
+			process.exit(-1);
+		}
+	}
+	process.env.DATA_DIRECTORY=process.env.DATA_DIRECTORY||'*';
+	var direct_lari_call=require(process.env.LARI_SOURCE_DIRECTORY+'/lariserver.js').directCall;
+	lari_client.setDirectLariCall(direct_lari_call);
+}
 
 var BJ=new BatchJob(null,lari_client);
 BJ.setBatchScript(script);
@@ -95,7 +119,6 @@ function remove_directory(path) {
 	if (path=='/') return;
 	var ml_allow_rm_path=require('path').join(path,'ML_ALLOW_RM');
 	if (!require('fs').existsSync(ml_allow_rm_path)) {
-		console.log(ml_allow_rm_path);
 		console.warn('To be safe we cannot remove a directory that does not contain a ML_ALLOW_RM file');
 		return;
 	}
@@ -120,7 +143,6 @@ function remove_directory(path) {
 
 function mkdir_if_needed(path) {
   try {
-  	console.log('mkdirSync: '+path);
     require('fs').mkdirSync(path);
   }
   catch(err) {

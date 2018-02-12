@@ -17,10 +17,12 @@ function LariClient() {
 	this.findFile=function(prv,opts,callback) {findFile(prv,opts,callback);};
 	this.getFileContent=function(prv,opts,callback) {getFileContent(prv,opts,callback);};
 	this.clearSpecCache=function() {m_spec_cache={};};
+	this.setDirectLariCall=function(func) {m_direct_lari_call=func;};
 
-	var m_lari_server_url='https://lari1.herokuapp.com';
+	var m_lari_server_url='';
 	var m_container_id='';
 	var m_spec_cache={};
+	var m_direct_lari_call=null;
 
 	function getSpec(query,opts,callback) {
 		var spec_code=get_spec_code(query);
@@ -92,9 +94,22 @@ function LariClient() {
 			callback(null,resp);
 		});
 	}
-	
 
 	function api_call(cmd,query,opts,callback) {
+		if (!m_lari_server_url) {
+			if (!m_direct_lari_call) {
+				callback('LariClient: Lari server url not set, and no direct lari call found.');
+				return;
+			}
+			m_direct_lari_call(cmd,query,null,function(resp) {
+				if (!resp.success) {
+					callback(resp.error);
+					return;
+				}
+				callback(null,resp);
+			});
+			return;
+		}
 		if (!m_container_id) {
 			callback('LariClient: Container id not set.');
 			return;
