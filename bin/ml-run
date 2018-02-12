@@ -67,6 +67,8 @@ else {
 			process.exit(-1);
 		}
 	}
+	process.env.LISTEN_PORT=0;
+	process.env.PARENT_LARI_URL='';
 	process.env.DATA_DIRECTORY=process.env.DATA_DIRECTORY||'*';
 	var direct_lari_call=require(process.env.LARI_SOURCE_DIRECTORY+'/lariserver.js').directCall;
 	lari_client.setDirectLariCall(direct_lari_call);
