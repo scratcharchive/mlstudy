@@ -1,3 +1,10 @@
+if (typeof module !== 'undefined' && module.exports) {
+  //using nodejs
+  exports.BatchJob=BatchJob;
+  JSQObject=require(__dirname+'/../jsq/src/jsqcore/jsqobject.js').JSQObject;
+  mlpLog=function(obj) {console.log (obj.text||obj);};
+}
+
 function BatchJob(O,lari_client) {
   O=O||this;
   JSQObject(O);
@@ -30,6 +37,8 @@ function BatchJob(O,lari_client) {
   var m_reported_error='';
   var m_load_study_tasks=[];
   var m_load_file_tasks=[];
+  var m_download_to_server_tasks=[];
+  var m_upload_tasks=[];
   var m_wait_callbacks=[];
   var m_docstor_client=null;
   var m_kbucket_url='';
@@ -42,6 +51,7 @@ function BatchJob(O,lari_client) {
       setResult:_set_result,
       loadStudy:_load_study,
       loadFile:_load_file,
+      upload:_upload,
       wait:_wait,
       prvToUrl: _prv_to_url
     };
@@ -297,6 +307,32 @@ function BatchJob(O,lari_client) {
       }
     }
 
+    // Check on the download file tasks
+    for (var i=0; i<m_download_to_server_tasks.length; i++) {
+      var task=m_download_to_server_tasks[i];
+      if (!task.is_finished) {
+        done_with_all=false;
+        if (!task.handling) {
+          task.handling=true;
+          handle_download_to_server_task(task);
+        }
+      }
+    }
+
+    // Check on the upload tasks
+    for (var i=0; i<m_upload_tasks.length; i++) {
+      var task=m_upload_tasks[i];
+      if (!task.is_finished) {
+        done_with_all=false;
+        if ((task._mls_pending_output in m_outputs)&&(m_outputs[task._mls_pending_output].status=='finished')) {
+          if (!task.handling) {
+            task.handling=true;
+            handle_upload_task(task);
+          }
+        }
+      }
+    }
+
     // If we are done with all, then we should run the _MLS.wait callbacks
     if (done_with_all) {
       if (m_wait_callbacks.length>0) {
@@ -412,6 +448,38 @@ function BatchJob(O,lari_client) {
     for (var i in m_load_file_tasks) {
       m_load_file_tasks[i].stop();
     }
+  }
+
+  function check_if_file_is_on_processing_server(prv,callback) {
+    lari_client.findFile(prv,{},function(err,found) {
+      callback(err,found);
+    });
+  }
+
+  function handle_download_to_server_task(task) {
+    console.log ('Checking if file is on the processing server: '+task._mls_pending_output);
+    check_if_file_is_on_processing_server(task.prv,function(err,found) {
+      if (err) {
+        report_error('Error checking if file is on server: '+err);
+        return;
+      }
+      if (found) {
+        console.log ('File found on processing server: '+task._mls_pending_output);
+        m_outputs[task._mls_pending_output]={value:{prv:JSQ.clone(task.prv)},status:'finished'}
+        task.is_finished=true;
+      }
+      else {
+        console.log ('File not found on processing server. Will download: '+task._mls_pending_output);
+        m_queued_processes.push({
+          processor_name:'kbucket.download',
+          inputs:{},
+          outputs:{file:task._mls_pending_output},
+          parameters:{sha1:task.prv.original_checksum},
+          opts:{}
+        });
+        task.is_finished=true;
+      }
+    });
   }
 
   function processor_job_ready_to_run(P) {
@@ -532,12 +600,24 @@ function BatchJob(O,lari_client) {
     if (!opts) opts={};
     for (var oname in outputs) {
       if (outputs[oname]===true) {
-        outputs[oname]={_mls_pending_output:'unspecified_'+oname+'_'+JSQ.makeRandomId(10)};
+        outputs[oname]={_mls_pending_output:processor_name+'--'+oname+'--'+JSQ.makeRandomId(10)};
+      }
+    }
+    var inputs2=JSQ.clone(inputs);
+    for (var iname in inputs2) {
+      if (inputs2[iname].prv) {
+        //this means it was not generated as an output, so we need to download it if it is not on the server
+        var input0=inputs2[iname];
+        inputs2[iname]={_mls_pending_output:'download--'+iname+'--'+JSQ.makeRandomId(10)};
+        m_download_to_server_tasks.push({
+          prv:input0.prv,
+          _mls_pending_output:inputs2[iname]._mls_pending_output
+        });
       }
     }
     var PP={
       processor_name:processor_name,
-      inputs:JSQ.clone(inputs),
+      inputs:inputs2,
       outputs:JSQ.clone(outputs),
       parameters:JSQ.clone(parameters),
       opts:JSQ.clone(opts)
@@ -697,6 +777,38 @@ function BatchJob(O,lari_client) {
       }
     });
   }
+  function _upload(obj) {
+    if (!obj) return;
+    if (typeof(obj)!='object') return;
+    if (obj.prv) {
+      add_upload_process(JSQ.clone(obj.prv));
+      return;
+    }
+    if (obj._mls_pending_output) {
+      m_upload_tasks.push(JSQ.clone(obj));
+      return;
+    }
+    for (var key in obj) {
+      _upload(obj[key]);
+    }
+  }
+
+  function handle_upload_task(task) {
+    var prv=m_outputs[task._mls_pending_output].value.prv;
+    add_upload_process(prv);
+    task.is_finished=true;
+  }
+
+  function add_upload_process(prv) {
+    m_queued_processes.push({
+      processor_name:'kbucket.upload',
+      inputs:{file:{prv:prv}},
+      outputs:{},
+      parameters:{sha1:prv.original_checksum},
+      opts:{}
+    });
+  }
+  
   function _wait(callback) {
     m_wait_callbacks.push(callback);
   }
@@ -970,8 +1082,6 @@ function ProcessorJob(O,lari_client) {
         parameters:m_parameters,
         opts:m_options
       };
-      console.log('queueProcess');
-      console.log(qq);
       LC.queueProcess(qq,{},function(err2,resp) {
         if (err2) {
           report_error('Error in queueJob: '+err2);
@@ -1072,6 +1182,7 @@ function ProcessorJob(O,lari_client) {
     mlpLog(obj);
   }
   function report_error(err) {
+    console.log ('Error in process '+m_processor_name+': '+err);
     m_is_completed=true;
     m_error=err;
   }
@@ -1085,9 +1196,14 @@ function run_some_code(func) {
   for (var key in console)
     original_console[key]=console[key];
   try {
-    console.log=function(a) {
-      original_console.log (a);
-      mlpLog({text:'CONSOLE: '+a,color:'yellow'});
+    if (typeof module !== 'undefined' && module.exports) {
+      //using nodejs
+    }
+    else {
+      console.log=function(a) {
+        original_console.log (a);
+        mlpLog({text:'CONSOLE: '+a,color:'yellow'});
+      }
     }
     var ret=func();
     restore();

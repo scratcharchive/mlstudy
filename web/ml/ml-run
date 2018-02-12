@@ -1,0 +1,173 @@
+#!/usr/bin/env node
+
+var BatchJob=require(__dirname+'/../managers/batchjob.js').BatchJob;
+var DocStorClient=require(__dirname+'/../clients/docstorclient.js').DocStorClient;
+var LariClient=require(__dirname+'/../clients/lariclient.js').LariClient;
+var JSQ=require(__dirname+'/../jsq/src/jsqcore/jsq.js').JSQ;
+
+function print_usage() {
+	console.log ('Usage:');
+	console.log ('    ml-run [script.ml]');
+	console.log ('Optional arguments:');
+	console.log ('    --_results=[/path/to/output]');
+	console.log ('    --_server=[url of lari server]');
+	console.log ('    --_container=[container id for processing server]');
+}
+
+var CLP=new CLParams(process.argv);
+var arg1=CLP.unnamedParameters[0]||'';
+if (!arg1) {
+	print_usage();
+	process.exit(-1);
+}
+
+var results_path=CLP.namedParameters._results||'results';
+
+
+if (require('fs').existsSync(results_path)) {
+	remove_directory('results');	
+}
+if (require('fs').existsSync(results_path)) {
+	console.warn('Unable to remove directory: '+results_path);
+	process.exit(-1);
+}
+require('fs').mkdirSync(results_path);
+write_text_file(results_path+'/ML_ALLOW_RM','The presence of this file allows the complete removal of this directory by ml-run.');
+//mkdir_if_needed(results_path);
+
+var script=read_text_file(arg1);
+if (!script) {
+	console.error('Unable to read script file: '+arg1);
+	process.exit(-1);
+}
+var all_scripts={};
+var study={scripts:{},datasets:{}};
+var DSC=new DocStorClient(); //todo
+var lari_client=new LariClient();
+
+lari_client.setLariServerUrl('http://localhost:8054'); //todo
+lari_client.setContainerId('dub_c1');
+
+var BJ=new BatchJob(null,lari_client);
+BJ.setBatchScript(script);
+BJ.setAllScripts(all_scripts);
+BJ.setStudyObject(study);
+BJ.setDocStorClient(DSC);
+BJ.setKBucketUrl('https://kbucket.flatironinstitute.org'); //todo
+
+JSQ.connect(BJ,'results_changed',null,function() {
+	var results=BJ.results();
+	for (var fname in results) {
+		var X=results[fname];
+		var path=results_path+'/'+fname;
+		remove_file_if_exists(path+'.pending.json');
+		remove_file_if_exists(path+'.running.json');
+		remove_file_if_exists(path+'.error.json');
+		if (X.status=='finished') {
+			var val=X.value||{};
+			if (val.prv) {
+				write_text_file(path+'.prv',JSON.stringify(val.prv,null,4));
+			}
+			else {
+				write_text_file(path,JSON.stringify(val,null,4));	
+			}
+		}
+		else {
+			write_text_file(path+'.'+X.status+'.json',JSON.stringify(X,null,4));
+		}
+	}
+});
+
+BJ.start();
+  
+function read_text_file(fname) {
+	try {
+		return require('fs').readFileSync(fname,'utf8');
+	}
+	catch(err) {
+		return '';
+	}
+}
+
+function remove_directory(path) {
+	//to be safe
+	if (!path) return;
+	if (path=='/') return;
+	var ml_allow_rm_path=require('path').join(path,'ML_ALLOW_RM');
+	if (!require('fs').existsSync(ml_allow_rm_path)) {
+		console.log(ml_allow_rm_path);
+		console.warn('To be safe we cannot remove a directory that does not contain a ML_ALLOW_RM file');
+		return;
+	}
+
+	delete_folder_recursive(path);
+
+	function delete_folder_recursive(path) {
+		if (require('fs').existsSync(path)) {
+			require('fs').readdirSync(path).forEach(function(file,index) {
+				var curpath=require('path').join(path,file);
+				if (require('fs').lstatSync(curpath).isDirectory()) { //recurse
+					delete_folder_recursive(curpath);
+				}
+				else {
+					require('fs').unlinkSync(curpath);
+				}
+			});
+		}
+		require('fs').rmdirSync(path);
+	}
+}
+
+function mkdir_if_needed(path) {
+  try {
+  	console.log('mkdirSync: '+path);
+    require('fs').mkdirSync(path);
+  }
+  catch(err) {
+  }
+}
+
+function remove_file_if_exists(path) {
+	if (require('fs').existsSync(path)) {
+		require('fs').unlinkSync(path);
+	}
+}
+
+function write_text_file(fname,txt) {
+	try {
+		require('fs').writeFileSync(fname,txt);
+		return true;
+	}
+	catch(err) {
+		return false;
+	}
+}
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				//this.namedParameters[arg0]=args[i+1]||'';
+				//i++;
+				this.namedParameters[arg0]='';
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+}

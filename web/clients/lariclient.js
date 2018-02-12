@@ -9,18 +9,25 @@ if (typeof module !== 'undefined' && module.exports) {
 function LariClient() {
 	var that=this;
 	this.setLariServerUrl=function(url) {m_lari_server_url=url;};
-	this.setContainerId=function(id) {m_container_id=id;};
+	this.setContainerId=function(id) {m_container_id=id; that.clearSpecCache();};
 	this.getSpec=function(query,opts,callback) {getSpec(query,opts,callback);};
 	this.queueProcess=function(query,opts,callback) {queueProcess(query,opts,callback);};
 	this.probeProcess=function(job_id,opts,callback) {probeProcess(job_id,opts,callback);};
 	this.cancelProcess=function(job_id,opts,callback) {cancelProcess(job_id,opts,callback);};
 	this.findFile=function(prv,opts,callback) {findFile(prv,opts,callback);};
 	this.getFileContent=function(prv,opts,callback) {getFileContent(prv,opts,callback);};
+	this.clearSpecCache=function() {m_spec_cache={};};
 
 	var m_lari_server_url='https://lari1.herokuapp.com';
 	var m_container_id='';
+	var m_spec_cache={};
 
 	function getSpec(query,opts,callback) {
+		var spec_code=get_spec_code(query);
+		if (spec_code in m_spec_cache) {
+			callback(null,m_spec_cache[spec_code]);
+			return;
+		}
 		api_call('spec',query,opts,function(err,resp) {
 			if (err) {
 				callback(err);
@@ -30,11 +37,34 @@ function LariClient() {
 				callback(resp.error);
 				return;
 			}
+			m_spec_cache[spec_code]=resp.spec;
 			callback(null,resp.spec);
 		});
 	}
 	function queueProcess(query,opts,callback) {
-		api_call('queue-process',query,opts,callback);
+		var processor_name=query.processor_name||'';
+		var package_uri=(query.opts||{}).package_uri||'';
+		getSpec({processor_name:processor_name,opts:{package_uri:package_uri}},{},function(err,spec) {
+			if (err) {
+				callback('Error getting spec: '+err);
+				return;
+			}
+			var spec_opts=spec.opts||{};
+			if (spec_opts.force_run) {
+				if (!query.opts) query.opts={};
+				query.opts.force_run=true;
+			}
+			if (query.processor_version) {
+				if (query.processor_version!=spec.version) {
+					callback('Incompatible processor version: '+query.processor_version+' <> '+spec.version);
+					return;
+				}
+			}
+			else {
+				query.processor_version=spec.version;
+			}
+			api_call('queue-process',query,opts,callback);
+		});
 	}
 	function probeProcess(job_id,opts,callback) {
 		api_call('probe-process',{job_id:job_id},opts,callback);
@@ -81,6 +111,10 @@ function LariClient() {
 			}
 			callback(null,obj);
 		});
+	}
+
+	function get_spec_code(query) {
+		return query.processor_name+':'+(query.package_uri||'');
 	}
 }
 

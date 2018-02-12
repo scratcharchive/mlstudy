@@ -269,7 +269,7 @@ function MLSOverviewRightWindow(O) {
 		if (!jsu_ends_with(title0,'.mls')) {
 			title0+='.mls';
 		}
-		if (m_mode=='my_studies') {
+		if ((m_mode=='my_studies')||(m_mode=='on_this_browser')) {
 			var opts={
 				owner:m_login_info.user_id,
 				content:'{}',
