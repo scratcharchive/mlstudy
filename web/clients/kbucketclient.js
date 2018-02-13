@@ -38,7 +38,7 @@ function KBucketClient() {
 			}
 			if (!obj.found) {
 				var stat0={found:false};
-				s_kbucket_client_data.stats_by_sha1[sha1]=stat0;
+				//s_kbucket_client_data.stats_by_sha1[sha1]=stat0;
 				callback(null,stat0);
 				return;
 			}

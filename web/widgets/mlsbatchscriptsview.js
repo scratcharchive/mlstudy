@@ -249,7 +249,9 @@ function MLSBatchScriptsView(O,options) {
 		}
 		var job=BJM.startBatchJob(m_batch_script_widget.batchScript(),module_scripts,m_manager.study().object());
 		JSQ.connect(job,'results_changed',O,function() {O.emit('results_changed');});
-		JSQ.connect(job,'completed',O,function() {m_batch_script_widget.setScriptIsRunning(false);});
+		JSQ.connect(job,'completed',O,function() {
+			m_batch_script_widget.setScriptIsRunning(false);
+		});
 		var batch_script_name=m_list_widget.currentBatchScriptName();
 		m_batch_jobs_by_batch_script_name[batch_script_name]=job;
 		update_results_widget();

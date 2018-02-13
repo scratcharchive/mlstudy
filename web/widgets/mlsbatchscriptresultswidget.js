@@ -45,6 +45,11 @@ function MLSBatchScriptResultsWidget(O) {
 					schedule_refresh();
 				}
 			});
+			JSQ.connect(BJ,'completed',O,function() {
+				if (BJ==m_batch_job) { //still the same
+					schedule_refresh();
+				}
+			});
 		}
 		schedule_refresh();
 	}
