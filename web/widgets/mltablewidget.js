@@ -35,7 +35,8 @@ function MLTableWidget(O) {
 	this.setCurrentRow=function(row) {setCurrentRow(row);};
 	this.selectedRows=function() {return selectedRows();};
 
-	var m_table=$('<table class=Table1></table>');
+	//var m_table=$('<table class=Table1></table>');
+	var m_table=$('<table class=table></table>'); //moving to bootstrap
 	O.div().append(m_table);
 	O.div().css({'overflow':'auto'})
 	var m_header_row=new MLTableWidgetHeaderRow(0,O);
