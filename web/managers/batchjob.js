@@ -474,9 +474,9 @@ function BatchJob(O,lari_client) {
         m_queued_processes.push({
           processor_name:'kbucket.download',
           inputs:{},
-          outputs:{file:task._mls_pending_output},
+          outputs:{file:{_mls_pending_output:task._mls_pending_output}},
           parameters:{sha1:task.prv.original_checksum},
-          opts:{}
+          opts:{force_run:true} // we should force run because we know that the file is not on the server.
         });
         task.is_finished=true;
       }
