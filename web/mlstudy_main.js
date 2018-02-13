@@ -18,6 +18,10 @@ function jsqmain(query) {
     // The url query
     query=query||{};
 
+    if (query.alt=='true') {
+        MLSOverviewWindow=AltMLSOverviewWindow;
+    }
+
     // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
     var local_mode=(window.mlpipeline_mode=='local'); 
 
@@ -56,6 +60,7 @@ function jsqmain(query) {
             show_full_browser_message('','');
 
             var OO=new MLSOverviewWindow();
+            if (OO.setMLSManager) OO.setMLSManager(mls_manager);
             OO.setDocStorClient(DSC);
             OO.setLoginInfo(login_info);
             OO.refresh();

@@ -74,7 +74,7 @@ opts.STYLESHEETS.push('create.css');
 
 opts.SOURCEPATH.push('overview');
 opts.SCRIPTS.push(
-	'mlsoverviewwindow.js'
+	'mlsoverviewwindow.js','altmlsoverviewwindow.js'
 );
 opts.STYLESHEETS.push('mlsoverviewwindow.css');
 
