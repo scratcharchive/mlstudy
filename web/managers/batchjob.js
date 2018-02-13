@@ -801,12 +801,27 @@ function BatchJob(O,lari_client) {
   }
 
   function add_upload_process(prv) {
-    m_queued_processes.push({
-      processor_name:'kbucket.upload',
-      inputs:{file:{prv:prv}},
-      outputs:{},
-      parameters:{sha1:prv.original_checksum},
-      opts:{}
+    check_on_kbucket(prv,function(err,tmp) {
+      if (err) {
+        console.error('Error checking kbucket: '+err);
+      }
+      if ((err)||(!tmp.found)) {
+        m_queued_processes.push({
+          processor_name:'kbucket.upload',
+          inputs:{file:{prv:prv}},
+          outputs:{},
+          parameters:{sha1:prv.original_checksum},
+          opts:{}
+        });
+      }
+    });
+  }
+
+  function check_on_kbucket(prv,callback) {
+    var KC=new KBucketClient();
+    KC.setKBucketUrl(m_kbucket_url);
+    KC.stat(prv.original_checksum,prv.original_size,function(err,res) {
+      callback(err,res);
     });
   }
   
