@@ -24,6 +24,7 @@ function BatchJob(O,lari_client) {
   this.queuedProcessCount=function() {return m_queued_processes.length;};
   this.queuedProcessInfo=function(i) {return queuedProcessInfo(i);};
   this.processorJob=function(job_id) {return m_processor_jobs_by_id[job_id]||null;}
+  this.isCompleted=function() {return m_is_completed;};
 
   var m_id=JSQ.makeRandomId(6);
   var m_script='';

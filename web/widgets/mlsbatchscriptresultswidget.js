@@ -298,19 +298,25 @@ function MLSBatchScriptResultsWidget(O) {
 				row.cell(3).find('.download_button').click(download_result_file);
 			}
 			else {
-				var elmt=$('<span><a href=#><span class=no>Transfer to kbucket</span></a></span>');
+				var elmt;
+				if ((m_batch_job)&&(m_batch_job.isCompleted())) {
+					elmt=$('<span><a href=#><span class=no>Transfer to kbucket</span></a></span>');
+					elmt.find('a').click(function() {
+						row.cell(3).html('<span class=no>Uploading...</span>');
+						row.upload_error='';
+						transfer_to_kbucket(row.prv,function(err) {
+							if (err) console.error(err);
+							row.upload_error=err;
+							check_on_kbucket_2(row,null);
+						});
+					});
+				}
+				else {
+					elmt=$('<span><span class=no>Not found</span></span>');	
+				}
 				if (row.upload_error) {
 					elmt.append(' Error uploading: '+row.upload_error);
 				}
-				elmt.find('a').click(function() {
-					row.cell(3).html('<span class=no>Uploading...</span>');
-					row.upload_error='';
-					transfer_to_kbucket(row.prv,function(err) {
-						if (err) console.error(err);
-						row.upload_error=err;
-						check_on_kbucket_2(row,null);
-					});
-				})
 				row.cell(3).children().detach();
 				row.cell(3).empty();
 				row.cell(3).append(elmt);

@@ -46,7 +46,7 @@ function LariClient() {
 	function queueProcess(query,opts,callback) {
 		var processor_name=query.processor_name||'';
 		var package_uri=(query.opts||{}).package_uri||'';
-		getSpec({processor_name:processor_name,opts:{package_uri:package_uri}},{},function(err,spec) {
+		getSpec({processor_name:processor_name,package_uri:package_uri},{},function(err,spec) {
 			if (err) {
 				callback('Error getting spec: '+err);
 				return;
@@ -81,7 +81,7 @@ function LariClient() {
 				callback(err);
 				return;
 			}
-			callback(null,resp);
+			callback(null,resp.found);
 		});
 	}
 
