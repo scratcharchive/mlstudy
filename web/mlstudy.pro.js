@@ -22,10 +22,10 @@ var opts={PROJECTPATH:__dirname, SOURCEPATH:['.'], SCRIPTS:[], STYLESHEETS:[]};
 //require('../../jsqcore/jsqcore.pri').load(opts);
 opts.SOURCEPATH.push('jsq/src/jsqcore');
 opts.SCRIPTS.push(
-	'jquery.min.js','jsq.js','jsqobject.js','jsqwidget.js','jsqcanvaswidget.js','jquery-ui.min.js'
+	/*'jquery.min.js',*/'jsq.js','jsqobject.js','jsqwidget.js','jsqcanvaswidget.js'/*,'jquery-ui.min.js'*/
 );
 opts.STYLESHEETS.push(
-	'jsq.css','jquery-ui.min.css'
+	'jsq.css'/*,'jquery-ui.min.css'*/
 );
 
 //////////////////////////////////////////////////////////////////////
@@ -105,10 +105,10 @@ opts.STYLESHEETS.push(
 
 //// MLMenuBar
 opts.SCRIPTS.push(
-	'mlmenubar.js','jquery.dropdown.min.js'
+	'mlmenubar.js'/*,'jquery.dropdown.min.js'*/
 );
 opts.STYLESHEETS.push(
-	'jquery.dropdown.min.css','mlmenubar.css'
+	/*'jquery.dropdown.min.css',*/'mlmenubar.css'
 );
 
 opts.SOURCEPATH.push('managers')
