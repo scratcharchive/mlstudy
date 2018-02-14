@@ -27,6 +27,7 @@ function JSQWidget(O) {
 	O.top=function() {return m_position[1];};
 	O.setPosition=function(x,y) {setPosition(x,y);};
 	O.setGeometry=function(x,y,W,H) {setGeometry(x,y,W,H);};
+	O.clearGeometry=function() {clearGeometry();};
 	O.geometry=function() {return [m_position[0],m_position[1],m_size[0],m_size[1]];};
 	O.showFullBrowser=function() {showFullBrowser();};
 	var JSQObject_setParent=O.setParent;
@@ -75,6 +76,7 @@ function JSQWidget(O) {
 		}
 		m_size[0]=size[0];
 		m_size[1]=size[1];
+		m_position_str='absolute';
 		set_div_geom();
 		O.emit('sizeChanged');
 	}
@@ -86,6 +88,7 @@ function JSQWidget(O) {
 		}
 		m_position[0]=pos[0];
 		m_position[1]=pos[1];
+		m_position_str='absolute';
 		set_div_geom();
 		O.emit('positionChanged');
 	}
@@ -96,6 +99,11 @@ function JSQWidget(O) {
 		}
 		O.setSize(geom[2],geom[3]);
 		O.setPosition(geom[0],geom[1]);
+	}
+	function clearGeometry() {
+		m_position_str='';
+		O.emit('positionChanged');
+		O.emit('sizeChanged');
 	}
 	function showFullBrowser(opts) {
 		if (!opts) opts={};
@@ -204,18 +212,30 @@ function JSQWidget(O) {
 	O._set_is_widget(true);
 	var m_position=[0,0];
 	var m_size=[0,0];
+	var m_position_str='';
 
 	var m_div=$('<div></div>');
 	connect_div(m_div);
 
 	function set_div_geom() {
-		m_div.css({
-			position:'absolute',
-			left:m_position[0],
-			top:m_position[1],
-			width:m_size[0],
-			height:m_size[1]
-		})
+		if (m_position_str) {
+			m_div.css({
+				position:m_position_str,
+				left:m_position[0],
+				top:m_position[1],
+				width:m_size[0],
+				height:m_size[1]
+			});
+		}
+		else {
+			m_div.css({
+				position:'',
+				left:undefined,
+				top:undefined,
+				width:undefined,
+				height:undefined
+			});
+		}
 	}
 
 	O.onMouseMove(mouseMove);

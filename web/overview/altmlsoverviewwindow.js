@@ -4,32 +4,65 @@ function AltMLSOverviewWindow(O) {
 	O.div().addClass('AltMLSOverviewWindow');
 
 	this.setMLSManager=function(manager) {m_mls_manager=manager;};
-	this.setDocStorClient=function(DSC) {m_right_window.setDocStorClient(DSC);};
-	this.refresh=function() {refresh_right_window();};
-	this.setLoginInfo=function(info) {m_right_window.setLoginInfo(info);};
+	this.setDocStorClient=function(DSC) {m_study_list_widget.setDocStorClient(DSC);};
+	this.refresh=function() {refresh_study_list_widget();};
+	this.setLoginInfo=function(info) {m_study_list_widget.setLoginInfo(info);};
 
 	//O.div().append($('#template-AltMLSOverviewWindow').find(">:first-child").clone());
 	O.div().append($('#template-AltMLSOverviewWindow').children().clone());
 
+	O.div().find('.bd-toc-item').addClass('active');
+
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
+		//O.div().find('.bd-toc-item').removeClass('active');
 		O.div().find('.bd-toc-item ul > li > a').parent().removeClass('active bd-sidenav-active');
 		$(this).parent().addClass('active bd-sidenav-active');
+		$(this).parent().parent().parent().addClass('active');
+		update_visible_content();
+	});
+	O.div().find('.bd-toc-link').click(function() {
+		//O.div().find('.bd-toc-link').parent().removeClass('active');
+		$(this).parent().addClass('active');
+		O.div().find('.bd-toc-item ul > li > a').parent().removeClass('active bd-sidenav-active');
+		$(this).parent().find('ul > li').first().addClass('active bd-sidenav-active');
+		update_visible_content();
 	});
 
+	function current_content_id() {
+		var active_item=O.div().find('.bd-toc-item ul > li.active').first();
+		var content_id=active_item.attr('data-content-id');
+		return content_id;
+	}
+
+	function current_study_list_mode() {
+		var active_item=O.div().find('.bd-toc-item ul > li.active').first();
+		var study_list_mode=active_item.attr('data-study-list-mode');
+		return study_list_mode;
+	}
+
+	function update_visible_content() {
+		var content_id=current_content_id();
+		O.div().find('#content .tab-pane').removeClass('show active');
+		O.div().find('#content .tab-pane#'+content_id).addClass('show active');
+		refresh_study_list_widget();
+	}
+
 	var m_left_window=new AltMLSOverviewLeftWindow();
-	var m_right_window=new AltMLSOverviewRightWindow();
+	var m_study_list_widget=new StudyListWidget();
 	var m_mls_manager=null;
 	//m_left_window.setParent(O);
 	//m_right_window.setParent(O);
+
+	O.div().find('#study_list').append(m_study_list_widget.div());
 
 	O.div().find('.action_set_processing_server').click(set_processing_server);
 	O.div().find('.action_configuration').click(set_configuration);
 	O.div().find('.action_login').click(login);
 	O.div().find('.action_generate_kbucket_upload_token').click(generate_kbucket_upload_token);
 
-	JSQ.connect(m_right_window,'open_study',O,'open_study');
+	JSQ.connect(m_study_list_widget,'open_study',O,'open_study');
 
-	JSQ.connect(m_left_window,'selection_changed',O,refresh_right_window);
+	//JSQ.connect(m_left_window,'selection_changed',O,refresh_right_window);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -44,13 +77,19 @@ function AltMLSOverviewWindow(O) {
 		var W2=W-xmarg*2-xspace-W1;
 		var ytop=60;
 
-		m_left_window.setGeometry(xmarg,ytop,W1,H-ytop);
-		m_right_window.setGeometry(xmarg+W1+xspace,ytop+ymarg,W2,H-ymarg*2-ytop);
+		//m_left_window.setGeometry(xmarg,ytop,W1,H-ytop);
+		//m_right_window.setGeometry(xmarg+W1+xspace,ytop+ymarg,W2,H-ymarg*2-ytop);
 	}
 
-	function refresh_right_window() {
-		var sel=m_left_window.currentSelection();
-		m_right_window.setMode(sel);
+	function refresh_study_list_widget() {
+
+		var study_list_mode=current_study_list_mode();
+		if (study_list_mode) {
+			m_study_list_widget.setMode(study_list_mode);	
+		}
+		
+		//var sel=m_left_window.currentSelection();
+		//m_right_window.setMode(sel);
 	}
 
 	function set_processing_server() {
@@ -97,11 +136,10 @@ function AltMLSOverviewWindow(O) {
 	update_layout();
 }
 
-function AltMLSOverviewRightWindow(O) {
+function StudyListWidget(O) {
 	O=O||this;
 	JSQWidget(O);
-	O.div().addClass('MLSOverviewRightWindow');
-	O.div().addClass('MLSOverviewWindow');
+	O.div().addClass('StudyListWidget');
 
 	this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
 	this.clear=function() {clear();};
@@ -125,12 +163,15 @@ function AltMLSOverviewRightWindow(O) {
 	var menu_item_unshare_with=menu.addItem('Unshare with...',unshare_with);
 	menu.addDivider();
 	var menu_item_delete=menu.addItem('Delete selected studies...',delete_selected_studies);
-	m_menu_bar.setParent(O);
+	//m_menu_bar.setParent(O);
 	update_menus();
 
-	O.div().append('<h3 style="margin:10px"><span id=heading style="padding-left:20px;"></span></h3>');
-	O.div().append('<span style="padding-left:30px"><button id=create_new_study>Create new study...</button></span>');
+	O.div().append('<span id=alert></span>');
+	O.div().append('<h2 id=heading></h2>');
+	O.div().append('<p><button type=button class=btn id=create_new_study>Create new study</button></p>');
 	O.div().find('#create_new_study').click(create_new_study);
+
+	O.div().append(m_table.div());
 
 	JSQ.connect(m_table,'selected_rows_changed',O,update_menus);
 
@@ -141,18 +182,30 @@ function AltMLSOverviewRightWindow(O) {
 		var H1=80;
 		var Hmenu=60;
 		xmarg=20;
-		m_menu_bar.setGeometry(xmarg,H1,W-xmarg*2,Hmenu)
-		m_table.setGeometry(xmarg,H1+Hmenu,W-xmarg*2,H-H1-Hmenu);
+		//m_menu_bar.setGeometry(xmarg,H1,W-xmarg*2,Hmenu)
+		//m_table.setGeometry(xmarg,H1+Hmenu,W-xmarg*2,H-H1-Hmenu);
 	}
 
 	function clear() {
 		m_studies=[];
-		set_heading('');
+		set_alert(null);
 		refresh();
 	}
 
 	function set_heading(heading) {
 		O.div().find('#heading').html(heading);
+	}
+
+	function set_alert(alert_type,message) {
+		var elmt=O.div().find('#alert');
+		elmt.empty();
+		if (alert_type) {
+			elmt.append(`
+				<div class="alert alert-${alert_type}">
+  					${message}
+				</div>
+			`);
+		}
 	}
 
 	function get_selected_document_ids_list() {
@@ -183,7 +236,7 @@ function AltMLSOverviewRightWindow(O) {
 	      DC.getDocument(id,{include_content:false},function(err,doc0) {
 	        if (err) {
 	          refresh();
-	          alert(err);
+	          set_alert('warning',err);
 	          return;
 	        }
 	        var attr0=doc0.attributes||{};
@@ -214,7 +267,7 @@ function AltMLSOverviewRightWindow(O) {
 	        m_docstor_client.setDocument(doc0._id,{attributes:attr0},function(err) {
 	          if (err) {
 	            refresh();
-	            alert(err);
+	            set_alert('warning',err);
 	          }
 	          else cb();
 	        });  
@@ -243,7 +296,7 @@ function AltMLSOverviewRightWindow(O) {
 	      DC.getDocument(id,{include_content:false},function(err,doc0) {
 	        if (err) {
 	          refresh();
-	          alert(err);
+	          set_alert('warning',err);
 	          return;
 	        }
 	        var per0=doc0.permissions||{};
@@ -274,7 +327,7 @@ function AltMLSOverviewRightWindow(O) {
 	        m_docstor_client.setDocument(doc0._id,{permissions:per0},function(err) {
 	          if (err) {
 	            refresh();
-	            alert(err);
+	            set_alert('warning',err);
 	          }
 	          else cb();
 	        });  
@@ -313,7 +366,7 @@ function AltMLSOverviewRightWindow(O) {
 		}
 		m_docstor_client.removeDocuments(ids,function(err) {
 			if (err) {
-				alert('Error removing documents: '+err);
+				set_alert('warning','Error removing documents: '+err);
 				refresh();
 				return;
 			}
@@ -322,46 +375,46 @@ function AltMLSOverviewRightWindow(O) {
 	}
 
 	function create_new_study() {
-		var title0=prompt('Title of new study:','untitled.mls');
-		if (!title0) return;
-		if (!jsu_ends_with(title0,'.mls')) {
-			title0+='.mls';
-		}
-		if ((m_mode=='my_studies')||(m_mode=='on_this_browser')) {
-			var opts={
-				owner:m_login_info.user_id,
-				content:'{}',
-				attributes:{title:title0}
+		mlprompt('Title of new study:','untitled.mls',function(title0) {
+			if (!jsu_ends_with(title0,'.mls')) {
+				title0+='.mls';
 			}
-			m_docstor_client.createDocument(opts,function(err) {
-				if (err) {
-					alert(err);
-					return;
+			if (m_mode=='my_studies') {
+				var opts={
+					owner:m_login_info.user_id,
+					content:'{}',
+					attributes:{title:title0}
 				}
-				//O.emit('open_study',{study:{owner:opts.owner,title:opts.attributes.title}});
-				refresh();
-			});
-		}
-		else {
-			alert('Not yet implemented.');
-		}
+				m_docstor_client.createDocument(opts,function(err) {
+					if (err) {
+						set_alert('warning',err);
+						return;
+					}
+					//O.emit('open_study',{study:{owner:opts.owner,title:opts.attributes.title}});
+					refresh();
+				});
+			}
+			else {
+				alert('Not yet implemented.');
+			}
+		});
 	}
 
 	function setMode(mode) {
+		if (m_mode==mode) return;
 		m_mode=mode;
 		refresh();
 	}
 
 	function refresh() {
 		var mode=m_mode;
+		set_heading('');
 		if (mode=='public_studies')
-			set_heading('Loading public studies...');
+			set_alert('info','Loading public studies...');
 		else if (mode=='my_studies')
-			set_heading('Loading studies...');
+			set_alert('info','Loading studies...');
 		else if (mode=='shared_with_me')
-			set_heading('Loading studies...');
-		else if (mode=='on_this_browser')
-			set_heading('Loading studies from browser...');
+			set_alert('info','Loading studies...');
 
 		if ((mode=='my_studies')||(mode=='on_this_browser')) {
 			O.div().find('#create_new_study').css({visibility:''});
@@ -398,18 +451,14 @@ function AltMLSOverviewRightWindow(O) {
 				filter:'*.mls'
 			};	
 		}
-		else if (mode=='on_this_browser') {
-			client=new DocStorClient();
-			client.setDocStorUrl('browser');
-		}
 		else {
-			alert('Unexpected mode: '+mode);
+			set_alert('Unexpected mode: '+mode);
 			return;
 		}
 		client.findDocuments(obj,function(err,docs) {
 			if (mode!=m_mode) return;
 			if (err) {
-				alert('Error loading documents from cloud: '+err);
+				set_alert('warning','Error loading documents from cloud: '+err);
 				return;
 			}
 			var docs0=[];
@@ -436,8 +485,7 @@ function AltMLSOverviewRightWindow(O) {
 				set_heading('My studies');
 			else if (mode=='shared_with_me')
 				set_heading('Shared with me');
-			else if (mode=='on_this_browser')
-				set_heading('On this browser');
+			set_alert(null);
 			update_table();
 		});
 	}
@@ -467,7 +515,7 @@ function AltMLSOverviewRightWindow(O) {
 		for (var i in list) {
 			list[i].setDisabled(true);
 		}
-		if ((m_mode=='my_studies')||(m_mode=='on_this_browser')) {
+		if (m_mode=='my_studies') {
 			if (m_table.selectedRows().length>0) {
 				for (var i in list) {
 					list[i].setDisabled(false);
@@ -492,7 +540,7 @@ function AltMLSOverviewRightWindow(O) {
 		share_elmt.find('.edit_button').click(function() {
 			edit_sharing(study0);
 		});
-		if ((m_mode=='my_studies')||(m_mode=='on_this_browser')) {
+		if (m_mode=='my_studies') {
 			//keep it
 		}
 		else {
@@ -533,7 +581,6 @@ function AltMLSOverviewLeftWindow(O) {
 	ul.append('<li id=public_studies>Public studies</li>');
 	ul.append('<li id=my_studies>My studies</li>');
 	ul.append('<li id=shared_with_me>Shared with me</li>');
-	ul.append('<li id=on_this_browser>On this browser</li>');
 	O.div().append(ul);
 	//O.div().append('<a href=# id=set_configuration>Configuration...</a>');
 

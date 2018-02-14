@@ -200,28 +200,53 @@ function parse_url_params() {
   </ul>
 </header>
 
-<div class="container-fluid">
+<div class="container-fluid" style="padding:20px;">
       <div class="row flex-xl-nowrap">
-        <div class="col-12 col-md-3 col-xl-2 bd-sidebar">
+        <div class="bd-sidebar col-xl-2 col-4">
         	<nav class="bd-links" id="bd-docs-nav">
+
         		<div class="bd-toc-item active">
         			<a class="bd-toc-link" href="#">
 	              		Studies
 	            	</a>
 	            	<ul class="nav bd-sidenav">
-	            		<li class="active bd-sidenav-active">
+	            		<li data-content-id="study_list" data-study-list-mode="public_studies" class="active bd-sidenav-active">
 			            	<a href="#">Public studies</a>
 			            </li>
-			            <li>
+			            <li data-content-id="study_list" data-study-list-mode="my_studies">
 			            	<a href="#">My studies</a>
 			            </li>
-			            <li>
+			            <li data-content-id="study_list" data-study-list-mode="shared_with_me">
 			            	<a href="#">Shared with me</a>
+			            </li>
+			        </ul>
+        		</div>
+
+        		<div class="bd-toc-item active">
+        			<a class="bd-toc-link" href="#">
+	              		Configuration
+	            	</a>
+	            	<ul class="nav bd-sidenav">
+	            		<li data-content-id="processing_server">
+			            	<a href="#">Processing server</a>
+			            </li>
+			            <li data-content-id="advanced_configuration">
+			            	<a href="#">Advanced</a>
 			            </li>
 			        </ul>
         		</div>
         		
         	</nav>
+		</div>
+		<div id=content class="col-xl-10 col-8" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
+			<div class="tab-content" id="myTabContent">
+			  <div class="tab-pane fade show active" id="study_list" role="tabpanel" aria-labelledby="home-tab"></div>
+
+			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab">Processing server</div>
+
+			  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab">Advanced configuration</div>
+			</div>
+			
 		</div>
     </div>
 </div>

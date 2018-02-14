@@ -9,4 +9,4 @@ var A=_MLS.runProcess('pyms.synthesize_random_waveforms',
 
 _MLS.setResult('waveforms.mda',A.waveforms_out);
 
-_MLS.upload(A.waveforms_out);
+//_MLS.upload(A.waveforms_out);
