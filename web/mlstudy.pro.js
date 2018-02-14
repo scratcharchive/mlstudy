@@ -76,7 +76,7 @@ opts.SOURCEPATH.push('overview');
 opts.SCRIPTS.push(
 	'mlsoverviewwindow.js','altmlsoverviewwindow.js'
 );
-opts.STYLESHEETS.push('mlsoverviewwindow.css');
+opts.STYLESHEETS.push('mlsoverviewwindow.css','bootstrap_docs.css');
 
 opts.SOURCEPATH.push('widgets');
 opts.SCRIPTS.push(

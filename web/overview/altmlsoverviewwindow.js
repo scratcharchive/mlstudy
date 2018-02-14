@@ -8,39 +8,19 @@ function AltMLSOverviewWindow(O) {
 	this.refresh=function() {refresh_right_window();};
 	this.setLoginInfo=function(info) {m_right_window.setLoginInfo(info);};
 
-	O.div().html(`
-	<nav class="navbar navbar-expand-lg navbar-light bg-light">
-	  <a class="navbar-brand" href="#">MLStudy</a>
+	//O.div().append($('#template-AltMLSOverviewWindow').find(">:first-child").clone());
+	O.div().append($('#template-AltMLSOverviewWindow').children().clone());
 
-	  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-	    <ul class="navbar-nav mr-auto">
-	      <li class="nav-item dropdown">
-	        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-	          Tools
-	        </a>
-
-	        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-	          <a class="dropdown-item action_set_processing_server" href="#">Set processing server...</a>
-	          <a class="dropdown-item action_configuration" href="#">Configuration...</a>
-
-	        <div class="dropdown-divider"></div>
-	          <a class="dropdown-item action_login" href="#">Log in...</a>
-
-	        <div class="dropdown-divider"></div>
-	          <a class="dropdown-item action_generate_kbucket_upload_token" href="#">Generate kbucket upload token...</a>
-
-	        </div>
-	      </li>
-	    </ul>
-	  </div>
-	</nav>
-	`);
+	O.div().find('.bd-toc-item ul > li > a').click(function() {
+		O.div().find('.bd-toc-item ul > li > a').parent().removeClass('active bd-sidenav-active');
+		$(this).parent().addClass('active bd-sidenav-active');
+	});
 
 	var m_left_window=new AltMLSOverviewLeftWindow();
 	var m_right_window=new AltMLSOverviewRightWindow();
 	var m_mls_manager=null;
-	m_left_window.setParent(O);
-	m_right_window.setParent(O);
+	//m_left_window.setParent(O);
+	//m_right_window.setParent(O);
 
 	O.div().find('.action_set_processing_server').click(set_processing_server);
 	O.div().find('.action_configuration').click(set_configuration);
