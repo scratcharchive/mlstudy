@@ -3,10 +3,15 @@ function AltMLSOverviewWindow(O) {
 	JSQWidget(O);
 	O.div().addClass('AltMLSOverviewWindow');
 
-	this.setMLSManager=function(manager) {m_mls_manager=manager;};
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
 	this.setDocStorClient=function(DSC) {m_study_list_widget.setDocStorClient(DSC);};
 	this.refresh=function() {refresh_study_list_widget();};
 	this.setLoginInfo=function(info) {m_study_list_widget.setLoginInfo(info);};
+
+	var m_study_list_widget=new StudyListWidget();
+	var m_processing_server_widget=new ProcessingServerWidget();
+	var m_advanced_configuration_widget=new AdvancedConfigurationWidget();
+	var m_mls_manager=null;
 
 	//O.div().append($('#template-AltMLSOverviewWindow').find(">:first-child").clone());
 	O.div().append($('#template-AltMLSOverviewWindow').children().clone());
@@ -28,6 +33,19 @@ function AltMLSOverviewWindow(O) {
 		update_visible_content();
 	});
 
+	O.div().find('#study_list').append(m_study_list_widget.div());
+	O.div().find('#processing_server').append(m_processing_server_widget.div());
+	O.div().find('#advanced_configuration').append(m_advanced_configuration_widget.div());
+
+	O.div().find('.action_sign_in').click(sign_in);
+	O.div().find('.action_sign_out').click(sign_out);
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager; 
+		m_processing_server_widget.setMLSManager(manager);
+		m_advanced_configuration_widget.setMLSManager(manager);
+	}
+
 	function current_content_id() {
 		var active_item=O.div().find('.bd-toc-item ul > li.active').first();
 		var content_id=active_item.attr('data-content-id');
@@ -47,93 +65,22 @@ function AltMLSOverviewWindow(O) {
 		refresh_study_list_widget();
 	}
 
-	var m_left_window=new AltMLSOverviewLeftWindow();
-	var m_study_list_widget=new StudyListWidget();
-	var m_mls_manager=null;
-	//m_left_window.setParent(O);
-	//m_right_window.setParent(O);
-
-	O.div().find('#study_list').append(m_study_list_widget.div());
-
-	O.div().find('.action_set_processing_server').click(set_processing_server);
-	O.div().find('.action_configuration').click(set_configuration);
-	O.div().find('.action_login').click(login);
-	O.div().find('.action_generate_kbucket_upload_token').click(generate_kbucket_upload_token);
-
 	JSQ.connect(m_study_list_widget,'open_study',O,'open_study');
 
-	//JSQ.connect(m_left_window,'selection_changed',O,refresh_right_window);
-
-	JSQ.connect(O,'sizeChanged',O,update_layout);
-	function update_layout() {
-		var W=O.width();
-		var H=O.height();
-
-		var xmarg=5;
-		var xspace=20;
-		var ymarg=15;
-
-		var W1=200;
-		var W2=W-xmarg*2-xspace-W1;
-		var ytop=60;
-
-		//m_left_window.setGeometry(xmarg,ytop,W1,H-ytop);
-		//m_right_window.setGeometry(xmarg+W1+xspace,ytop+ymarg,W2,H-ymarg*2-ytop);
-	}
-
 	function refresh_study_list_widget() {
-
 		var study_list_mode=current_study_list_mode();
 		if (study_list_mode) {
 			m_study_list_widget.setMode(study_list_mode);	
 		}
-		
-		//var sel=m_left_window.currentSelection();
-		//m_right_window.setMode(sel);
 	}
 
-	function set_processing_server() {
-		var config=m_mls_manager.mlsConfig();
-		var server=config.processing_server;
-		mlprompt('Processing server:',config.processing_server||'',function(server) {
-			config.processing_server=server;
-			m_mls_manager.setMLSConfig(config);	
-		});
-		/*
-		server=prompt(,server);
-		if (!server) return;
-		config.processing_server=server;
-		m_mls_manager.setMLSConfig(config);
-		*/
+	function sign_in() {
+		O.emit('log_in');
 	}
 
-	function set_configuration() {
-		var LS=new LocalStorage();
-		var obj=LS.readObject('mls_config2')||{};
-		var dlg=new EditTextDlg();
-		dlg.setText(JSON.stringify(obj,null,4));
-		dlg.show();
-		dlg.onAccepted(function() {
-			var json=dlg.text();
-			var obj2=jsu_try_parse_json(json);
-			if (!obj2) {
-				alert('Error parsing json.');
-				return;
-			}
-			LS.writeObject('mls_config2',obj2);
-			alert('Configuration saved. You should now reload the page.');
-		});
+	function sign_out() {
+		mlinfo('Not yet implemented','Sign out - not yet implemented');
 	}
-
-	function login() {
-		//todo
-	}
-
-	function generate_kbucket_upload_token() {
-		//todo
-	}
-
-	update_layout();
 }
 
 function StudyListWidget(O) {
@@ -144,7 +91,7 @@ function StudyListWidget(O) {
 	this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
 	this.clear=function() {clear();};
 	this.setMode=function(mode) {setMode(mode);};
-	this.setLoginInfo=function(info) {m_login_info=JSQ.clone(info);};
+	this.setLoginInfo=function(info) {m_login_info=JSQ.clone(info); refresh();};
 
 	var m_docstor_client=null;
 	var m_studies=[];
@@ -567,56 +514,6 @@ function StudyListWidget(O) {
 	refresh();
 }
 
-function AltMLSOverviewLeftWindow(O) {
-	O=O||this;
-	JSQWidget(O);
-	O.div().addClass('MLSOverviewLeftWindow');
-	O.div().addClass('MLSOverviewWindow');
-
-	this.currentSelection=function() {return m_current_selection;};
-
-	var m_current_selection='public_studies';
-
-	var ul=$('<ul></ul>');
-	ul.append('<li id=public_studies>Public studies</li>');
-	ul.append('<li id=my_studies>My studies</li>');
-	ul.append('<li id=shared_with_me>Shared with me</li>');
-	O.div().append(ul);
-	//O.div().append('<a href=# id=set_configuration>Configuration...</a>');
-
-	ul.find('#public_studies').click(function() {set_current_selection('public_studies')});
-	ul.find('#my_studies').click(function() {set_current_selection('my_studies')});
-	ul.find('#shared_with_me').click(function() {set_current_selection('shared_with_me')});
-	ul.find('#on_this_browser').click(function() {set_current_selection('on_this_browser')});
-
-	//O.div().find('#set_configuration').click(set_configuration);
-
-	JSQ.connect(O,'sizeChanged',O,update_layout);
-	function update_layout() {
-		var W=O.width();
-		var H=O.height();
-
-		var list=ul.find('li');
-		for (var i=0; i<list.length; i++) {
-			var elmt=$(list[i]);
-			if (elmt.attr('id')==m_current_selection) {
-				elmt.addClass('AltMLSOverviewLeftWindow-selected');
-			}
-			else {
-				elmt.removeClass('AltMLSOverviewLeftWindow-selected');	
-			}
-		}
-	}
-
-	function set_current_selection(selection) {
-		if (selection==m_current_selection) return;
-		m_current_selection=selection;
-		update_layout();
-		O.emit('selection_changed');
-	}
-
-	update_layout();
-}
 
 function mlprompt(text,val,callback) {
 	bootbox.prompt({
@@ -624,4 +521,91 @@ function mlprompt(text,val,callback) {
 		value:val,
 		callback:callback
 	});
+}
+
+function mlinfo(title,message,callback) {
+	bootbox.alert({
+		title:title,
+		message:message,
+		callback:callback
+	});
+}
+
+function ProcessingServerWidget(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('ProcessingServerWidget');
+
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
+	this.refresh=function() {refresh();};
+
+	O.div().append($('#template-ProcessingServerWidget').children().clone());
+	O.div().find('#set_processing_server').click(set_processing_server);
+
+	function refresh() {
+		var config=m_mls_manager.mlsConfig();
+		var server=config.processing_server;
+		O.div().find('#processing_server_name').html(server);
+	}
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		manager.onConfigChanged(refresh);
+		refresh();
+	}
+	
+	function set_processing_server() {
+		var config=m_mls_manager.mlsConfig();
+		var server=config.processing_server;
+		mlprompt('Processing server:',config.processing_server||'',function(server) {
+			config.processing_server=server;
+			m_mls_manager.setMLSConfig(config);	
+		});
+	}
+}
+
+function AdvancedConfigurationWidget(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('AdvancedConfigurationWidget');
+
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
+	this.refresh=function() {refresh();};
+
+	O.div().append($('#template-AdvancedConfigurationWidget').children().clone());
+	O.div().find('#update_configuration').click(update_configuration);
+	O.div().find('#generate_kbucket_upload_token').click(generate_kbucket_upload_token);
+
+	function refresh() {
+		var config=m_mls_manager.mlsConfig();
+		for (var key in config) {
+			var elmt=O.div().find('#'+key);
+			if (elmt.length==1)
+				elmt.val(config[key]);
+		}
+	}
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		manager.onConfigChanged(refresh);
+		refresh();
+	}
+	
+	function update_configuration() {
+		var config=m_mls_manager.mlsConfig();
+		for (var key in config) {
+			var elmt=O.div().find('#'+key);
+			if (elmt.length==1)
+				config[key]=elmt.val();
+		}
+		m_mls_manager.setMLSConfig(config);	
+		refresh();
+		mlinfo('Configuration saved.','Configuration saved. You should now reload the page.',function() {
+
+		});
+	}
+
+	function generate_kbucket_upload_token() {
+		mlinfo('Not yet implemented.','Not yet implemented');
+	}
 }

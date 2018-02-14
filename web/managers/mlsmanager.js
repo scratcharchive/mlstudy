@@ -6,10 +6,13 @@ if (typeof module !== 'undefined' && module.exports) {
   LocalStorage=require(__dirname+'/../jsutils/localstorage.js').LocalStorage;
 }
 
-function MLSManager() {
+function MLSManager(O) {
+  O=O||this;
+  JSQObject(O);
+  
 	this.setMLSObject=function(X) {m_study.setObject(X);};
   this.study=function() {return m_study;};
-  this.setLoginInfo=function(info) {m_login_info=JSQ.clone(info);};
+  this.setLoginInfo=function(info) {m_login_info=JSQ.clone(info); O.emit('login-info-changed');};
   this.loginInfo=function() {return JSQ.clone(m_login_info);};
   this.kBucketAuthUrl=function() {return kBucketAuthUrl();};
   this.kBucketUrl=function() {return kBucketUrl();};

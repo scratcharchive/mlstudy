@@ -68,8 +68,12 @@ function jsqmain(query) {
             var Y=new MLSMainWindow(null,mls_manager);
             Y.setDocStorClient(DSC);
             Y.setLoginInfo(login_info);
-            JSQ.connect(Y,'log_in',Y,function() {
-                Authenticate({passcode:query.passcode||'',login_method:query.login||''},function(err1,login_info2) {
+
+            JSQ.connect(Y,'log_in',Y,do_log_in);
+            JSQ.connect(OO,'log_in',OO,do_log_in);
+
+            function do_log_in() {
+                Authenticate({},function(err1,login_info2) {
                     if (err1) {
                         alert('Error authenticating: '+err1);
                         return;
@@ -80,11 +84,13 @@ function jsqmain(query) {
                             alert('Error logging in to docstor: '+err2);
                             return;
                         }
+                        login_info2.user_id=result.user_id||'';
                         Y.setLoginInfo(login_info2);
                         OO.setLoginInfo(login_info2);
+                        mls_manager.setLoginInfo(login_info2);
                     });
                 });
-            });
+            }
 
             JSQ.connect(OO,'open_study',null,function(sender,args) {
                 open_study(args.study);

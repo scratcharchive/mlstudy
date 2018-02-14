@@ -153,6 +153,7 @@ function parse_url_params() {
 <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
   <a class="navbar-brand" href="#">MLStudy</a>
 
+  <!--
   <div class="navbar-nav-scroll">
     <ul class="navbar-nav bd-navbar-nav flex-row">
       <li class="nav-item active">
@@ -164,25 +165,8 @@ function parse_url_params() {
       
     </ul>
   </div>
+  -->
   <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
-	  <li class="nav-item dropdown">
-	    <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-	      Tools
-	    </a>
-
-	    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-	      <a class="dropdown-item action_set_processing_server" href="#">
-	      	Set processing server...
-	      </a>
-	      <a class="dropdown-item action_configuration" href="#">
-	      	Configuration...
-	      </a>
-
-	      <div class="dropdown-divider"></div>
-	      <a class="dropdown-item action_generate_kbucket_upload_token" href="#">	Generate kbucket upload token...
-	      </a>
-	    </div>
-	  </li>
 	  <li class="nav-item dropdown">
 	    <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 	      Sign in
@@ -192,6 +176,7 @@ function parse_url_params() {
 	      <a class="dropdown-item action_sign_in" href="#">
 	      	Sign in...
 	      </a>
+	      <div class="dropdown-divider"></div>
 	      <a class="dropdown-item action_sign_out" href="#">
 	      	Sign out
 	      </a>
@@ -242,41 +227,58 @@ function parse_url_params() {
 			<div class="tab-content" id="myTabContent">
 			  <div class="tab-pane fade show active" id="study_list" role="tabpanel" aria-labelledby="home-tab"></div>
 
-			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab">Processing server</div>
+			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
 
-			  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab">Advanced configuration</div>
+			  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
 			</div>
 			
 		</div>
     </div>
 </div>
 
-<!--
-<div class="col-12 col-md-3 col-xl-2 bd-sidebar bg-light">
-	<nav class="bd-links">
-		<div class="bd-toc-item active">
-			<a class="bd-toc-link" href="#">
-			Getting started
-			</a>
+<span id="template-ProcessingServerWidget">
+	<p>
+		<button type=button class=btn id=set_processing_server>Set processing server</button>
+	</p>
+	<h2>Processing server: <span id=processing_server_name></span></h2>
+	
+</span>
 
-		<ul class="nav bd-sidenav">
-			<li class="active bd-sidenav-active">
-				<a class="bd-toc-link" href="#">Public studies</a>
-			</li>
-			<li>
-				<a class="bd-toc-link" href="#">My studies</a>
-			</li>
-			<li>
-				<a class="bd-toc-link" href="#">My studies</a>
-			</li>
-			<li>
-				<a class="bd-toc-link" href="#">Shared with me</a>
-			</li>
-		</ul> 
-		</div>
-	</nav>
-</div>
--->
+<span id="template-AdvancedConfigurationWidget">
+	<p>
+		<button type=button class=btn id=update_configuration>Update configuration</button>
+	</p>
+
+	<form>
+		<div class="form-group">
+			<label for="lari_url">lari url</label>
+    		<input type="url" class="form-control" id="lari_url">
+  		</div>
+  		<div class="form-group">
+			<label for="kbucket_url">kbucket url</label>
+    		<input type="url" class="form-control" id="kbucket_url">
+  		</div>
+  		<div class="form-group">
+			<label for="kbucketauth_url">docstor url</label>
+    		<input type="url" class="form-control" id="kbucketauth_url">
+  		</div>
+  		<div class="form-group">
+			<label for="docstor_url">docstor url</label>
+    		<input type="url" class="form-control" id="docstor_url">
+  		</div>
+  		<div class="form-group">
+			<label for="tidbits_url">docstor url</label>
+    		<input type="url" class="form-control" id="tidbits_url">
+  		</div>  		
+    </form>
+
+    <hr />
+
+    <p>
+		Advanced: <button type=button class=btn id=generate_kbucket_upload_token>Generate kbucket upload token</button>
+	</p>
+	
+</span>
 
 </span>
 
