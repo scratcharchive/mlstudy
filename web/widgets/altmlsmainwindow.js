@@ -13,16 +13,22 @@ function AltMLSMainWindow(O) {
 	var m_advanced_configuration_widget=new AdvancedConfigurationWidget();
 	var m_datasets_view=new AltMLSDatasetsView();
 	var m_scripts_view=new AltMLSScriptsView();
+	var m_output_view=new MLSOutputView();
 	var m_file_source=''; //e.g., docstor
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
 	var m_original_study_object={};
 
+	JSQ.connect(m_scripts_view,'current-batch-job-changed',O,on_batch_job_changed);
+
 	O.div().append($('#template-AltMLSMainWindow').children().clone());
 	O.div().find('#processing_server').append(m_processing_server_widget.div());
 	O.div().find('#advanced_configuration').append(m_advanced_configuration_widget.div());
 	O.div().find('#datasets').append(m_datasets_view.div());
+	m_scripts_view.div().addClass('h-100');
 	O.div().find('#scripts').append(m_scripts_view.div());
+	m_output_view.div().addClass('h-100');
+	O.div().find('#output').append(m_output_view.div());
 
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
@@ -201,10 +207,15 @@ function AltMLSMainWindow(O) {
 	    });
 	}
 
+	function on_batch_job_changed() {
+		m_output_view.setBatchJob(m_scripts_view.currentBatchJob());
+	}
+
 	function setMLSManager(manager) {
 		m_mls_manager=manager; 
 		m_datasets_view.setMLSManager(manager);
 		m_scripts_view.setMLSManager(manager);
+		m_output_view.setMLSManager(manager);
 		m_processing_server_widget.setMLSManager(manager);
 		m_advanced_configuration_widget.setMLSManager(manager);
 		refresh_views();
@@ -261,13 +272,20 @@ function AltMLSScriptsView(O) {
 
 	this.setMLSManager=function(manager) {setMLSManager(manager);};
 	this.refresh=function() {refresh();};
+	this.currentBatchJob=function() {return currentBatchJob();};
 
 	var m_script_list=new MLSBatchScriptListWidget();
 	var m_script_widget=new AltMLSScriptWidget();
 	var m_mls_manager=null;
+	var m_script_job_lookup=new ScriptJobLookup();
+	var m_current_script_name='';
+	m_script_widget.setScriptJobLookup(m_script_job_lookup);
+
+	JSQ.connect(m_script_widget,'script-job-started',O,'current-batch-job-changed');
 
 	O.div().append($('#template-AltMLSScriptsView').children().clone());
 	O.div().find('#script_list').append(m_script_list.div());
+	m_script_widget.div().addClass('h-100');
 	O.div().find('#script_widget').append(m_script_widget.div());
 
 	m_script_list.onCurrentBatchScriptChanged(update_current_script);
@@ -280,7 +298,14 @@ function AltMLSScriptsView(O) {
 	function update_current_script() {
 		var batch_script_name=m_script_list.currentBatchScriptName();
 		var P=m_mls_manager.study().batchScript(batch_script_name);
-		m_script_widget.setScript(P);
+		m_script_widget.setScript(P,batch_script_name);
+		m_current_script_name=batch_script_name;
+		O.emit('current-batch-job-changed');
+	}
+
+	function currentBatchJob() {
+		if (!m_current_script_name) return null;
+		return m_script_job_lookup.job(m_current_script_name);
 	}
 
 	function setMLSManager(manager) {
@@ -290,5 +315,56 @@ function AltMLSScriptsView(O) {
 		m_script_widget.setMLSManager(manager);
 		//m_script_widget.refresh();
 		refresh();
+	}
+}
+
+function MLSOutputView(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('MLSOutputView');
+
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
+	this.setBatchJob=function(job) {setBatchJob(job);};
+
+	var m_mls_manager=null;
+	var m_results_widget=new AltMLSBatchScriptResultsWidget();
+	var m_jobs_widget=new MLSBatchScriptJobsWidget();
+	var m_log_widget=new MLPLogWidget(null,true);
+
+	m_log_widget.div().css({height:'100%'});
+
+	O.div().append($('#template-MLSOutputView').children().clone());
+	
+	O.div().find('#results_widget').append(m_results_widget.div());
+	O.div().find('#jobs_widget').append(m_jobs_widget.div());
+	O.div().find('#log_widget').append(m_log_widget.div());
+	
+	m_results_widget.div().css({"font-size":"12px"});
+	m_jobs_widget.div().css({"font-size":"12px"});
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		m_results_widget.setMLSManager(manager);
+		m_jobs_widget.setMLSManager(manager);
+	}
+
+	function setBatchJob(job) {
+		m_results_widget.setBatchJob(job);
+		m_jobs_widget.setBatchJob(job);
+	}
+}
+
+function ScriptJobLookup() {
+	this.setJob=function(script_name,job) {setJob(script_name,job);};
+	this.job=function(script_name) {return job(script_name);};
+
+	var m_script_jobs={};
+
+	function setJob(script_name,job) {
+		m_script_jobs[script_name]=job;
+	}
+
+	function job(script_name) {
+		return m_script_jobs[script_name]||null;
 	}
 }

@@ -628,10 +628,3 @@ font-size:14px;
   background-color:rgb(255,230,230);
 }
 
-.MLPLogWidget {
-  background-color: black;
-  border: solid 3px #gray;
-  color: #CCECEA;
-  font-family: Courier;
-  font-size: 10px;
-}

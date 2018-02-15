@@ -18,17 +18,29 @@ function AltMLSScriptWidget(O) {
 	JSQWidget(O);
 	O.div().addClass('AltMLSScriptWidget');
 
-	this.setScript=function(X) {setScript(X);};
+	this.setScript=function(X,script_name) {setScript(X,script_name);};
 	this.setProcessorManager=function(PM) {m_processor_manager=PM;};
 	this.setJobManager=function(JM) {m_job_manager=JM;};
 	this.script=function() {return m_script;};
 	this.setScriptIsRunning=function(val) {setScriptIsRunning(val);};
-	this.setMLSManager=function(manager) {m_mls_manager=manager;};
+	this.setMLSManager=function(manager) {m_mls_manager=manager; m_results_widget.setMLSManager(manager);};
+	this.setScriptJobLookup=function(lookup) {m_script_job_lookup=lookup;};
 
 	var m_script=null;
+	var m_script_name='';
 	var m_processor_manager=null;
 	var m_job_manager=null;
 	var m_mls_manager=null;
+	var m_results_widget=new AltMLSBatchScriptResultsWidget();
+	m_results_widget.div().css({"font-size":'12px'});
+	var m_log_widget=new MLPLogWidget(null,true);
+	m_log_widget.div().css({height:'100%',width:'100%',overflow:'auto'});
+	var m_script_job_lookup=null;
+
+	O.div().append($('#template-AltMLSScriptWidget').children().clone());
+
+	O.div().find('#results_widget').append(m_results_widget.div());
+	O.div().find('#log_widget').append(m_log_widget.div());
 
 	/*
 	var m_button_bar=$('<div class="MLSBatchScriptWidget-buttonbar"><span class=start_button></span><span class=stop_button></span></div>')
@@ -41,33 +53,37 @@ function AltMLSScriptWidget(O) {
 
 	setScriptIsRunning(false);
 
-	var m_script_editor_div=$('<div><textarea /></div>');
-	var m_script_editor=CodeMirror.fromTextArea(m_script_editor_div.find('textarea')[0], {
+	//var m_script_editor_div=$('<div><textarea /></div>');
+	var m_script_editor=CodeMirror.fromTextArea(O.div().find('textarea.code_editor')[0], {
     	lineNumbers: true,
     	mode: "javascript",
     	lint:true,
     	gutters: ["CodeMirror-lint-markers"]
   	});
   	m_script_editor.on('change',on_script_editor_changed);
-  	O.div().append(m_script_editor_div);
+  	//O.div().append(m_script_editor_div);
+
+  	O.div().find('.CodeMirror').addClass('h-100');
+  	O.div().find('.CodeMirror').css({width:'95%'});
+
+  	O.div().find('#start_button').click(start_script_job);
+  	O.div().find('#stop_button').click(stop_script_job);
 
 	function setScriptIsRunning(val) {
-		//todo
-		/*
 		if (val) {
-			m_button_bar.find('.start_button').css({visibility:'hidden'});
-			m_button_bar.find('.stop_button').css({visibility:''});
+			O.div().find('#stop_button').removeAttr('disabled');
+			O.div().find('#start_button').attr('disabled','disabled');
 		}
 		else {
-			m_button_bar.find('.start_button').css({visibility:''});
-			m_button_bar.find('.stop_button').css({visibility:'hidden'});	
+			O.div().find('#stop_button').attr('disabled','disabled');
+			O.div().find('#start_button').removeAttr('disabled');
 		}
-		*/
 	}
 
-  	function setScript(X) {
+  	function setScript(X,script_name) {
   		do_update_script_from_editor();
   		m_script=X;
+  		m_script_name=script_name;
   		if (m_script) {
   			m_script_editor.setValue(m_script.script());
   		}
@@ -94,19 +110,21 @@ function AltMLSScriptWidget(O) {
 			m_script.setScript(str);	
 		}
 	}
-	function run_script() {
-		/*
-		if (m_processor_manager) {
-			if (!m_processor_manager.specHasBeenSet()) {
-				alert('The processor specification has not yet been downloaded from the server. Please try again in a few seconds.');
-				return;
-			}
+	function start_script_job() {
+		var module_scripts={};
+		var names0=m_mls_manager.study().batchScriptNames();
+		for (var i in names0) {
+			module_scripts[names0[i]]=m_mls_manager.study().batchScript(names0[i]);
 		}
-		*/	
-		O.emit('run_script');
+		var J=m_mls_manager.batchJobManager().startBatchJob(m_script,module_scripts,m_mls_manager.study().object());
+		m_script_job_lookup.setJob(m_script_name,J);
+		m_results_widget.setBatchJob(J);
+		setScriptIsRunning(true);
+
+		O.emit('script-job-started');
 	}
 
-	function stop_script() {
-		O.emit('stop_script');
+	function stop_script_job() {
+		//todo
 	}
 }

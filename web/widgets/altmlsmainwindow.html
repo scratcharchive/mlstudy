@@ -73,10 +73,10 @@
         	</nav>
 		</div>
 		<div id=content class="col-xl-10 col-lg-9 col-9" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
-			<div class="tab-content" id="myTabContent">
+			<div class="tab-content h-100" id="myTabContent">
 			  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
+			  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
+			  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
 
 			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
 
@@ -100,11 +100,10 @@
 			</span>
 		</div>
 	</div>
-	
 </span>
 
 <span id="template-AltMLSScriptsView" style="display:none">
-	<div class=row>
+	<div class="row h-100">
 		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
 			<span id=script_list>
 			</span>
@@ -114,5 +113,19 @@
 			</span>
 		</div>
 	</div>
-	
+</span>
+
+<span id="template-MLSOutputView" style="display:none">
+	<div class="row h-100">
+		<div class="col-4" style="padding-right:20px">
+			<span id=results_widget></span>
+		</div>
+		<div class="col-4">
+			<span id=log_widget></span>
+		</div>
+		<div class="col-4" style="padding-left:20px">
+			<span id=jobs_widget></span>
+		</div>
+		
+	</div>
 </span>

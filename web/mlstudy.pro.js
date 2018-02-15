@@ -94,9 +94,9 @@ opts.STYLESHEETS.push(
 );
 
 opts.SCRIPTS.push(
-	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js'
+	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js','altmlsbatchscriptresultswidget.js'
 );
-opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html');
+opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html','altmlsscriptwidget.html');
 
 //////////////////////////////////////////////////////////////////////
 opts.SOURCEPATH.push('mlpipeline')

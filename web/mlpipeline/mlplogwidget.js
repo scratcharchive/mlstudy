@@ -32,21 +32,23 @@ function GlobalLog() {
 }
 var GLOBAL_LOG=new GlobalLog();
 
-function MLPLogWidget(O) {
+function MLPLogWidget(O,alt) {
 	O=O||this;
 	JSQWidget(O);
 	O.div().addClass('MLPLogWidget');
-	O.div().css({'overflow-x':'scroll','overflow-y':'scroll'});
+	O.div().css({'overflow-x':'auto','overflow-y':'auto'});
 
 	var m_message_table=$('<table></table>');
 	O.div().append(m_message_table);
 
-	JSQ.connect(O,'sizeChanged',O,update_layout);
-  	function update_layout() {
-		var W=O.width();
-		var H=O.height();
-		
-		m_message_table.css({position:'absolute',left:0,top:0,width:W-5});
+	if (!alt) {
+		JSQ.connect(O,'sizeChanged',O,update_layout);
+	  	function update_layout() {
+			var W=O.width();
+			var H=O.height();
+			
+			m_message_table.css({position:'absolute',left:0,top:0,width:W-5});
+		}
 	}
 
 	GLOBAL_LOG.onMessage(function(msg) {
@@ -80,5 +82,7 @@ function MLPLogWidget(O) {
 	    }
 	}
 
-	update_layout();
+	if (!alt) {
+		update_layout();
+	}
 }
