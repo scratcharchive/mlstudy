@@ -181,6 +181,7 @@ function jsqmain_alt(query) {
     var DSC=new DocStorClient();
     var docstor_url=mls_config.docstor_url;
     DSC.setDocStorUrl(docstor_url);
+    mls_manager.setDocStorClient(DSC);
 
     var status_message=$('<span id=status_message></span>');
     $('body').append(status_message);
@@ -245,9 +246,8 @@ function jsqmain_alt(query) {
 
             function create_main_window_if_needed() {
                 if (!main_window) {
-                    main_window=new MLSMainWindow(null,mls_manager);
-                    main_window.setDocStorClient(DSC);
-                    main_window.setLoginInfo(login_info);        
+                    main_window=new AltMLSMainWindow(null);
+                    main_window.setMLSManager(mls_manager);
                     JSQ.connect(main_window,'log_in',main_window,do_log_in);
                     JSQ.connect(main_window,'goto_overview',null,function() {
                         main_window.hide();
@@ -271,7 +271,6 @@ function jsqmain_alt(query) {
                             return;
                         }
                         login_info2.user_id=result.user_id||'';
-                        if (main_window) main_window.setLoginInfo(login_info2);
                         if (overview_window) overview_window.setLoginInfo(login_info2);
                         mls_manager.setLoginInfo(login_info2);
                     });

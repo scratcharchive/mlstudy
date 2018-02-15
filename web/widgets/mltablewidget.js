@@ -280,7 +280,14 @@ function MLTableWidgetHeaderRow(O,table_widget) {
 	function setColumnCount(num) {
 		m_tr.empty();
 		if ((table_widget.rowsMoveable())||(table_widget.selectionMode()=='multiple')) {
-			m_tr.append('<th />');
+			var wid=5;
+			if (table_widget.rowsMoveable()) {
+				wid+=10;
+			}
+			if (table_widget.selectionMode()=='multiple') {
+				wid+=10;
+			}
+			m_tr.append(`<th style="width:${wid}px" />`);
 		}
 		m_cells=[];
 		for (var i=0; i<num; i++) {

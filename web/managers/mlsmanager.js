@@ -9,7 +9,7 @@ if (typeof module !== 'undefined' && module.exports) {
 function MLSManager(O) {
   O=O||this;
   JSQObject(O);
-  
+
 	this.setMLSObject=function(X) {m_study.setObject(X);};
   this.study=function() {return m_study;};
   this.setLoginInfo=function(info) {m_login_info=JSQ.clone(info); O.emit('login-info-changed');};
@@ -22,7 +22,8 @@ function MLSManager(O) {
   this.batchJobManager=function() {return m_batch_job_manager;};
   //this.setKuleleClient=function(KC) {m_batch_job_manager.setKuleleClient(KC);};
   //this.kuleleClient=function() {return m_batch_job_manager.kuleleClient();};
-  this.setDocStorClient=function(DSC) {m_batch_job_manager.setDocStorClient(DSC);};
+  this.setDocStorClient=function(DSC) {m_docstor_client=DSC; m_batch_job_manager.setDocStorClient(DSC);};
+  this.docStorClient=function() {return m_docstor_client;};
   this.mlsConfig=function() {return mlsConfig();};
   this.setMLSConfig=function(config) {setMLSConfig(config);};
   this.onConfigChanged=function(handler) {m_config_changed_handlers.push(handler);};
@@ -34,6 +35,7 @@ function MLSManager(O) {
   var m_job_manager=null;
   var m_batch_job_manager=new BatchJobManager();
   var m_config_changed_handlers=[];
+  var m_docstor_client=null;
 
   var m_lari_client=new LariClient();
   m_lari_client.setContainerId('child');

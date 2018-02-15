@@ -52,12 +52,17 @@ $INCLUDES$
 function _jsq_load_html_snippets(callback) {
 	var num_loaded=0;
 	for (var i=0; i<_jsq_html_snippet_urls.length; i++) {
-		$('#jsq-templates').load(_jsq_html_snippet_urls[i],function() {
+		do_load_html_snippet(_jsq_html_snippet_urls[i]);
+	}
+	check_done();
+	function do_load_html_snippet(url) {
+		var holder=$('<span></span>');
+		$('#jsq-templates').append(holder);
+		holder.load(url,function() {
 			num_loaded++;
 			check_done();
 		});
 	}
-	check_done();
 	function check_done() {
 		if (num_loaded>=_jsq_html_snippet_urls.length) {
 			if (callback) callback();

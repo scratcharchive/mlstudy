@@ -93,6 +93,11 @@ opts.STYLESHEETS.push(
 	'mlsdatasetwidget.css','mlsmainwindow.css','descriptionwidget.css'
 );
 
+opts.SCRIPTS.push(
+	'altmlsmainwindow.js','altmlsdatasetwidget.js'
+);
+opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html');
+
 //////////////////////////////////////////////////////////////////////
 opts.SOURCEPATH.push('mlpipeline')
 opts.SCRIPTS.push(

@@ -600,6 +600,18 @@ function MLSMainWindow(O,mls_manager) {
 		}
 	}
 
+	function parse_url_params0() {
+		var match,
+		pl     = /\+/g,  // Regex for replacing addition symbol with a space
+		search = /([^&=]+)=?([^&]*)/g,
+		decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+		query  = window.location.search.substring(1);
+		url_params = {};
+		while (match = search.exec(query))
+			url_params[decode(match[1])] = decode(match[2]);
+		return url_params;
+	}
+
 	function download_kbucket_file_from_prv(prv) {
 		var sha1=prv.original_checksum||'';
 		var size=prv.original_size||0;
@@ -632,18 +644,6 @@ function MLSMainWindow(O,mls_manager) {
 		var aaa=path.lastIndexOf('/');
 		if (aaa>=0) return path.slice(aaa+1);
 		else return path;
-	}
-
-	function parse_url_params0() {
-		var match,
-		pl     = /\+/g,  // Regex for replacing addition symbol with a space
-		search = /([^&=]+)=?([^&]*)/g,
-		decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
-		query  = window.location.search.substring(1);
-		url_params = {};
-		while (match = search.exec(query))
-			url_params[decode(match[1])] = decode(match[2]);
-		return url_params;
 	}
 
 	update_layout();

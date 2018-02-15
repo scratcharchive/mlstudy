@@ -87,6 +87,8 @@
 <script src="widgets/mlsbatchscriptresultswidget.js"></script>
 <script src="widgets/mlsbatchscriptjobswidget.js"></script>
 <script src="widgets/mlsprocessorswidget.js"></script>
+<script src="widgets/altmlsmainwindow.js"></script>
+<script src="widgets/altmlsdatasetwidget.js"></script>
 <script src="mlpipeline/editmlpipelinewidget.js"></script>
 <script src="mlpipeline/editmlpipelinetablewidget.js"></script>
 <script src="mlpipeline/mlpipeline.js"></script>
@@ -123,6 +125,8 @@
 <script>
 var _jsq_html_snippet_urls=[];
 _jsq_html_snippet_urls.push('overview/altmlsoverviewwindow.html');
+_jsq_html_snippet_urls.push('widgets/altmlsmainwindow.html');
+_jsq_html_snippet_urls.push('widgets/altmlsdatasetwidget.html');
 </script>
 
 <script>
@@ -130,12 +134,17 @@ _jsq_html_snippet_urls.push('overview/altmlsoverviewwindow.html');
 function _jsq_load_html_snippets(callback) {
 	var num_loaded=0;
 	for (var i=0; i<_jsq_html_snippet_urls.length; i++) {
-		$('#jsq-templates').load(_jsq_html_snippet_urls[i],function() {
+		do_load_html_snippet(_jsq_html_snippet_urls[i]);
+	}
+	check_done();
+	function do_load_html_snippet(url) {
+		var holder=$('<span></span>');
+		$('#jsq-templates').append(holder);
+		holder.load(url,function() {
 			num_loaded++;
 			check_done();
 		});
 	}
-	check_done();
 	function check_done() {
 		if (num_loaded>=_jsq_html_snippet_urls.length) {
 			if (callback) callback();

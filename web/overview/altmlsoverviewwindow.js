@@ -17,7 +17,6 @@ function AltMLSOverviewWindow(O) {
 	O.div().append($('#template-AltMLSOverviewWindow').children().clone());
 
 	O.div().find('.bd-toc-item').addClass('active');
-
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
 		//O.div().find('.bd-toc-item').removeClass('active');
 		O.div().find('.bd-toc-item ul > li > a').parent().removeClass('active bd-sidenav-active');
@@ -62,6 +61,7 @@ function AltMLSOverviewWindow(O) {
 		var content_id=current_content_id();
 		O.div().find('#content .tab-pane').removeClass('show active');
 		O.div().find('#content .tab-pane#'+content_id).addClass('show active');
+		//todo: only do the following line when necessary
 		refresh_study_list_widget();
 	}
 
