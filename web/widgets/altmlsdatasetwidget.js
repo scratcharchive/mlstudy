@@ -28,7 +28,7 @@ function AltMLSDatasetWidget(O) {
 	var m_files_table=new MLTableWidget();
 	var m_params_table=new MLTableWidget();
 	var m_description_widget=new AltDescriptionWidget();
-	m_description_widget.setLabel('Dataset description: ');
+	m_description_widget.setLabel('Description: ');
 	
 	//m_files_table.setParent(O);
 	//m_params_table.setParent(O);
@@ -60,6 +60,7 @@ function AltMLSDatasetWidget(O) {
 
 	function refresh() {
 		update_tables();
+		O.div().find('#dataset_id').html(m_dataset_id);
 		m_description_widget.setDescription('');
 		var ds=get_dataset();
 		if (!ds) return;
@@ -68,7 +69,6 @@ function AltMLSDatasetWidget(O) {
 		update_tables();
 		setTimeout(function() {
 			refresh_kb_elements();
-			refresh_ps_elements();
 		},100);
 	}
 
@@ -80,12 +80,11 @@ function AltMLSDatasetWidget(O) {
 	}
 
 	function update_tables() {
-		m_files_table.setColumnCount(6);
+		m_files_table.setColumnCount(5);
 		m_files_table.headerRow().cell(1).html('File');
 		m_files_table.headerRow().cell(2).html('Size');
 		m_files_table.headerRow().cell(3).html('Orig. Path');
 		m_files_table.headerRow().cell(4).html('KBucket');
-		m_files_table.headerRow().cell(5).html('Server');
 		
 		m_files_table.clearRows();
 		var ds=get_dataset();
@@ -191,6 +190,8 @@ function AltMLSDatasetWidget(O) {
 		row.cell(0).append(link);
 
 		if (file.prv) {
+			row.cell(1).attr('title','sha1='+file.prv.original_checksum);
+
 			var download_link1=$('<span class=download2_button title="Download prv file"></span>')
 			download_link1.click(function() {
 				download_prv_file(name);
@@ -199,16 +200,20 @@ function AltMLSDatasetWidget(O) {
 
 			row.cell(2).append(format_file_size(file.prv.original_size));
 
-			var elmt=$('<span>'+file.prv.original_path+'</span>')
-			elmt.attr('title','sha1='+file.prv.original_checksum);
+			var elmt=$('<span>'+shorten_path(file.prv.original_path)+'</span>')
+			elmt.attr('title',file.prv.original_path+' sha1='+file.prv.original_checksum);
+			row.cell(3).css({"max-width":"120px","overflow-wrap":"break-word"})
 			row.cell(3).append(elmt);
 
 			var kb_elmt=$('<span class=kb data-sha1="'+file.prv.original_checksum+'" data-size="'+file.prv.original_size+'" data-name="'+name+'"></span>');
 			row.cell(4).append(kb_elmt);
-
-			var ps_elmt=$('<span class=ps data-sha1="'+file.prv.original_checksum+'" data-size="'+file.prv.original_size+'" data-fcs="'+file.prv.fcs+'" data-name="'+name+'"></span>');
-			row.cell(5).append(ps_elmt);
 		}
+	}
+	function shorten_path(path) {
+		if (!path) return path;
+		var list=path.split('/');
+		if (list.length==1) return path;
+		return '<span style="color:lightgray">.....</span>/'+list[list.length-1];
 	}
 	function edit_parameter(name) {
 		var ds=get_dataset();
@@ -349,92 +354,12 @@ function AltMLSDatasetWidget(O) {
 		//m_top_widget.refresh();
 		//m_bottom_widget.refresh();
 	}
-	function refresh_ps_elements() {
-		var elmts=O.div().find('.ps');
-		for (var i=0; i<elmts.length; i++) {
-			refresh_ps_element($(elmts[i]));
-		}
-		function refresh_ps_element(elmt) {
-			elmt.html('Checking...');
-			elmt.attr('title','');
-			elmt.attr('class','ps unknown');
-			var sha1=elmt.attr('data-sha1');
-			var size=elmt.attr('data-size');
-			var fcs=elmt.attr('data-fcs');
-			var name=elmt.attr('data-name');
-			var prv0={
-				original_checksum:sha1,
-				original_size:size,
-				original_fcs:fcs
-			};
-			var LC=m_manager.lariClient();
-			LC.findFile(prv0,{},function(err,tmp) {
-				if (err) {
-					elmt.html('Error checking');
-					elmt.attr('title',err);
-					elmt.attr('class','ps unknown');
-					return;
-				}
-				if (!tmp.found) {
-					var html0='Not found';
-					html0='<a href=# id=transfer title="Click to transfer from kbucket">'+html0+'</a>';
-					elmt.html(html0);
-					elmt.attr('title','Not found on the processing server.');
-					elmt.attr('class','ps no');
-					elmt.find('#transfer').click(function() {
-						elmt.html('Transferring from kbucket...');
-						transfer_file_from_kbucket_to_processing_server(sha1,function(err) {
-							if (err) {
-								alert(err);
-							}
-							refresh_ps_elements();
-						});
-					});
-					return;
-				}
-				elmt.html('Found');
-				elmt.attr('title','This file was found on the processing server.');
-				elmt.attr('class','kb yes');
-			});
-			/*
-			var KC=new KBucketClient();
-			KC.setKBucketUrl(m_manager.kBucketUrl());
-			KC.stat(sha1,size,function(err,stat0) {
-				if (err) {
-					elmt.html('Error checking');
-					elmt.attr('title',err);
-					elmt.attr('class','kb unknown');
-					return;
-				}
-				if (!stat0.found) {
-					elmt.html('Not found');
-					elmt.attr('title','Not found on the kbucket server.');
-					elmt.attr('class','kb no');
-					return;
-				}
-				elmt.html('');
-				elmt.attr('title','This file was found on the kbucket server.');
-				elmt.attr('class','kb yes');
-				var download_link2=create_original_download_file_link(name);
-				elmt.append(download_link2);
-				elmt.append('&nbsp;Found');
-			});
-			*/
-		}
-		//m_top_widget.refresh();
-		//m_bottom_widget.refresh();
-	}
+	/*
 	function transfer_file_from_kbucket_to_processing_server(sha1,callback) {
 		if (!m_manager) {
 			callback('MLS manager has not been set');
 			return;
 		}
-		/*
-		if (!m_manager.kuleleClient()) {
-			callback('KuleleClient has not been set');
-			return;
-		}
-		*/
 		var LC=m_manager.lariClient();
 		var job_id='';
 		var qq={
@@ -505,8 +430,9 @@ function AltMLSDatasetWidget(O) {
 		    });
 		}
 	}
+	*/
 	function create_original_download_file_link(name) {
-		var ret=$('<span class=download_button title="Download original file from the kbucket server"></span>');
+		var ret=$('<span class="download_button" title="Download full file from the kbucket server"></span>');
 		ret.click(function() {
 			download_kbucket_file(name);
 		});
@@ -599,8 +525,9 @@ function AltDescriptionWidget(O) {
 	this.setDescription=function(descr) {setDescription(descr);};
 	this.onDescriptionEdited=function(handler) {JSQ.connect(O,'description-edited',O,handler);};
 
-	O.div().css({padding:'20px'});
+	var m_description='';
 
+	/*
 	O.div().append(`
 		<form>
 		<div class="form-group">
@@ -608,6 +535,15 @@ function AltDescriptionWidget(O) {
   			<textarea class="form-control" rows="5" id="description"></textarea>
 		</div>
 		</form>
+	`);
+	*/
+	O.div().append(`
+		<p>
+		<span style="font-weight:bold">Description:</span>
+		<span style="font-style:italic">
+			<span id=description_content></span>
+		</span>
+		</p>
 	`);
 
 	//m_top_bar.find('#edit_button').click(edit_description);
@@ -628,10 +564,18 @@ function AltDescriptionWidget(O) {
 	}
 
 	function description() {
-		return O.div().find('#description').val();
+		//return O.div().find('#description').val();
+		return m_description;
 	}
 
 	function setDescription(descr) {
-		O.div().find('#description').val(descr);
+		//O.div().find('#description').val(descr);
+		m_description=descr;
+		O.div().find('#description_content').html(shorten(m_description,1000));
+	}
+
+	function shorten(txt,maxlen) {
+		if (txt.length<=maxlen) return txt;
+		return txt.slice(0,maxlen)+' ...';
 	}
 }

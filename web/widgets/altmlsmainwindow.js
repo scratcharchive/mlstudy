@@ -12,6 +12,7 @@ function AltMLSMainWindow(O) {
 	var m_processing_server_widget=new ProcessingServerWidget();
 	var m_advanced_configuration_widget=new AdvancedConfigurationWidget();
 	var m_datasets_view=new AltMLSDatasetsView();
+	var m_scripts_view=new AltMLSScriptsView();
 	var m_file_source=''; //e.g., docstor
 	var m_file_path=''; //when m_file_source=='file_content'
 	var m_file_info={};
@@ -21,6 +22,7 @@ function AltMLSMainWindow(O) {
 	O.div().find('#processing_server').append(m_processing_server_widget.div());
 	O.div().find('#advanced_configuration').append(m_advanced_configuration_widget.div());
 	O.div().find('#datasets').append(m_datasets_view.div());
+	O.div().find('#scripts').append(m_scripts_view.div());
 
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
@@ -48,6 +50,7 @@ function AltMLSMainWindow(O) {
 		O.div().find('#content .tab-pane').removeClass('show active');
 		O.div().find('#content .tab-pane#'+content_id).addClass('show active');
 		m_datasets_view.refresh(); //todo: only when necessary
+		m_scripts_view.refresh(); //todo: only when necessary
 	}
 
 
@@ -98,6 +101,7 @@ function AltMLSMainWindow(O) {
 
 	function refresh_views() {
 		m_datasets_view.refresh();
+		m_scripts_view.refresh();
 	}
 
 	function try_parse_json(str) {
@@ -200,6 +204,7 @@ function AltMLSMainWindow(O) {
 	function setMLSManager(manager) {
 		m_mls_manager=manager; 
 		m_datasets_view.setMLSManager(manager);
+		m_scripts_view.setMLSManager(manager);
 		m_processing_server_widget.setMLSManager(manager);
 		m_advanced_configuration_widget.setMLSManager(manager);
 		refresh_views();
@@ -245,6 +250,45 @@ function AltMLSDatasetsView(O) {
 		m_dataset_list.refresh();
 		m_dataset_widget.setMLSManager(manager);
 		m_dataset_widget.refresh();
+		refresh();
+	}
+}
+
+function AltMLSScriptsView(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('AltMLSScriptsView');
+
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
+	this.refresh=function() {refresh();};
+
+	var m_script_list=new MLSBatchScriptListWidget();
+	var m_script_widget=new AltMLSScriptWidget();
+	var m_mls_manager=null;
+
+	O.div().append($('#template-AltMLSScriptsView').children().clone());
+	O.div().find('#script_list').append(m_script_list.div());
+	O.div().find('#script_widget').append(m_script_widget.div());
+
+	m_script_list.onCurrentBatchScriptChanged(update_current_script);
+
+	function refresh() {
+		m_script_list.refresh();
+		update_current_script();
+	}
+
+	function update_current_script() {
+		var batch_script_name=m_script_list.currentBatchScriptName();
+		var P=m_mls_manager.study().batchScript(batch_script_name);
+		m_script_widget.setScript(P);
+	}
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		m_script_list.setMLSManager(manager);
+		m_script_list.refresh();
+		m_script_widget.setMLSManager(manager);
+		//m_script_widget.refresh();
 		refresh();
 	}
 }

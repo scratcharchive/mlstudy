@@ -94,7 +94,7 @@ opts.STYLESHEETS.push(
 );
 
 opts.SCRIPTS.push(
-	'altmlsmainwindow.js','altmlsdatasetwidget.js'
+	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js'
 );
 opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html');
 

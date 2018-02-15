@@ -1,4 +1,4 @@
-<span id="template-AltMLSMainWindow">
+<span id="template-AltMLSMainWindow" style="display:none">
 <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
   <a class="navbar-brand" href="#">MLStudy</a>
 
@@ -36,7 +36,7 @@
 
 <div class="container-fluid" style="padding:20px;">
       <div class="row flex-xl-nowrap">
-        <div class="bd-sidebar col-xl-2 col-4">
+        <div class="bd-sidebar col-xl-2 col-lg-3 col-3">
         	<nav class="bd-links" id="bd-docs-nav">
 
         		<div class="bd-toc-item active">
@@ -72,11 +72,11 @@
         		
         	</nav>
 		</div>
-		<div id=content class="col-xl-10 col-8" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
+		<div id=content class="col-xl-10 col-lg-9 col-9" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
 			<div class="tab-content" id="myTabContent">
 			  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade show active" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade show active" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
+			  <div class="tab-pane fade" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
+			  <div class="tab-pane fade" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
 
 			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
 
@@ -89,14 +89,28 @@
 
 </span>
 
-<span id="template-AltMLSDatasetsView">
+<span id="template-AltMLSDatasetsView" style="display:none">
 	<div class=row>
-		<div class="col-8 col-sm-5 col-md-4 col-xl-3">
+		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
 			<span id=dataset_list>
 			</span>
 		</div>
-		<div class="col-4 col-sm-7 col-md-8 col-xl-9">
+		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
 			<span id=dataset_widget>
+			</span>
+		</div>
+	</div>
+	
+</span>
+
+<span id="template-AltMLSScriptsView" style="display:none">
+	<div class=row>
+		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
+			<span id=script_list>
+			</span>
+		</div>
+		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
+			<span id=script_widget>
 			</span>
 		</div>
 	</div>
