@@ -16,7 +16,7 @@
  */
 
 //////////////////////////////////////////////////////////////////////
-var opts={PROJECTPATH:__dirname, SOURCEPATH:['.'], SCRIPTS:[], STYLESHEETS:[]};
+var opts={PROJECTPATH:__dirname, SOURCEPATH:['.'], SCRIPTS:[], STYLESHEETS:[], HTML_SNIPPETS:[]};
 
 //////////////////////////////////////////////////////////////////////
 //require('../../jsqcore/jsqcore.pri').load(opts);
@@ -77,6 +77,7 @@ opts.SCRIPTS.push(
 	'mlsoverviewwindow.js','altmlsoverviewwindow.js'
 );
 opts.STYLESHEETS.push('mlsoverviewwindow.css','bootstrap_docs.css');
+opts.HTML_SNIPPETS.push('altmlsoverviewwindow.html');
 
 opts.SOURCEPATH.push('widgets');
 opts.SCRIPTS.push(

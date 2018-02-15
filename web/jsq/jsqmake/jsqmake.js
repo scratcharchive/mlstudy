@@ -36,6 +36,9 @@ function jsqmake(opts) {
 	return true;
 
 	function get_include_text(opts) {
+		opts.SCRIPTS=opts.SCRIPTS||[];
+		opts.STYLESHEETS=opts.STYLESHEETS||[];
+		opts.HTML_SNIPPETS=opts.HTML_SNIPPETS||[];
 		var ret='';
 		for (var i=0; i<opts.SCRIPTS.length; i++) {
 			var src_fname=find_source_file_path_rel_to_target(opts,opts.SCRIPTS[i]);
@@ -57,6 +60,17 @@ function jsqmake(opts) {
 			line=strreplace(line,'$1$',src_fname);
 			ret+=line+'\n';
 		}
+		ret+='<script>\n';
+		ret+='var _jsq_html_snippet_urls=[];\n'
+		for (var i=0; i<opts.HTML_SNIPPETS.length; i++) {
+			var src_fname=find_source_file_path_rel_to_target(opts,opts.HTML_SNIPPETS[i]);
+			if (!src_fname) {
+				console.error('Unable to find source file: '+opts.HTML_SNIPPETS[i]);
+				return '';
+			}
+			ret+=`_jsq_html_snippet_urls.push('${src_fname}');\n`;
+		}
+		ret+='</script>\n';
 		return ret;
 	}
 	function find_source_file_path_rel_to_target(opts,source_fname) {

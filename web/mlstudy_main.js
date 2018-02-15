@@ -19,7 +19,8 @@ function jsqmain(query) {
     query=query||{};
 
     if (query.alt=='true') {
-        MLSOverviewWindow=AltMLSOverviewWindow;
+        jsqmain_alt(query);
+        return;
     }
 
     // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
@@ -153,9 +154,153 @@ function jsqmain(query) {
             }
         });
     });
+}
 
+function jsqmain_alt(query) {
 
+    // The url query
+    query=query||{};
 
+    // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
+    var local_mode=(window.mlpipeline_mode=='local'); 
+
+    // Determine whether we are running on localhost (development mode)
+    var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
+
+    if (!local_mode) {
+        // Switch to https protocol if needed
+        if ((!on_localhost)&&(location.protocol != 'https:')) {
+            location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+        }
+    }
+
+    var mls_manager=new MLSManager();
+    var mls_config=mls_manager.mlsConfig();
+
+    //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
+    var DSC=new DocStorClient();
+    var docstor_url=mls_config.docstor_url;
+    DSC.setDocStorUrl(docstor_url);
+
+    var status_message=$('<span id=status_message></span>');
+    $('body').append(status_message);
+    function show_status(alert_type,message) {
+        status_message.empty();
+        if (alert_type) {
+            var elmt=$(`<div class="alert alert-${alert_type}">${message}</div>`);
+            status_message.append(elmt);
+        }
+    }
+    show_status('info','Logging in...');
+
+    Authenticate({passcode:query.passcode||'',login_method:query.login||''},function(err,login_info) {
+        if (err) {
+            show_status('warning','Error logging in: '+err);
+            return;
+        }
+        DSC.login(login_info,function(err00,result) {
+            if (err00) {
+                show_status('warning','Error logging in to DocStor: '+err00);
+                return;
+            }
+            show_status(null);
+            
+            login_info.user_id=result.user_id||'';
+
+            var overview_window=null;
+            var main_window=null;
+
+            var storage_method=query.storage||'';
+            if (!storage_method) {
+                if (query.owner) storage_method='docstor';
+            }
+            if (storage_method=='docstor') {
+                DSC.login(login_info,function(err1) {
+                    if (err1) {
+                        show_status('warning','Error logging in to docstor: '+err1);
+                        return;       
+                    }
+                    open_study({storage:'docstor',owner:query.owner,title:query.title});
+                });
+            }
+            else {
+                show_status(null);
+                create_overview_window_if_needed();
+                overview_window.showFullBrowser();
+            }
+
+            function create_overview_window_if_needed() {
+                if (!overview_window) {
+                    overview_window=new AltMLSOverviewWindow();
+                    overview_window.setMLSManager(mls_manager);
+                    overview_window.setDocStorClient(DSC);
+                    overview_window.setLoginInfo(login_info);
+                    overview_window.refresh();
+                    JSQ.connect(overview_window,'log_in',overview_window,do_log_in);
+                    JSQ.connect(overview_window,'open_study',null,function(sender,args) {
+                        open_study(args.study);
+                    });
+                }
+            }
+
+            function create_main_window_if_needed() {
+                if (!main_window) {
+                    main_window=new MLSMainWindow(null,mls_manager);
+                    main_window.setDocStorClient(DSC);
+                    main_window.setLoginInfo(login_info);        
+                    JSQ.connect(main_window,'log_in',main_window,do_log_in);
+                    JSQ.connect(main_window,'goto_overview',null,function() {
+                        main_window.hide();
+                        show_status(null);
+                        create_overview_window_if_needed();
+                        overview_window.showFullBrowser();
+                    });
+                }
+            }
+
+            function do_log_in() {
+                Authenticate({},function(err1,login_info2) {
+                    if (err1) {
+                        alert('Error authenticating: '+err1);
+                        return;
+                    }
+                    login_info=login_info2;
+                    DSC.login(login_info2,function(err2,result) {
+                        if (err2) {
+                            alert('Error logging in to docstor: '+err2);
+                            return;
+                        }
+                        login_info2.user_id=result.user_id||'';
+                        if (main_window) main_window.setLoginInfo(login_info2);
+                        if (overview_window) overview_window.setLoginInfo(login_info2);
+                        mls_manager.setLoginInfo(login_info2);
+                    });
+                });
+            }
+
+            function open_study(study0) {
+                if (overview_window) overview_window.hide();
+                show_status('info','Opening study...');
+                if (!study0.storage) study0.storage='docstor';
+
+                if (study0.storage=='docstor') {
+                    show_status('info','Opening study from docstor...');
+                    create_main_window_if_needed();
+                    main_window.loadFromDocStor(study0.owner,study0.title,function(err) {
+                        if (err) {
+                            show_status('warning',err);
+                            return;
+                        }
+                        show_status('','');
+                        main_window.showFullBrowser();
+                    });
+                }
+                else {
+                    alert('Unexpected storage method: '+study0.storage);
+                }
+            }
+        });
+    });
 }
 
 function MessageWidget(O) {
