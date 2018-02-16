@@ -78,6 +78,7 @@ function AltMLSDatasetWidget(O) {
 	}
 
 	function get_dataset() {
+		if (!m_manager) return null;
 		return m_manager.study().dataset(m_dataset_id);
 	}
 	function set_dataset(ds) {

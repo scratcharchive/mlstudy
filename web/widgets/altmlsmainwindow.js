@@ -38,8 +38,7 @@ function AltMLSMainWindow(O) {
 	O.div().find('#save_changes').click(save_changes);
 
 	O.div().find('#home_button').click(function() {O.emit('goto_overview');});
-
-	O.div().find('.bd-navbar').css({"background-color":"#4752B1"}); //simons foundation color
+	O.div().find('#return_to_main_page').click(function() {O.emit('goto_overview');});
 
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
@@ -190,24 +189,9 @@ function AltMLSMainWindow(O) {
 	function set_file_info(source,info) {
 		m_file_source=source;
 		m_file_info=JSQ.clone(info);
+		m_home_view.setFileInfo(m_file_info);
+		m_home_view.refresh();
 		update_url();
-	}
-
-	function reset_url() {
-		var query=parse_url_params0();
-		var querystr='';
-		if ('passcode' in query) {
-			querystr+='&passcode='+query.passcode;
-		}
-		if ('login' in query) {
-			querystr+='&login='+query.login;
-		}
-		try {
-			history.pushState(null, null, '?'+querystr);
-		}
-		catch(err) {
-			console.log ('Unable to update url');
-		}
 	}
 
 	function update_url() {
@@ -329,7 +313,7 @@ function AltMLSHomeView(O) {
 	O.div().addClass('AltMLSHomeView');
 
 	this.setMLSManager=function(manager) {setMLSManager(manager);};
-	this.setFileInfo=function(info) {m_file_info=info;};
+	this.setFileInfo=function(info) {m_file_info=JSQ.clone(info);};
 	this.refresh=function() {refresh();};
 
 	var m_mls_manager=null;
@@ -406,6 +390,7 @@ function AltMLSDatasetsView(O) {
 	}
 
 	function setMLSManager(manager) {
+		console.log('setMLSManager: ',manager);
 		m_mls_manager=manager;
 		m_dataset_list.setMLSManager(manager);
 		m_dataset_list.refresh();

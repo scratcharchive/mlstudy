@@ -51,8 +51,6 @@ function AltMLSScriptWidget(O) {
 	O.div().append(m_button_bar);
 	*/
 
-	update_buttons();
-
 	//var m_script_editor_div=$('<div><textarea /></div>');
 	var m_script_editor=CodeMirror.fromTextArea(O.div().find('textarea.code_editor')[0], {
     	lineNumbers: true,
@@ -68,6 +66,9 @@ function AltMLSScriptWidget(O) {
 
   	O.div().find('#start_button').click(start_script_job);
   	O.div().find('#stop_button').click(stop_script_job);
+
+  	update_buttons();
+  	update_editor_visible();
 
   	function current_script_job() {
   		if (!m_script_job_lookup) return null;
@@ -86,6 +87,17 @@ function AltMLSScriptWidget(O) {
   		}
   	}
 
+  	function update_editor_visible() {
+  		if (m_script) {
+  			$(m_script_editor.getWrapperElement()).show();
+  			//m_script_editor.setOption("readOnly", false)
+  		}
+  		else {
+  			$(m_script_editor.getWrapperElement()).hide();
+  			//m_script_editor.setOption("readOnly", true)	
+  		}
+  	}
+
   	function setScript(X,script_name) {
   		do_update_script_from_editor();
   		m_script=X;
@@ -99,6 +111,8 @@ function AltMLSScriptWidget(O) {
   			m_script_editor.refresh();
   		}
   		update_buttons();
+  		update_editor_visible();
+  		m_script_editor.refresh();
   	}
 
   	function on_script_editor_changed() {

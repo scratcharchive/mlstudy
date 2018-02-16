@@ -228,35 +228,74 @@ function jsqmain_alt(query) {
             }
             else {
                 show_status(null);
-                create_overview_window_if_needed();
+                create_new_overview_window();
                 overview_window.showFullBrowser();
             }
 
-            function create_overview_window_if_needed() {
-                if (!overview_window) {
-                    overview_window=new AltMLSOverviewWindow();
-                    overview_window.setMLSManager(mls_manager);
-                    overview_window.setDocStorClient(DSC);
-                    overview_window.setLoginInfo(login_info);
-                    overview_window.refresh();
-                    JSQ.connect(overview_window,'log_in',overview_window,do_log_in);
-                    JSQ.connect(overview_window,'open_study',null,function(sender,args) {
-                        open_study(args.study);
-                    });
+            function remove_overview_and_main_windows() {
+                if (overview_window) {
+                    overview_window.div().remove();
+                    overview_window=null;
+                }
+                if (main_window) {
+                    main_window.div().remove();
+                    main_window=null;
                 }
             }
 
-            function create_main_window_if_needed() {
-                if (!main_window) {
-                    main_window=new AltMLSMainWindow(null);
-                    main_window.setMLSManager(mls_manager);
-                    JSQ.connect(main_window,'log_in',main_window,do_log_in);
-                    JSQ.connect(main_window,'goto_overview',null,function() {
-                        main_window.hide();
-                        show_status(null);
-                        create_overview_window_if_needed();
-                        overview_window.showFullBrowser();
-                    });
+            function create_new_overview_window() {
+                remove_overview_and_main_windows();
+                overview_window=new AltMLSOverviewWindow();
+                overview_window.setMLSManager(mls_manager);
+                overview_window.setDocStorClient(DSC);
+                overview_window.setLoginInfo(login_info);
+                overview_window.refresh();
+                JSQ.connect(overview_window,'log_in',overview_window,do_log_in);
+                JSQ.connect(overview_window,'open_study',null,function(sender,args) {
+                    open_study(args.study);
+                });
+                reset_url();
+            }
+
+            function create_new_main_window() {
+                remove_overview_and_main_windows();
+                main_window=new AltMLSMainWindow(null);
+                main_window.setMLSManager(mls_manager);
+                JSQ.connect(main_window,'log_in',main_window,do_log_in);
+                JSQ.connect(main_window,'goto_overview',null,function() {
+                    main_window.hide();
+                    show_status(null);
+                    create_new_overview_window();
+                    overview_window.showFullBrowser();
+                });
+            }
+
+            function reset_url() {
+                var query=parse_url_params0();
+                var querystr='';
+                if ('login' in query) {
+                    querystr+='login='+query.login;
+                }
+                if ('passcode' in query) {
+                    querystr+='&passcode='+query.passcode;
+                }
+                try {
+                    history.pushState(null, null, '?'+querystr);
+                }
+                catch(err) {
+                    console.log ('Unable to update url');
+                }
+
+                function parse_url_params0() {
+                    var match,
+                    pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                    search = /([^&=]+)=?([^&]*)/g,
+                    decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                    query  = window.location.search.substring(1);
+                    url_params = {};
+                    while (match = search.exec(query))
+                        url_params[decode(match[1])] = decode(match[2]);
+                    return url_params;
                 }
             }
 
@@ -286,7 +325,7 @@ function jsqmain_alt(query) {
 
                 if (study0.storage=='docstor') {
                     show_status('info','Opening study from docstor...');
-                    create_main_window_if_needed();
+                    create_new_main_window();
                     main_window.loadFromDocStor(study0.owner,study0.title,function(err) {
                         if (err) {
                             show_status('warning',err);
