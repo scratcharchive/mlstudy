@@ -68,7 +68,7 @@ function MLSBatchScriptListWidget(O) {
 
 		m_table.clearRows();
 		m_table.setColumnCount(1);
-		m_table.headerRow().cell(0).html('Script modules');
+		m_table.headerRow().cell(0).html('Scripts');
 		var names=m_manager.study().batchScriptNames();
 		for (var i=0; i<names.length; i++) {
 			var row=m_table.createRow();

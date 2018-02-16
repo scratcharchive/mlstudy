@@ -30,7 +30,6 @@ function KBucketUploadDialog(O) {
 	var m_label='Upload file(s) to KBucket';
 
 	function show() {
-		console.log('show');
 		var elmt=$('#template-KBucketUploadDialog').children().first().clone();
 		$('body').append(elmt);
 		elmt.modal({show:true,focus:true});
@@ -146,7 +145,6 @@ function KBucketUploadDialog(O) {
 		    } catch (e) {
 		      r = undefined;
 		    }
-		    console.log(r);
 		    if (r && r.prv) {
 		      var a=create_prv_link(file.fileName+'.prv',r.prv);
 		      f.find('#status').html('Finished uploading.');

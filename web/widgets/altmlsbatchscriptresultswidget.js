@@ -319,8 +319,42 @@ function AltMLSBatchScriptResultsWidget(O) {
 		function download_result_file() {
 			var prv=row.prv;
 			prv.original_path=rname;
-			O.emit('download_kbucket_file_from_prv',{prv:prv});
+			download_kbucket_file_from_prv(prv);
 		}
+	}
+
+	function download_kbucket_file_from_prv(prv) {
+		var sha1=prv.original_checksum||'';
+		var size=prv.original_size||0;
+
+		var kbucket_client=new KBucketClient();
+		kbucket_client.setKBucketUrl(m_mls_manager.kBucketUrl());
+		kbucket_client.stat(sha1,size,function(err,stat0) {
+			if (err) {
+				alert(err);
+				return;
+			}
+			if (!stat0.found) {
+				alert('Unexpected: not found on server.');
+				return;
+			}
+			var file_name=get_file_name_from_path(prv.original_path||'');
+			var url=stat0.url;
+			var aaa=url.indexOf('?');
+			if (aaa>=0) {
+				url=url.slice(0,aaa)+'/'+file_name+'?'+url.slice(aaa+1);
+			}
+			else {
+				url=url+'/'+file_name;
+			}
+			window.open(url,'_blank');
+		});
+	}
+
+	function get_file_name_from_path(path) {
+		var aaa=path.lastIndexOf('/');
+		if (aaa>=0) return path.slice(aaa+1);
+		else return path;
 	}
 
 	function check_on_kbucket_3(prv,callback) {

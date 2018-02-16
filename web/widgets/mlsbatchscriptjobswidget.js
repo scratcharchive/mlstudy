@@ -27,6 +27,7 @@ function MLSBatchScriptJobsWidget(O) {
 	var m_mls_manager=null;
 
 	m_table.setParent(O);
+	O.div().css({overflow:'auto'});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
   	function update_layout() {

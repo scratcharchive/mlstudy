@@ -199,7 +199,7 @@ function AltMLSDatasetWidget(O) {
 
 			var elmt=$('<span>'+shorten_path(file.prv.original_path)+'</span>')
 			elmt.attr('title',file.prv.original_path+' sha1='+file.prv.original_checksum);
-			row.cell(3).css({"max-width":"120px","overflow-wrap":"break-word"})
+			row.cell(3).css({"max-width":"220px","overflow-wrap":"break-word"})
 			row.cell(3).append(elmt);
 
 			var kb_elmt=$('<span class=kb data-sha1="'+file.prv.original_checksum+'" data-size="'+file.prv.original_size+'" data-name="'+name+'"></span>');
@@ -243,7 +243,6 @@ function AltMLSDatasetWidget(O) {
 		
 		var CC=new KBucketAuthClient();
 		CC.setKBucketAuthUrl(kbucketauth_url);
-		console.log('loginInfo: '+JSON.stringify(m_manager.loginInfo()));
 		CC.getAuth('upload',m_manager.loginInfo(),{},function(err,token,token_decoded) {
 			if (err) {
 				alert(err);

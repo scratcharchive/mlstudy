@@ -34,8 +34,8 @@
   </ul>
 </header>
 
-<div class="container-fluid" style="padding:20px;">
-      <div class="row flex-xl-nowrap">
+<div class="container-fluid MLSMainWindow-Container" style="position:absolute;top:70px;bottom:0px">
+      <div class="row flex-xl-nowrap h-100">
         <div class="bd-sidebar col-xl-2 col-lg-3 col-3">
         	<nav class="bd-links" id="bd-docs-nav">
 
@@ -72,7 +72,7 @@
         		
         	</nav>
 		</div>
-		<div id=content class="col-xl-10 col-lg-9 col-9" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
+		<div id=content class="col-xl-10 col-lg-9 col-9 h-100" style="padding:20px; overflow:auto">
 			<div class="tab-content h-100" id="myTabContent">
 			  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
 			  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
@@ -116,16 +116,17 @@
 </span>
 
 <span id="template-MLSOutputView" style="display:none">
-	<div class="row h-100">
-		<div class="col-4" style="padding-right:20px">
+	<div class="row" style="height:60%">
+		<div class="col-7" style="padding-right:20px">
 			<span id=results_widget></span>
 		</div>
-		<div class="col-4">
-			<span id=log_widget></span>
-		</div>
-		<div class="col-4" style="padding-left:20px">
+		<div class="col-5" style="padding-left:20px">
 			<span id=jobs_widget></span>
 		</div>
-		
+	</div>
+	<div class="row" style="height:40%">
+		<div class="col-12">
+			<span id=log_widget></span>
+		</div>
 	</div>
 </span>

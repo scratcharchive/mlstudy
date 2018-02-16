@@ -339,8 +339,8 @@ function MLSOutputView(O) {
 	O.div().find('#jobs_widget').append(m_jobs_widget.div());
 	O.div().find('#log_widget').append(m_log_widget.div());
 	
-	m_results_widget.div().css({"font-size":"12px"});
-	m_jobs_widget.div().css({"font-size":"12px"});
+	m_results_widget.div().css({"font-size":"12px",height:"100%"});
+	m_jobs_widget.div().css({"font-size":"12px",height:"100%"});
 
 	function setMLSManager(manager) {
 		m_mls_manager=manager;

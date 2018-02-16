@@ -51,7 +51,7 @@ function AltMLSScriptWidget(O) {
 	O.div().append(m_button_bar);
 	*/
 
-	setScriptIsRunning(false);
+	update_buttons();
 
 	//var m_script_editor_div=$('<div><textarea /></div>');
 	var m_script_editor=CodeMirror.fromTextArea(O.div().find('textarea.code_editor')[0], {
@@ -69,16 +69,22 @@ function AltMLSScriptWidget(O) {
   	O.div().find('#start_button').click(start_script_job);
   	O.div().find('#stop_button').click(stop_script_job);
 
-	function setScriptIsRunning(val) {
-		if (val) {
-			O.div().find('#stop_button').removeAttr('disabled');
-			O.div().find('#start_button').attr('disabled','disabled');
-		}
-		else {
-			O.div().find('#stop_button').attr('disabled','disabled');
-			O.div().find('#start_button').removeAttr('disabled');
-		}
-	}
+  	function current_script_job() {
+  		if (!m_script_job_lookup) return null;
+  		return m_script_job_lookup.job(m_script_name);
+  	}
+
+  	function update_buttons() {
+  		O.div().find('#stop_button').attr('disabled','disabled');
+		O.div().find('#start_button').attr('disabled','disabled');
+  		var J=current_script_job();
+  		if ((!J)||(!J.isRunning())) {
+  			O.div().find('#start_button').removeAttr('disabled');
+  		}
+  		else {
+  			O.div().find('#stop_button').removeAttr('disabled');
+  		}
+  	}
 
   	function setScript(X,script_name) {
   		do_update_script_from_editor();
@@ -90,6 +96,7 @@ function AltMLSScriptWidget(O) {
   		else {
   			m_script_editor.setValue('');
   		}
+  		update_buttons();
   	}
 
   	function on_script_editor_changed() {
@@ -119,12 +126,21 @@ function AltMLSScriptWidget(O) {
 		var J=m_mls_manager.batchJobManager().startBatchJob(m_script,module_scripts,m_mls_manager.study().object());
 		m_script_job_lookup.setJob(m_script_name,J);
 		m_results_widget.setBatchJob(J);
-		setScriptIsRunning(true);
+		update_buttons();
+		JSQ.connect(J,'completed',O,function() {
+			update_buttons();
+		});
 
 		O.emit('script-job-started');
 	}
 
 	function stop_script_job() {
-		//todo
+		var J=current_script_job();
+		if (!J) {
+			alert('Unexpected: no script job found. Please report this issue.');
+			return;
+		}
+		J.stop();
+
 	}
 }
