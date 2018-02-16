@@ -16,91 +16,28 @@
 
 function KBucketUploadDialog(O) {
 	O=O||this;
-	JSQWidget(O);
-	O.div().addClass('KBucketUploadDialog');
+	JSQObject(O);
 
 	this.setKBucketUrl=function(url) {m_kbucket_url=url;};
 	this.setKBucketAuthToken=function(token) {m_kbucket_auth_token=token;};
 	this.show=function() {show();};
-	this.close=function() {m_dialog.dialog('close');};
+	//this.close=function() {m_dialog.dialog('close');};
 	this.onFinished=function(handler) {JSQ.connect(O,'finished',O,function(sender,args) {handler(args);});}
 
-	var html=`
-		<div id=container style="text-align:center">
-          <div>
-            <h2>File Uploader</h2>
-            <h4>kbucket</h4>
-            <div id=auth></div>
-            <div id='resumable'>
-              	<button id="upload" class="btn btn-lg upload-btn" type="button">Upload File(s)</button>
-              	<div><span id=progress>-------</span></div>
-            </div>
-          </div>
-		</div>
-	`;
-	var m_dialog=$('<div id="dialog"></div>');
+	var m_dialog=null;
 	var m_kbucket_url='https://missing-kbucket-url';
 	var m_kbucket_auth_token='missing-kbucket-auth-token';
-	O.div().append($(html));
-	O.div().append('<div id=list_container><ul id=list class="upload-list"></ul></div>')
 	var m_label='Upload file(s) to KBucket';
 
 	function show() {
-		O.setSize(800,600);
-		var W=O.width();
-		var H=O.height();
-		m_dialog.css('overflow','hidden');
-		m_dialog.append(O.div());
-		$('body').append(m_dialog);
-		//O.div().find('#container').css({"max-width":(W-40)});
-		m_dialog.dialog({width:W+20,
-		              height:H+60,
-		              resizable:false,
-		              modal:true,
-		              title:m_label});
-		m_dialog.find('#container').css({position:'absolute',left:0,top:0,height:H/2,width:W-40});
-		m_dialog.find('#list_container').css({position:'absolute',left:0,top:H/2,height:H/2,width:W-40,'overflow-y':'auto'});
-		
+		console.log('show');
+		var elmt=$('#template-KBucketUploadDialog').children().first().clone();
+		$('body').append(elmt);
+		elmt.modal({show:true,focus:true});
+
+		m_dialog=elmt;
+
 		initialize_resumable();
-		//$.getScript("https://apis.google.com/js/platform.js",function() {
-		/*
-		$.getScript("https://apis.google.com/js/api:client.js",function() {
-			gapi.load('auth2,signin2',function() {
-				gapi.auth2.init({
-					client_id: '272128844725-rh0k50hgthnphjnkbb70s0v1efjt0pq3.apps.googleusercontent.com'
-				});
-				O.div().append('<div id="google-signin2"></div>');
-				O.setSize(450,300);
-
-				var W=O.width();
-				var H=O.height();
-				m_dialog.css('overflow','hidden');
-				m_dialog.append(O.div());
-				$('body').append(m_dialog);
-				m_dialog.dialog({width:W+20,
-				              height:H+60,
-				              resizable:false,
-				              modal:true,
-				              title:m_label});
-
-				gapi.signin2.render('google-signin2',{
-					onsuccess:on_success,
-					onfailure:on_failure
-				});
-				function on_success(googleUser) {
-					var profile = googleUser.getBasicProfile();
-					var id_token = googleUser.getAuthResponse().id_token;
-					O.emit('accepted',{profile:profile,id_token:id_token});
-					m_dialog.dialog('close');
-				}
-				function on_failure() {
-					O.emit('rejected');
-					m_dialog.dialog('close');
-				}
-				
-			});
-		});
-		*/
 	}
 
 	function initialize_resumable() {
@@ -165,16 +102,17 @@ function KBucketUploadDialog(O) {
 		});
 		r.on('progress', function (file) {
 		  var str = 'Uploading ('+format_progress(r.progress())+')';
-		  O.div().find('#progress').html(str);
+		  m_dialog.find('#progress').html(str);
 		});
 		r.on('complete', function () {
-		  O.div().find('#progress').html('Complete');
+		  //m_dialog.find('#progress').html('Finalizing...');
 		});
 
 		function fileError(file, msg) {
-		  var f = O.div().find('#file-' + file.uniqueIdentifier);
+		  var f = m_dialog.find('#file-' + file.uniqueIdentifier);
 		  f.addClass('error');
 		  f.find('#status').html((msg || 'unknown error'));
+		  m_dialog.find('#progress').html((msg || 'unknown error'));
 		}
 
 		r.on('fileError', function (file, msg) {
@@ -198,7 +136,7 @@ function KBucketUploadDialog(O) {
 		  xhr.open('POST', uri, true);
 		  xhr.responseType = 'json';
 		  xhr.onload = function() {
-		    var f = O.div().find('#file-'+file.uniqueIdentifier);
+		    var f = m_dialog.find('#file-'+file.uniqueIdentifier);
 		    f.addClass('complete');
 		    var r;
 		    try {
@@ -208,6 +146,7 @@ function KBucketUploadDialog(O) {
 		    } catch (e) {
 		      r = undefined;
 		    }
+		    console.log(r);
 		    if (r && r.prv) {
 		      var a=create_prv_link(file.fileName+'.prv',r.prv);
 		      f.find('#status').html('Finished uploading.');
@@ -277,6 +216,7 @@ function KBucketUploadDialog(O) {
 				}
 				var args={files:files0};
 				O.emit('finished',args);
+				m_dialog.find('#progress').html('Complete.');
 			}
 		}
 	}

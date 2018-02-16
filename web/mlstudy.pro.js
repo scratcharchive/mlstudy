@@ -134,6 +134,9 @@ opts.SCRIPTS.push(
 opts.STYLESHEETS.push(
         'kbucketuploaddialog.css'
 );
+opts.HTML_SNIPPETS.push(
+	'kbucketuploaddialog.html'
+);
 
 
 //////////////////////////////////////////////////////////////////////

@@ -48,6 +48,8 @@ function AltMLSDatasetWidget(O) {
 	O.div().find('#files').append(m_files_table.div());
 	O.div().find('#parameters').append(m_params_table.div());
 
+	O.div().find('#upload_files').click(upload_files);
+
 	m_description_widget.onDescriptionEdited(function() {;
 		var ds=get_dataset();
 		if (!ds) return;
@@ -97,11 +99,6 @@ function AltMLSDatasetWidget(O) {
 				update_file_row(row,key,ds.file(key));
 				m_files_table.addRow(row);	
 			}
-			var link=$('<a href=#>Upload file(s)</a>');
-			link.click(upload_files);
-			var row=m_files_table.createRow();
-			row.cell(1).append(link);
-			m_files_table.addRow(row);	
 		}
 
 		m_params_table.setColumnCount(3);
@@ -246,6 +243,7 @@ function AltMLSDatasetWidget(O) {
 		
 		var CC=new KBucketAuthClient();
 		CC.setKBucketAuthUrl(kbucketauth_url);
+		console.log('loginInfo: '+JSON.stringify(m_manager.loginInfo()));
 		CC.getAuth('upload',m_manager.loginInfo(),{},function(err,token,token_decoded) {
 			if (err) {
 				alert(err);
@@ -264,7 +262,7 @@ function AltMLSDatasetWidget(O) {
 				}
 				set_dataset(ds);
 				refresh();
-				dlg.close();
+				//dlg.close();
 			});
 		});
 	}
@@ -543,13 +541,27 @@ function AltDescriptionWidget(O) {
 		<span style="font-style:italic">
 			<span id=description_content></span>
 		</span>
+		<a href="#" id=edit_link class="fas fa-edit" title="Edit dataset description"></a>
 		</p>
 	`);
+
+	//O.div().find('#edit_link').click(edit_description);
+	O.div().find('#edit_link').click(edit_description);
 
 	//m_top_bar.find('#edit_button').click(edit_description);
 
 	function edit_description() {
-		var dlg=new EditTextDlg();
+		var elmt=$('#template-EditDescriptionDlg').children().first().clone();
+		$('body').append(elmt);
+		elmt.find('textarea').val(description());
+		elmt.find('#save_button').click(function() {
+			var descr=elmt.find('textarea').val();
+			setDescription(descr);
+			O.emit('description-edited');
+		});
+		elmt.modal({show:true,focus:true});
+
+		/*var dlg=new EditTextDlg();
 		dlg.setLabel('Edit description');
 		dlg.setText(description());
 		JSQ.connect(dlg,'accepted',O,function() {
@@ -557,6 +569,7 @@ function AltDescriptionWidget(O) {
 			O.emit('description-edited');
 		});
 		dlg.show();
+		*/
 	}
 
 	function setLabel(label) {

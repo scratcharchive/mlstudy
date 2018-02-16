@@ -199,6 +199,7 @@ function jsqmain_alt(query) {
             show_status('warning','Error logging in: '+err);
             return;
         }
+        mls_manager.setLoginInfo(login_info);
         DSC.login(login_info,function(err00,result) {
             if (err00) {
                 show_status('warning','Error logging in to DocStor: '+err00);
@@ -207,6 +208,7 @@ function jsqmain_alt(query) {
             show_status(null);
             
             login_info.user_id=result.user_id||'';
+            mls_manager.setLoginInfo(login_info);
 
             var overview_window=null;
             var main_window=null;
