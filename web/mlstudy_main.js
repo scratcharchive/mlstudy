@@ -18,7 +18,7 @@ function jsqmain(query) {
     // The url query
     query=query||{};
 
-    if (query.alt=='true') {
+    if (query.alt!='false') {
         jsqmain_alt(query);
         return;
     }
