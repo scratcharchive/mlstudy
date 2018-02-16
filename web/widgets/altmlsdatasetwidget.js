@@ -49,6 +49,7 @@ function AltMLSDatasetWidget(O) {
 	O.div().find('#parameters').append(m_params_table.div());
 
 	O.div().find('#upload_files').click(upload_files);
+	O.div().find('#add_parameter').click(add_param);
 
 	m_description_widget.onDescriptionEdited(function() {;
 		var ds=get_dataset();
@@ -116,13 +117,6 @@ function AltMLSDatasetWidget(O) {
 				update_param_row(row,key,params[key]);
 				m_params_table.addRow(row);	
 			}
-			
-			var add_parameter_link=$('<a href=#>Add parameter</a>');
-			add_parameter_link.click(add_param);
-
-			var row=m_params_table.createRow();
-			row.cell(1).append(add_parameter_link);
-			m_params_table.addRow(row);	
 		}
 	}
 	function update_param_row(row,name,val) {

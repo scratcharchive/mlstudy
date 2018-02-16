@@ -11,6 +11,7 @@ function AltMLSMainWindow(O) {
 	var m_mls_manager=null;
 	var m_processing_server_widget=new ProcessingServerWidget();
 	var m_advanced_configuration_widget=new AdvancedConfigurationWidget();
+	var m_home_view=new AltMLSHomeView();
 	var m_datasets_view=new AltMLSDatasetsView();
 	var m_scripts_view=new AltMLSScriptsView();
 	var m_output_view=new MLSOutputView();
@@ -21,9 +22,13 @@ function AltMLSMainWindow(O) {
 
 	JSQ.connect(m_scripts_view,'current-batch-job-changed',O,on_batch_job_changed);
 
+	JSQ.connect(m_home_view,'open-datasets',O,function() {open_content('datasets');});
+	JSQ.connect(m_home_view,'open-scripts',O,function() {open_content('scripts');});
+
 	O.div().append($('#template-AltMLSMainWindow').children().clone());
 	O.div().find('#processing_server').append(m_processing_server_widget.div());
 	O.div().find('#advanced_configuration').append(m_advanced_configuration_widget.div());
+	O.div().find('#home').append(m_home_view.div());
 	O.div().find('#datasets').append(m_datasets_view.div());
 	m_scripts_view.div().addClass('h-100');
 	O.div().find('#scripts').append(m_scripts_view.div());
@@ -57,8 +62,16 @@ function AltMLSMainWindow(O) {
 		var content_id=current_content_id();
 		O.div().find('#content .tab-pane').removeClass('show active');
 		O.div().find('#content .tab-pane#'+content_id).addClass('show active');
+		m_home_view.refresh(); //todo: only when necessary
 		m_datasets_view.refresh(); //todo: only when necessary
 		m_scripts_view.refresh(); //todo: only when necessary
+	}
+
+	function open_content(content_id) {
+		var items=O.div().find('.bd-toc-item ul > li').first();
+		items.removeClass('active bd-sidenav-active');
+		O.div().find(`.bd-toc-item ul > li[data-content-id='${content_id}']`).addClass('active bd-sidenav-active');
+		update_visible_content();
 	}
 
 
@@ -155,6 +168,7 @@ function AltMLSMainWindow(O) {
 	}
 
 	function refresh_views() {
+		m_home_view.refresh();
 		m_datasets_view.refresh();
 		m_scripts_view.refresh();
 	}
@@ -291,6 +305,7 @@ function AltMLSMainWindow(O) {
 
 	function setMLSManager(manager) {
 		m_mls_manager=manager; 
+		m_home_view.setMLSManager(manager);
 		m_datasets_view.setMLSManager(manager);
 		m_scripts_view.setMLSManager(manager);
 		m_output_view.setMLSManager(manager);
@@ -303,6 +318,36 @@ function AltMLSMainWindow(O) {
 
 }
 
+function AltMLSHomeView(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('AltMLSHomeView');
+
+	this.setMLSManager=function(manager) {setMLSManager(manager);};
+	this.setFileInfo=function(info) {m_file_info=info;};
+	this.refresh=function() {refresh();};
+
+	var m_mls_manager=null;
+	var m_file_info={owner:'',title:'',source:''};
+
+	O.div().append($('#template-AltMLSHomeView').children().clone());
+	O.div().find('#open_datasets').click(function() {O.emit('open-datasets');});
+	O.div().find('#open_scripts').click(function() {O.emit('open-scripts');});
+
+	function refresh() {
+		O.div().find('#study_title').html(m_file_info.title);
+		O.div().find('#description_content').html(m_mls_manager.study().description());
+		O.div().find('#num_datasets').html(m_mls_manager.study().datasetIds().length);
+		O.div().find('#num_scripts').html(m_mls_manager.study().batchScriptNames().length);
+	}
+
+	function setMLSManager(manager) {
+		m_mls_manager=manager;
+		JSQ.connect(m_mls_manager.study(),'changed',O,refresh);
+		refresh();
+	}
+}
+
 function AltMLSDatasetsView(O) {
 	O=O||this;
 	JSQWidget(O);
@@ -313,10 +358,13 @@ function AltMLSDatasetsView(O) {
 
 	var m_dataset_list=new MLSDatasetListWidget();
 	var m_dataset_widget=new AltMLSDatasetWidget();
+	var m_mls_manager=null;
 
 	O.div().append($('#template-AltMLSDatasetsView').children().clone());
 	O.div().find('#dataset_list').append(m_dataset_list.div());
 	O.div().find('#dataset_widget').append(m_dataset_widget.div());
+
+	O.div().find("#add_dataset").click(add_dataset);
 
 	m_dataset_list.onCurrentDatasetChanged(update_current_dataset);
 
@@ -343,6 +391,18 @@ function AltMLSDatasetsView(O) {
 		m_dataset_widget.refresh();
 		refresh();
 	}
+
+	function add_dataset() {
+		var dataset_id=prompt('Dataset ID:');
+		if (!dataset_id) return;
+		if (m_mls_manager.study().dataset(dataset_id)) {
+			alert('Error: Dataset with this id already exists.');
+			return;
+		}
+		m_mls_manager.study().setDataset(dataset_id,new MLSDataset());
+		refresh();
+		m_dataset_list.setCurrentDatasetId(dataset_id);
+	}
 }
 
 function AltMLSScriptsView(O) {
@@ -367,6 +427,8 @@ function AltMLSScriptsView(O) {
 	O.div().find('#script_list').append(m_script_list.div());
 	m_script_widget.div().addClass('h-100');
 	O.div().find('#script_widget').append(m_script_widget.div());
+
+	O.div().find("#add_script").click(add_script);
 
 	m_script_list.onCurrentBatchScriptChanged(update_current_script);
 
@@ -395,6 +457,14 @@ function AltMLSScriptsView(O) {
 		m_script_widget.setMLSManager(manager);
 		//m_script_widget.refresh();
 		refresh();
+	}
+
+	function add_script() {
+		var script_name=prompt('New script name:');
+		if (!script_name) return;
+		m_mls_manager.study().setBatchScript(script_name,new MLSBatchScript());
+		refresh();
+		m_script_list.setCurrentBatchScriptName(script_name);
 	}
 }
 

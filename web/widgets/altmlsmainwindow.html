@@ -44,7 +44,10 @@
 	              		Study
 	            	</a>
 	            	<ul class="nav bd-sidenav">
-	            		<li data-content-id="datasets" class="active bd-sidenav-active">
+	            		<li data-content-id="home" class="active bd-sidenav-active">
+			            	<a href="#">Overview</a>
+			            </li>
+	            		<li data-content-id="datasets">
 			            	<a href="#">Datasets</a>
 			            </li>
 			            <li data-content-id="scripts" data-study-list-mode="my_studies">
@@ -84,7 +87,8 @@
 				<div class="col-12">
 					<div id=content class="w-100 h-100" style="overflow:auto">
 						<div class="tab-content h-100" id="myTabContent">
-						  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade show active h-100" id="home" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade h-100" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
 						  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
 						  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
 
@@ -102,11 +106,41 @@
 
 </span>
 
-<span id="template-AltMLSDatasetsView" style="display:none">
+<span id="template-AltMLSHomeView" style="display:none">
 	<div class=row>
+		<div>
+			<h3 style="padding-left:20px">Study: <span id=study_title></span></h3>
+		</div>
+	</div>
+	<div class=row>
+		<div class="col-6" style="padding-left:20px">
+			<p>
+				<span style="font-weight:bold">Description:</span>
+				<span style="font-style:italic">
+					<span id=description_content></span>
+				</span>
+				<a href="#" id=edit_link class="fas fa-edit" title="Edit dataset description"></a>
+			</p>
+		</div>
+		<div class="col-6" style="padding-left:20px">
+			<ul>
+				<li><a href=# id=open_datasets><span id=num_datasets></span> datasets</a></li>
+				<li><a href=# id=open_scripts><span id=num_scripts></span> scripts</a></li>
+			</ul>
+		</div>
+	</div>
+</span>
+
+<span id="template-AltMLSDatasetsView" style="display:none">
+	<div class="row h-100" style="padding-left: 15px">
 		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
-			<span id=dataset_list>
-			</span>
+			<div class=row>
+				<a href=# title="Add new dataset" id="add_dataset"><span class="fas fa-plus"></span> Add dataset</a>
+			</div>
+			<div class=row>
+				<span id=dataset_list>
+				</span>
+			</div>
 		</div>
 		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
 			<span id=dataset_widget>
@@ -116,11 +150,15 @@
 </span>
 
 <span id="template-AltMLSScriptsView" style="display:none">
-	<div class="row h-100">
+	<div class="row h-100" style="padding-left: 15px">
 		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
-			<span id=script_list>
-			</span>
-		</div>
+			<div class=row>
+				<a href=# title="Add new script" id="add_script"><span class="fas fa-plus"></span> Add script</a>
+			</div>
+			<div class=row>
+				<span id=script_list>
+				</span>
+			</div>		</div>
 		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
 			<span id=script_widget>
 			</span>
