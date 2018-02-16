@@ -37,6 +37,8 @@ function AltMLSMainWindow(O) {
 
 	O.div().find('#save_changes').click(save_changes);
 
+	O.div().find('#home_button').click(function() {O.emit('goto_overview');});
+
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
@@ -334,6 +336,8 @@ function AltMLSHomeView(O) {
 	O.div().find('#open_datasets').click(function() {O.emit('open-datasets');});
 	O.div().find('#open_scripts').click(function() {O.emit('open-scripts');});
 
+	O.div().find('#edit_description').click(edit_description);
+
 	function refresh() {
 		O.div().find('#study_title').html(m_file_info.title);
 		O.div().find('#description_content').html(m_mls_manager.study().description());
@@ -345,6 +349,18 @@ function AltMLSHomeView(O) {
 		m_mls_manager=manager;
 		JSQ.connect(m_mls_manager.study(),'changed',O,refresh);
 		refresh();
+	}
+
+	function edit_description() {
+		var elmt=$('#template-EditDescriptionDlg').children().first().clone();
+		$('body').append(elmt);
+		elmt.find('textarea').val(m_mls_manager.study().description());
+		elmt.find('#save_button').click(function() {
+			var descr=elmt.find('textarea').val();
+			m_mls_manager.study().setDescription(descr);
+			elmt.modal('hide');
+		});
+		elmt.modal({show:true,focus:true});
 	}
 }
 
