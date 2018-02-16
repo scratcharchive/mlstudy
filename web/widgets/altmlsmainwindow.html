@@ -72,15 +72,28 @@
         		
         	</nav>
 		</div>
-		<div id=content class="col-xl-10 col-lg-9 col-9 h-100" style="padding:20px; overflow:auto">
-			<div class="tab-content h-100" id="myTabContent">
-			  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
-			  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
+		<div id=content_container class="col-xl-10 col-lg-9 col-9 h-100">
+			<div class="row" style="position:absolute;top:10px;height:40px;left:15px;right:15px;"">
+				<div class="col-12">
+					<button class="btn btn-primary btn-sm" disabled="disabled" id="save_changes">Save changes</button>
+					&nbsp;
+					<span id=document_info style="font-weight: bold;"></span>
+				</div>
+			</div>
+			<div class="row" style="position:absolute;top:60px;bottom:10px;left:15px;right:15px;"">
+				<div class="col-12">
+					<div id=content class="w-100 h-100" style="overflow:auto">
+						<div class="tab-content h-100" id="myTabContent">
+						  <div class="tab-pane fade show active" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
 
-			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
 
-			  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
+						  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
+						</div>
+					</div>
+				</div>
 			</div>
 			
 		</div>

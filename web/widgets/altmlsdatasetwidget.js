@@ -556,6 +556,7 @@ function AltDescriptionWidget(O) {
 		elmt.find('#save_button').click(function() {
 			var descr=elmt.find('textarea').val();
 			setDescription(descr);
+			elmt.modal('hide');
 			O.emit('description-edited');
 		});
 		elmt.modal({show:true,focus:true});
