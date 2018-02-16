@@ -62,13 +62,15 @@ function AltMLSDatasetWidget(O) {
 	});
 
 	function refresh() {
-		update_tables();
 		O.div().find('#dataset_id').html(m_dataset_id);
 		m_description_widget.setDescription('');
 		var ds=get_dataset();
-		if (!ds) return;
-		m_description_widget.setDescription('Loading...');
-		m_description_widget.setDescription(ds.properties().description||'');
+		if (ds) {
+			m_description_widget.setDescription(ds.properties().description||'');
+		}
+		else {
+			m_description_widget.setDescription('');
+		}
 		update_tables();
 		setTimeout(function() {
 			refresh_kb_elements();
@@ -286,6 +288,10 @@ function AltMLSDatasetWidget(O) {
 		if (new_name==name) return;
 		var ds=get_dataset();
 		if (!ds) return;
+		if (ds.file(new_name)) {
+			alert('Cannot rename. File with this name already exists.');
+			return;
+		}
 		var file0=ds.file(name);
 		ds.removeFile(name);
 		ds.setFile(new_name,file0);
@@ -534,7 +540,7 @@ function AltDescriptionWidget(O) {
 		<span style="font-style:italic">
 			<span id=description_content></span>
 		</span>
-		<a href="#" id=edit_link class="fas fa-edit" title="Edit dataset description"></a>
+		<a href="#" id=edit_link class="octicon octicon-pencil" title="Edit dataset description"></a>
 		</p>
 	`);
 

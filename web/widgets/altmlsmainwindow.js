@@ -39,6 +39,8 @@ function AltMLSMainWindow(O) {
 
 	O.div().find('#home_button').click(function() {O.emit('goto_overview');});
 
+	O.div().find('.bd-navbar').css({"background-color":"#4752B1"}); //simons foundation color
+
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
@@ -173,6 +175,7 @@ function AltMLSMainWindow(O) {
 		m_home_view.refresh();
 		m_datasets_view.refresh();
 		m_scripts_view.refresh();
+		// m_output_view.refresh(); todo: figure out what to do about this
 	}
 
 	function try_parse_json(str) {
@@ -383,6 +386,9 @@ function AltMLSDatasetsView(O) {
 	O.div().find("#add_dataset").click(add_dataset);
 
 	m_dataset_list.onCurrentDatasetChanged(update_current_dataset);
+	JSQ.connect(m_dataset_widget,'download_kbucket_file_from_prv',O,function(sender,args) {
+		download_kbucket_file_from_prv(args.prv);
+	});
 
 	function refresh() {
 		m_dataset_list.refresh();
@@ -458,6 +464,15 @@ function AltMLSScriptsView(O) {
 		var P=m_mls_manager.study().batchScript(batch_script_name);
 		m_script_widget.setScript(P,batch_script_name);
 		m_current_script_name=batch_script_name;
+
+		if (P) {
+			P.onChanged(function() {
+				if (batch_script_name) {
+					m_mls_manager.study().setBatchScript(batch_script_name,P);
+				}
+			});
+		}
+
 		O.emit('current-batch-job-changed');
 	}
 
@@ -532,5 +547,40 @@ function ScriptJobLookup() {
 
 	function job(script_name) {
 		return m_script_jobs[script_name]||null;
+	}
+}
+
+//todo: this should not be global: put it into the manager or something
+function download_kbucket_file_from_prv(prv) {
+	var sha1=prv.original_checksum||'';
+	var size=prv.original_size||0;
+
+	var kbucket_client=new KBucketClient();
+	kbucket_client.setKBucketUrl(m_mls_manager.kBucketUrl());
+	kbucket_client.stat(sha1,size,function(err,stat0) {
+		if (err) {
+			alert(err);
+			return;
+		}
+		if (!stat0.found) {
+			alert('Unexpected: not found on server.');
+			return;
+		}
+		var file_name=get_file_name_from_path(prv.original_path||'');
+		var url=stat0.url;
+		var aaa=url.indexOf('?');
+		if (aaa>=0) {
+			url=url.slice(0,aaa)+'/'+file_name+'?'+url.slice(aaa+1);
+		}
+		else {
+			url=url+'/'+file_name;
+		}
+		window.open(url,'_blank');
+	});
+
+	function get_file_name_from_path(path) {
+		var aaa=path.lastIndexOf('/');
+		if (aaa>=0) return path.slice(aaa+1);
+		else return path;
 	}
 }

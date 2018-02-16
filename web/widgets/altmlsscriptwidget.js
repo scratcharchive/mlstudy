@@ -92,9 +92,11 @@ function AltMLSScriptWidget(O) {
   		m_script_name=script_name;
   		if (m_script) {
   			m_script_editor.setValue(m_script.script());
+  			m_script_editor.refresh();
   		}
   		else {
   			m_script_editor.setValue('');
+  			m_script_editor.refresh();
   		}
   		update_buttons();
   	}

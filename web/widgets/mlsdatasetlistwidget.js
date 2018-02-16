@@ -152,6 +152,10 @@ function MLSDatasetListWidget(O) {
 		var name2=prompt('New id for dataset:',name);
 		if (!name2) return;
 		if (name2==name) return;
+		if (m_study.dataset(name2)) {
+			alert('Cannot rename dataset. A dataset with this name already exists.');
+			return;
+		}
 		m_study.changeDatasetId(name,name2);
 		refresh();
 	}

@@ -113,6 +113,10 @@ function MLSBatchScriptListWidget(O) {
 		var name2=prompt('New name for script module:',name);
 		if (!name2) return;
 		if (name2==name) return;
+		if (m_manager.study().batchScript(name2)) {
+			alert('Unable to rename script. A script with this name already exists.');
+			return;
+		}
 		m_manager.study().changeBatchScriptName(name,name2);
 		refresh();
 	}
