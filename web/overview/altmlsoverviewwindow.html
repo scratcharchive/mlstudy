@@ -1,20 +1,6 @@
 <span id="template-AltMLSOverviewWindow">
-<header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar" style="background-color:#627DB7">
+<header class="navbar navbar-expand navbar-dark bd-navbar" style="background-color:#627DB7">
   <a class="navbar-brand" id=home_button href="#">MLStudy</a>
-
-  <!--
-  <div class="navbar-nav-scroll">
-    <ul class="navbar-nav bd-navbar-nav flex-row">
-      <li class="nav-item active">
-        <a class="nav-link " href="#">Home</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link " href="#">Test</a>
-      </li>
-      
-    </ul>
-  </div>
-  -->
   <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
 	  <li class="nav-item dropdown">
 	    <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -34,11 +20,10 @@
   </ul>
 </header>
 
-<div class="container-fluid MLSOverviewWindow-Container" style="padding:20px;">
-      <div class="row flex-xl-nowrap">
-        <div class="bd-sidebar col-xl-2 col-4">
-        	<nav class="bd-links" id="bd-docs-nav">
-
+<div class="MLSOverviewWindow-Container" style="flex:1;display:flex;flex-flow:row;">
+    <div class="bd-sidebar" style="height:100%;overflow: auto;padding-top: 20px">
+        	
+        	<nav class="" id="bd-docs-nav" style="">
         		<div class="bd-toc-item active">
         			<a class="bd-toc-link" href="#">
 	              		Studies
@@ -71,18 +56,17 @@
         		</div>
         		
         	</nav>
+	</div>
+	<div id=content class="" style="flex:1; height:100%; overflow:auto; padding-left:20px;padding-top:20px">
+		<div class="tab-content" id="myTabContent">
+		  <div class="tab-pane fade show active" id="study_list" role="tabpanel" aria-labelledby="home-tab"></div>
+
+		  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
+
+		  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
 		</div>
-		<div id=content class="col-xl-10 col-8" style="padding:20px; max-height:calc(100vh - 9rem); overflow:auto">
-			<div class="tab-content" id="myTabContent">
-			  <div class="tab-pane fade show active" id="study_list" role="tabpanel" aria-labelledby="home-tab"></div>
-
-			  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
-
-			  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
-			</div>
 			
-		</div>
-    </div>
+	</div>
 </div>
 
 </span>
@@ -110,7 +94,7 @@
     		<input type="url" class="form-control" id="kbucket_url">
   		</div>
   		<div class="form-group">
-			<label for="kbucketauth_url">docstor url</label>
+			<label for="kbucketauth_url">kbucketauth url</label>
     		<input type="url" class="form-control" id="kbucketauth_url">
   		</div>
   		<div class="form-group">
@@ -118,7 +102,7 @@
     		<input type="url" class="form-control" id="docstor_url">
   		</div>
   		<div class="form-group">
-			<label for="tidbits_url">docstor url</label>
+			<label for="tidbits_url">tidbits url</label>
     		<input type="url" class="form-control" id="tidbits_url">
   		</div>  		
     </form>

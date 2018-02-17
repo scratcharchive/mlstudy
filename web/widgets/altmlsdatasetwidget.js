@@ -44,6 +44,9 @@ function AltMLSDatasetWidget(O) {
 	//m_menu_bar.setParent(O);
 
 	O.div().append($('#template-AltMLSDatasetWidget').children().clone());
+
+	O.div().css({display:'flex',"flex-flow":"column"});
+
 	O.div().find('#description').append(m_description_widget.div());
 	O.div().find('#files').append(m_files_table.div());
 	O.div().find('#parameters').append(m_params_table.div());

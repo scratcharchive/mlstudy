@@ -1,20 +1,6 @@
-<span id="template-AltMLSMainWindow" style="display:none">
-<header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar" style="background-color:#627DB7">
+<span id="template-AltMLSMainWindow">
+<header class="navbar navbar-expand navbar-dark bd-navbar" style="background-color:#627DB7">
   <a class="navbar-brand" id=home_button href="#">MLStudy</a>
-
-  <!--
-  <div class="navbar-nav-scroll">
-    <ul class="navbar-nav bd-navbar-nav flex-row">
-      <li class="nav-item active">
-        <a class="nav-link " href="#">Home</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link " href="#">Test</a>
-      </li>
-      
-    </ul>
-  </div>
-  -->
   <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
 	  <li class="nav-item dropdown">
 	    <a class="nav-item nav-link dropdown-toggle mr-md-2" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -34,92 +20,82 @@
   </ul>
 </header>
 
-<div class="container-fluid MLSMainWindow-Container" style="position:absolute;top:70px;bottom:0px">
-      <div class="row flex-xl-nowrap h-100">
-        <div class="bd-sidebar col-xl-2 col-lg-3 col-3">
-        	<nav class="bd-links" id="bd-docs-nav">
+<div class="MLSMainWindow-Container" style="flex:1;display:flex;flex-flow:row;max-height: 100%;">
+    <div class="bd-sidebar" style="height:100%;overflow: auto;padding-top: 20px">
+    	<nav class="" id="bd-docs-nav">
 
-        		<div class="bd-toc-item active">
-        			<a class="bd-toc-link" href="#">
-	              		Current study
-	            	</a>
-	            	<ul class="nav bd-sidenav">
-	            		<li data-content-id="home" class="active bd-sidenav-active">
-			            	<a href="#">Study overview</a>
-			            </li>
-	            		<li data-content-id="datasets">
-			            	<a href="#">Datasets</a>
-			            </li>
-			            <li data-content-id="scripts" data-study-list-mode="my_studies">
-			            	<a href="#">Scripts</a>
-			            </li>
-			            <li data-content-id="output" data-study-list-mode="my_studies">
-			            	<a href="#">Output</a>
-			            </li>
-			        </ul>
-        		</div>
+    		<div class="bd-toc-item active">
+    			<a class="bd-toc-link" href="#">
+              		Current study
+            	</a>
+            	<ul class="nav bd-sidenav">
+            		<li data-content-id="home" class="active bd-sidenav-active">
+		            	<a href="#">Study overview</a>
+		            </li>
+            		<li data-content-id="datasets">
+		            	<a href="#">Datasets</a>
+		            </li>
+		            <li data-content-id="scripts" data-study-list-mode="my_studies">
+		            	<a href="#">Scripts</a>
+		            </li>
+		            <li data-content-id="output" data-study-list-mode="my_studies">
+		            	<a href="#">Output</a>
+		            </li>
+		        </ul>
+    		</div>
 
-        		<div class="bd-toc-item active">
-        			<a class="bd-toc-link" href="#">
-	              		Configuration
-	            	</a>
-	            	<ul class="nav bd-sidenav">
-	            		<li data-content-id="processing_server">
-			            	<a href="#">Processing server</a>
-			            </li>
-			            <li data-content-id="advanced_configuration">
-			            	<a href="#">Advanced</a>
-			            </li>
-			        </ul>
-        		</div>
+    		<div class="bd-toc-item active">
+    			<a class="bd-toc-link" href="#">
+              		Configuration
+            	</a>
+            	<ul class="nav bd-sidenav">
+            		<li data-content-id="processing_server">
+		            	<a href="#">Processing server</a>
+		            </li>
+		            <li data-content-id="advanced_configuration">
+		            	<a href="#">Advanced</a>
+		            </li>
+		        </ul>
+    		</div>
 
-        		<div class="bd-toc-item active">
-        			<a id="return_to_main_page" class="bd-toc-link" href="#">
-	              		Return to main page
-	            	</a>
-        		</div>
+    		<div class="bd-toc-item active">
+    			<a id="return_to_main_page" class="bd-toc-link" href="#">
+              		Return to main page
+            	</a>
+    		</div>
 
-        	</nav>
-		</div>
-		<div id=content_container class="col-xl-10 col-lg-9 col-9 h-100">
-			<div class="row" style="position:absolute;top:10px;height:40px;left:15px;right:15px;"">
-				<div class="col-12">
-					<button class="btn btn-primary btn-sm" disabled="disabled" id="save_changes">Save changes</button>
-					&nbsp;
-					<span id=document_info style="font-weight: bold;"></span>
-				</div>
+    	</nav>
+	</div>
+	<div id=content_container style="flex:1; display:flex; flex-flow: column; height:100%; overflow:auto; padding-left:20px;padding-top:20px">
+			<div class="" style="display:flex;flex-flow: row">
+				<button class="btn btn-primary btn-sm" disabled="disabled" id="save_changes">Save changes</button>
+				&nbsp;
+				<span id=document_info style="font-weight: bold;"></span>
 			</div>
-			<div class="row" style="position:absolute;top:60px;bottom:10px;left:15px;right:15px;"">
-				<div class="col-12">
-					<div id=content class="w-100 h-100" style="overflow:auto">
-						<div class="tab-content h-100" id="myTabContent">
-						  <div class="tab-pane fade show active h-100" id="home" role="tabpanel" aria-labelledby="home-tab"></div>
-						  <div class="tab-pane fade h-100" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
-						  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
-						  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
+			<div id=content class="" style="overflow:auto;flex:1">
+				<div class="tab-content h-100" id="myTabContent" style="padding-top: 10px">
+				  <div class="tab-pane fade show active h-100" id="home" role="tabpanel" aria-labelledby="home-tab"></div>
+				  <div class="tab-pane fade h-100" id="datasets" role="tabpanel" aria-labelledby="home-tab"></div>
+				  <div class="tab-pane fade h-100" id="scripts" role="tabpanel" aria-labelledby="home-tab"></div>
+				  <div class="tab-pane fade h-100" id="output" role="tabpanel" aria-labelledby="home-tab"></div>
 
-						  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
+				  <div class="tab-pane fade" id="processing_server" role="tabpanel" aria-labelledby="home-tab"></div>
 
-						  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
-						</div>
-					</div>
+				  <div class="tab-pane fade" id="advanced_configuration" role="tabpanel" aria-labelledby="home-tab"></div>
 				</div>
 			</div>
 			
-		</div>
-    </div>
+	</div>
 </div>
 
 </span>
 
 <span id="template-AltMLSHomeView" style="display:none">
-	<div class=row>
-		<div>
-			<h3 style="padding-left:20px">Study: <span id=study_title></span></h3>
-		</div>
+	<div>
+		<h3 style="padding-left:20px">Study: <span id=study_title></span></h3>
 	</div>
-	<div class=row>
-		<div class="col-6" style="padding-left:20px">
+	<div style="flex:1;display:flex;flex-flow: row">
+		<div class="" style="width:50%">
 			<p>
 				<span style="font-weight:bold">Description:</span>
 				<span style="font-style:italic">
@@ -128,7 +104,7 @@
 				<a href="#" id=edit_description class="octicon octicon-pencil" title="Edit study description"></a>
 			</p>
 		</div>
-		<div class="col-6" style="padding-left:20px">
+		<div class="" style="width:50%">
 			<ul>
 				<li><a href=# id=open_datasets><span id=num_datasets></span> datasets</a></li>
 				<li><a href=# id=open_scripts><span id=num_scripts></span> scripts</a></li>
@@ -138,51 +114,48 @@
 </span>
 
 <span id="template-AltMLSDatasetsView" style="display:none">
-	<div class="row h-100" style="padding-left: 15px">
-		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
-			<div class=row>
-				<a href=# title="Add new dataset" id="add_dataset"><span class="octicon octicon-plus"></span> Add dataset</a>
-			</div>
-			<div class=row>
-				<span id=dataset_list>
-				</span>
-			</div>
+	<div class="" style="width:200px;display:flex;flex-flow: column">
+		<div class="">
+			<a href=# title="Add new dataset" id="add_dataset"><span class="octicon octicon-plus"></span> Add dataset</a>
 		</div>
-		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
-			<span id=dataset_widget>
+		<div class="" style="flex:1">
+			<span id=dataset_list>
 			</span>
 		</div>
+	</div>
+	<div class="" style="flex:1;padding-left:40px">
+		<span id=dataset_widget>
+		</span>
 	</div>
 </span>
 
 <span id="template-AltMLSScriptsView" style="display:none">
-	<div class="row h-100" style="padding-left: 15px">
-		<div class="col-6 col-sm-4 col-md-3 col-xl-2">
-			<div class=row>
-				<a href=# title="Add new script" id="add_script"><span class="octicon octicon-plus"></span> Add script</a>
-			</div>
-			<div class=row>
-				<span id=script_list>
-				</span>
-			</div>		</div>
-		<div class="col-6 col-sm-8 col-md-9 col-xl-10">
-			<span id=script_widget>
+	<div class="" style="width:200px;display:flex;flex-flow: column">
+		<div class="">
+			<a href=# title="Add new script" id="add_script"><span class="octicon octicon-plus"></span> Add script</a>
+		</div>
+		<div class="" style="flex:1">
+			<span id=script_list>
 			</span>
 		</div>
+	</div>
+	<div class="" style="flex:1;padding-left:40px">
+		<span id=script_widget>
+		</span>
 	</div>
 </span>
 
 <span id="template-MLSOutputView" style="display:none">
-	<div class="row" style="height:60%">
-		<div class="col-7" style="padding-right:20px">
+	<div class="" style="display:flex;flex-flow: row; height:60%">
+		<div style="width:50%">
 			<span id=results_widget></span>
 		</div>
-		<div class="col-5" style="padding-left:20px">
+		<div style="width:50%; padding-left:50px">
 			<span id=jobs_widget></span>
 		</div>
 	</div>
-	<div class="row" style="height:40%">
-		<div class="col-12">
+	<div class="" style="height:40%">
+		<div style="width: 100%;height:100%;">
 			<span id=log_widget></span>
 		</div>
 	</div>

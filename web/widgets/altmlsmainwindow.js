@@ -26,6 +26,9 @@ function AltMLSMainWindow(O) {
 	JSQ.connect(m_home_view,'open-scripts',O,function() {open_content('scripts');});
 
 	O.div().append($('#template-AltMLSMainWindow').children().clone());
+
+	O.div().css({display:"flex","flex-flow":"column","max-height":"100%"});
+
 	O.div().find('#processing_server').append(m_processing_server_widget.div());
 	O.div().find('#advanced_configuration').append(m_advanced_configuration_widget.div());
 	O.div().find('#home').append(m_home_view.div());
@@ -312,6 +315,7 @@ function AltMLSHomeView(O) {
 	JSQWidget(O);
 	O.div().addClass('AltMLSHomeView');
 
+
 	this.setMLSManager=function(manager) {setMLSManager(manager);};
 	this.setFileInfo=function(info) {m_file_info=JSQ.clone(info);};
 	this.refresh=function() {refresh();};
@@ -320,6 +324,9 @@ function AltMLSHomeView(O) {
 	var m_file_info={owner:'',title:'',source:''};
 
 	O.div().append($('#template-AltMLSHomeView').children().clone());
+
+	O.div().css({display:'flex',"flex-flow":"column"});
+
 	O.div().find('#open_datasets').click(function() {O.emit('open-datasets');});
 	O.div().find('#open_scripts').click(function() {O.emit('open-scripts');});
 
@@ -364,6 +371,9 @@ function AltMLSDatasetsView(O) {
 	var m_mls_manager=null;
 
 	O.div().append($('#template-AltMLSDatasetsView').children().clone());
+
+	O.div().css({display:'flex',"flex-flow":"row"});
+
 	O.div().find('#dataset_list').append(m_dataset_list.div());
 	O.div().find('#dataset_widget').append(m_dataset_widget.div());
 
@@ -431,6 +441,9 @@ function AltMLSScriptsView(O) {
 	JSQ.connect(m_script_widget,'script-job-started',O,'current-batch-job-changed');
 
 	O.div().append($('#template-AltMLSScriptsView').children().clone());
+
+	O.div().css({display:'flex',"flex-flow":"row"});
+
 	O.div().find('#script_list').append(m_script_list.div());
 	m_script_widget.div().addClass('h-100');
 	O.div().find('#script_widget').append(m_script_widget.div());
@@ -496,8 +509,6 @@ function MLSOutputView(O) {
 	var m_results_widget=new AltMLSBatchScriptResultsWidget();
 	var m_jobs_widget=new MLSBatchScriptJobsWidget();
 	var m_log_widget=new MLPLogWidget(null,true);
-
-	m_log_widget.div().css({height:'100%'});
 
 	O.div().append($('#template-MLSOutputView').children().clone());
 	

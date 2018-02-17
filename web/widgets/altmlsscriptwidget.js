@@ -34,10 +34,11 @@ function AltMLSScriptWidget(O) {
 	var m_results_widget=new AltMLSBatchScriptResultsWidget();
 	m_results_widget.div().css({"font-size":'12px'});
 	var m_log_widget=new MLPLogWidget(null,true);
-	m_log_widget.div().css({height:'100%',width:'100%',overflow:'auto'});
 	var m_script_job_lookup=null;
 
 	O.div().append($('#template-AltMLSScriptWidget').children().clone());
+
+	O.div().css({display:'flex',"flex-flow":"row"});
 
 	O.div().find('#results_widget').append(m_results_widget.div());
 	O.div().find('#log_widget').append(m_log_widget.div());

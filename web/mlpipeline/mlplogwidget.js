@@ -36,7 +36,8 @@ function MLPLogWidget(O,alt) {
 	O=O||this;
 	JSQWidget(O);
 	O.div().addClass('MLPLogWidget');
-	O.div().css({'overflow-x':'auto','overflow-y':'auto'});
+
+	O.div().css({height:'100%',width:'100%',overflow:'auto',"background-color": "black"});
 
 	var m_message_table=$('<table></table>');
 	O.div().append(m_message_table);

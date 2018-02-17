@@ -16,6 +16,8 @@ function AltMLSOverviewWindow(O) {
 	//O.div().append($('#template-AltMLSOverviewWindow').find(">:first-child").clone());
 	O.div().append($('#template-AltMLSOverviewWindow').children().clone());
 
+	O.div().css({display:"flex","flex-flow":"column"});
+
 	O.div().find('.bd-toc-item').addClass('active');
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
 		//O.div().find('.bd-toc-item').removeClass('active');

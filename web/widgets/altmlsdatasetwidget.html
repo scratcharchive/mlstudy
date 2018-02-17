@@ -1,39 +1,28 @@
 <span id="template-AltMLSDatasetWidget" style="display: none">
-	<div class="row flex-nowrap">
-		<div class="col-12">
-			<div class=row>
-				<div>
-					<h3 style="padding-left:20px">Dataset: <span id=dataset_id></span></h3>
-				</div>
+	<div>
+		<h3>Dataset: <span id=dataset_id></span></h3>
+	</div>
+	<div>
+		<span id=description></span>
+	</div>
+	<div class="" style="flex:1;display:flex;flex-flow: row">
+		<div class="" style="width:50%;display: flex;flex-flow:column;">
+			<div class="">
+				<a href=# style="margin-left:20px; margin-bottom:10px" id=upload_files>
+					<span class="octicon octicon-cloud-upload"></span> Upload data file(s)
+				</a>
 			</div>
-			<div class=row>
-				<div class="col-12" style="padding-left:20px">
-					<span id=description></span>
-				</div>
+			<div class="" style="flex:1">
+				<span id=files></span>
 			</div>
-			<div class=row>
-				<div class="col-7">
-					<div class=row>
-						<a href=# style="margin-left:20px; margin-bottom:10px" id=upload_files>
-							<span class="octicon octicon-cloud-upload"></span> Upload data file(s)
-						</a>
-					</div>
-					<div class=row>
-						<span id=files></span>
-					</div>
-				</div>
-				<div class="col-1">
-					
-				</div>
-				<div class="col-4">
-					<div class=row>
-						<a href=# style="margin-left:20px; margin-bottom:10px" id=add_parameter>
-							<span class="octicon octicon-plus"></span> Add parameter
-						</a>
-					</div>
-					<span id=parameters></span>
-				</div>
+		</div>
+		<div class"" style="width:50%;display: flex;flex-flow:column;padding-left:60px">
+			<div class="">
+				<a href=# style="margin-left:20px; margin-bottom:10px" id=add_parameter>
+					<span class="octicon octicon-plus"></span> Add parameter
+				</a>
 			</div>
+			<span id=parameters></span>
 		</div>
 	</div>
 </span>
