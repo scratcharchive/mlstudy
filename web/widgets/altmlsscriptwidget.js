@@ -25,6 +25,7 @@ function AltMLSScriptWidget(O) {
 	this.setScriptIsRunning=function(val) {setScriptIsRunning(val);};
 	this.setMLSManager=function(manager) {m_mls_manager=manager; m_results_widget.setMLSManager(manager);};
 	this.setScriptJobLookup=function(lookup) {m_script_job_lookup=lookup;};
+	this.refreshResults=function() {m_results_widget.refresh();};
 
 	var m_script=null;
 	var m_script_name='';
@@ -114,6 +115,11 @@ function AltMLSScriptWidget(O) {
   		update_buttons();
   		update_editor_visible();
   		m_script_editor.refresh();
+
+  		var J=m_script_job_lookup.job(script_name);
+  		m_results_widget.setBatchJob(J);
+
+  		O.refreshResults();
   	}
 
   	function on_script_editor_changed() {
@@ -158,6 +164,5 @@ function AltMLSScriptWidget(O) {
 			return;
 		}
 		J.stop();
-
 	}
 }

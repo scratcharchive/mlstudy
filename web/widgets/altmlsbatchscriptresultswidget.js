@@ -21,6 +21,7 @@ function AltMLSBatchScriptResultsWidget(O) {
 
 	this.setBatchJob=function(BJ) {setBatchJob(BJ);};
 	this.setMLSManager=function(MM) {m_mls_manager=MM;};
+	this.refresh=function() {schedule_refresh();};
 	
 	var m_table=new MLTableWidget();
 	var m_batch_job=null;
@@ -55,7 +56,7 @@ function AltMLSBatchScriptResultsWidget(O) {
 		var elapsed=(new Date())-s_last_schedule_refresh;
 		s_last_schedule_refresh=new Date();
 		var msec=1000;
-		if (elapsed>2000) msec=100;
+		if (elapsed>100) msec=100;
 		setTimeout(function() {
 			s_refresh_scheduled=false;
 			do_refresh();

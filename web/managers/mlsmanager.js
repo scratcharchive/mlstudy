@@ -41,6 +41,8 @@ function MLSManager(O) {
   m_lari_client.setContainerId('child');
   m_batch_job_manager.setLariClient(m_lari_client);
 
+  JSQ.connect(m_batch_job_manager,'results_changed',O,'results_changed');
+
   var default_config={
     //kulele_url:'https://kulele.herokuapp.com',
     lari_url:'https://lari1.herokuapp.com',
