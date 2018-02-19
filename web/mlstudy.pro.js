@@ -74,7 +74,7 @@ opts.STYLESHEETS.push('create.css');
 
 opts.SOURCEPATH.push('overview');
 opts.SCRIPTS.push(
-	'mlsoverviewwindow.js','altmlsoverviewwindow.js'
+	'mlutils.js','mlsoverviewwindow.js','altmlsoverviewwindow.js'
 );
 opts.STYLESHEETS.push('mlsoverviewwindow.css','bootstrap_docs.css');
 opts.HTML_SNIPPETS.push('altmlsoverviewwindow.html');
@@ -95,6 +95,9 @@ opts.STYLESHEETS.push(
 
 opts.SCRIPTS.push(
 	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js','altmlsbatchscriptresultswidget.js'
+);
+opts.STYLESHEETS.push(
+	'altmlsmainwindow.css'
 );
 opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html','altmlsscriptwidget.html');
 

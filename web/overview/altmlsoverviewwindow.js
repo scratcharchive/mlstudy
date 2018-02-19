@@ -324,7 +324,7 @@ function StudyListWidget(O) {
 	}
 
 	function create_new_study() {
-		mlprompt('Title of new study:','untitled.mls',function(title0) {
+		mlprompt('Create new study','Enter title of new study:','untitled.mls',function(title0) {
 			if (!jsu_ends_with(title0,'.mls')) {
 				title0+='.mls';
 			}
@@ -516,23 +516,6 @@ function StudyListWidget(O) {
 	refresh();
 }
 
-
-function mlprompt(text,val,callback) {
-	bootbox.prompt({
-		title:text,
-		value:val,
-		callback:callback
-	});
-}
-
-function mlinfo(title,message,callback) {
-	bootbox.alert({
-		title:title,
-		message:message,
-		callback:callback
-	});
-}
-
 function ProcessingServerWidget(O) {
 	O=O||this;
 	JSQWidget(O);
@@ -559,7 +542,7 @@ function ProcessingServerWidget(O) {
 	function set_processing_server() {
 		var config=m_mls_manager.mlsConfig();
 		var server=config.processing_server;
-		mlprompt('Processing server:',config.processing_server||'',function(server) {
+		mlprompt('Set processing server','Enter processing server ID:',config.processing_server||'',function(server) {
 			config.processing_server=server;
 			m_mls_manager.setMLSConfig(config);	
 		});

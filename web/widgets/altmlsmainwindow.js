@@ -40,8 +40,13 @@ function AltMLSMainWindow(O) {
 
 	O.div().find('#save_changes').click(save_changes);
 
-	O.div().find('#home_button').click(function() {O.emit('goto_overview');});
-	O.div().find('#return_to_main_page').click(function() {O.emit('goto_overview');});
+	O.div().find('#home_button').click(function() {check_can_close(function() {O.emit('goto_overview');});});
+	O.div().find('#return_to_main_page').click(function() {check_can_close(function() {O.emit('goto_overview');});});
+
+	O.div().find('#new_study').click(on_new_study);
+	O.div().find('#open_study').click(on_open_study);
+	O.div().find('#save_study').click(on_save_study);
+	O.div().find('#save_study_as').click(on_save_study_as);
 
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
@@ -112,11 +117,15 @@ function AltMLSMainWindow(O) {
 		//update_menus();
 	}
 
+	function is_dirty() {
+		return (JSON.stringify(get_mls_object())!=JSON.stringify(m_original_study_object));
+	}
+
 	function update_document_info() {
 		var info=`${m_file_info.title} (${m_file_info.owner})`;
 		O.div().find('#document_info').html(info);
 
-		if (JSON.stringify(get_mls_object())!=JSON.stringify(m_original_study_object)) {
+		if (is_dirty()) {
 			O.div().find('#save_changes').removeAttr('disabled');
 		}
 		else {
@@ -124,36 +133,32 @@ function AltMLSMainWindow(O) {
 		}
 	}
 
-	function save_changes() {
+	function save_changes(callback) {
 		if (m_file_source=='docstor') {
-			save_changes_docstor({prompt:false});
+			save_changes_docstor({},callback);
 		}
 		else {
 			alert('Unexpected file source: '+m_file_source);
+			if (callback) callback('Unexpected file source');
 		}
 	}
 
-	function save_changes_docstor(opts) {
-		if (!opts) opts={};
-		if (!('prompt' in opts)) opts.prompt=true;
+	function save_changes_docstor(opts,callback) {
+		if (!opts) opts={}; //todo: not used
 		var owner=m_file_info.owner||m_mls_manager.user();
 		var title=m_file_info.title||'study.mls';
-		if (opts.prompt) {
-			owner=prompt('Saving to cloud. Owner of document:',owner);
-			if (!owner) return;
-			title=prompt('Saving to cloud. Title of document:',title);
-			if (!title) return;
-		}
 		var obj=get_mls_object();
 		var content=JSON.stringify(obj,null,4);
 		set_document_content_to_docstor(m_mls_manager.docStorClient(),owner,title,content,function(err) {
 			if (err) {
 				alert('Unable to save document: '+err);
+				if (callback) callback('Unable to save document: '+err);
 				return;
 			}
 			set_file_info('docstor',{owner:owner,title:title});
 			set_original_study_object(obj);
 			alert('Changes saved to cloud document: '+m_file_info.title+' ('+owner+')');
+			callback(null);
 		});
 	}
 
@@ -301,6 +306,50 @@ function AltMLSMainWindow(O) {
 		JSQ.connect(manager.study(),'changed',O,update_document_info);
 		refresh_views();
 		update_document_info();
+	}
+
+	function on_new_study() {
+		check_can_close(function() {
+			O.emit('new_study');
+		});
+	}
+
+	function on_open_study() {
+		check_can_close(function() {
+			O.emit('goto_overview');
+		});
+	}
+
+	function on_save_study() {
+		save_changes();
+	}
+
+	function on_save_study_as() {
+		var user=m_mls_manager.user()||m_file_info.owner;
+		mlprompt('Save study as',`Enter title of study (owner will be ${user}):`,m_file_info.title,function(title) {
+			if (!title) return;
+			var m_old_file_info=m_file_info;
+			m_file_info={title:title,owner:user};
+			save_changes(function(err) {
+				if (err) {
+					m_file_info=m_old_file_info;
+				}
+				update_document_info();
+			});
+		});
+	}
+
+	function check_can_close(callback) {
+		if (is_dirty()) {
+			mlconfirm('Proceed without saving?','Are you sure you want to proceed without saving changes?',function(tmp) {
+				if (tmp) {
+					callback();
+				}
+			});
+		}
+		else {
+			callback();
+		}
 	}
 
 }

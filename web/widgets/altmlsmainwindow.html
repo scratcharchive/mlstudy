@@ -68,9 +68,24 @@
 	</div>
 	<div id=content_container style="flex:1; display:flex; flex-flow: column; height:100%; overflow:auto; padding-left:20px;padding-top:20px">
 			<div class="" style="display:flex;flex-flow: row">
-				<button class="btn btn-primary btn-sm" disabled="disabled" id="save_changes">Save changes</button>
-				&nbsp;
+				<ul class="nav navbar-nav">
+		          <li class="dropdown">
+		            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Study <span class="caret"></span></a>
+		            <ul class="dropdown-menu" style="padding:10px">
+		              <li><a href="#" id=new_study>New...</a></li>
+		              <li><a href="#" id=open_study>Open...</a></li>
+		              <li role="separator" class="divider"></li>
+		              <li><a href="#" id=save_study>Save</a></li>
+		              <li><a href="#" id=save_study_as>Save as...</a></li>
+		              <li role="separator" class="divider"></li>
+		              <li><a href="#" id=share_study>Share...</a></li>
+		            </ul>
+		          </li>
+		        </ul>
+		        &nbsp;&nbsp;&nbsp;&nbsp;
 				<span id=document_info style="font-weight: bold;"></span>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+				<button class="btn btn-primary btn-sm" disabled="disabled" id="save_changes">Save changes to study</button>
 			</div>
 			<div id=content class="" style="overflow:auto;flex:1">
 				<div class="tab-content h-100" id="myTabContent" style="padding-top: 10px">
