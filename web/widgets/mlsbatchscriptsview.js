@@ -125,7 +125,7 @@ function MLSBatchScriptsView(O,options) {
 
 	function setResultsByScript(X) {
 		for (var script_name in X) {
-			var dummy_job0=new BatchJob();
+			var dummy_job0=new BatchJob(null,m_manager.lariClient());
 			dummy_job0.setResults(X[script_name]);
 			m_batch_jobs_by_batch_script_name[script_name]=dummy_job0;
 		}

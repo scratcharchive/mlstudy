@@ -133,9 +133,16 @@ function MLStudy(O) {
   this.removeBatchScript=function(name) {removeBatchScript(name);};
   this.changeBatchScriptName=function(name,new_name) {changeBatchScriptName(name,new_name);};
 
+  this.webModuleNames=function() {return webModuleNames();};
+  this.webModule=function(name) {return webModule(name);};
+  this.setWebModule=function(name,X) {setWebModule(name,X);};
+  this.removeWebModule=function(name) {removeWebModule(name);};
+  this.changeWebModuleName=function(name,new_name) {changeWebModuleName(name,new_name);};
+
   var m_object={
     datasets:{},
-    scripts:{}
+    scripts:{},
+    web_modules:{}
   };
 
   function setObject(obj) {
@@ -144,6 +151,7 @@ function MLStudy(O) {
 
     m_object.datasets=m_object.datasets||{};
     m_object.scripts=m_object.scripts||m_object.batch_scripts||{};
+    m_object.web_modules=m_object.web_modules||{};
     if (m_object.batch_scripts) delete m_object.batch_scripts;
     O.emit('changed');
   }
@@ -168,6 +176,17 @@ function MLStudy(O) {
     if (!(name in m_object.scripts)) return null;
     var obj=m_object.scripts[name];
     var ret=new MLSBatchScript(obj);
+    return ret;
+  }
+  function webModuleNames() {
+    var ret=Object.keys(m_object.web_modules);
+    ret.sort();
+    return ret;
+  }
+  function webModule(name) {
+    if (!(name in m_object.web_modules)) return null;
+    var obj=m_object.web_modules[name];
+    var ret=new MLSWebModule(obj);
     return ret;
   }
   function setDataset(id,X) {
@@ -203,6 +222,23 @@ function MLStudy(O) {
     if (!X) return;
     removeBatchScript(name);
     setBatchScript(new_name,X); 
+  }
+  function setWebModule(name,X) {
+    m_object.web_modules[name]=X.object();
+    O.emit('changed');
+  }
+  function removeWebModule(name) {
+    if (name in m_object.web_modules) {
+      delete m_object.web_modules[name];
+      O.emit('changed');
+    }
+  }
+  function changeWebModuleName(name,new_name) {
+    if (name==new_name) return;
+    var X=webModule(name);
+    if (!X) return;
+    removeWebModule(name);
+    setWebModule(new_name,X); 
   }
   function description() {
     return m_object.description||'';
@@ -280,6 +316,34 @@ function MLSBatchScript(obj) {
   function setScript(script) {
     var obj=JSQ.clone(m_object);
     obj.script=script;
+    setObject(obj);
+  }
+
+  that.setObject(obj||{});
+}
+
+function MLSWebModule(obj) {
+  var that=this;
+  this.setObject=function(obj) {setObject(obj);};
+  this.object=function() {return JSQ.clone(m_object);};
+  this.setContent=function(content) {setContent(content);};
+  this.content=function() {return JSQ.clone(m_object.content||{});};
+  this.onChanged=function(handler) {m_changed_handlers.push(handler);};
+
+  var m_object={};
+  var m_changed_handlers=[];
+
+  function setObject(obj) {
+    if (JSON.stringify(obj)==JSON.stringify(m_object)) return;
+    m_object=JSQ.clone(obj);
+    for (var i in m_changed_handlers) {
+      m_changed_handlers[i]();
+    }    
+  }
+
+  function setContent(content) {
+    var obj=JSQ.clone(m_object);
+    obj.content=JSQ.clone(content);
     setObject(obj);
   }
 

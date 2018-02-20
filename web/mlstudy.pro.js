@@ -50,6 +50,9 @@ opts.SCRIPTS.push(
 opts.SCRIPTS.push('CodeMirror/lib/codemirror.js');
 opts.STYLESHEETS.push('CodeMirror/lib/codemirror.css');
 opts.SCRIPTS.push('CodeMirror/mode/javascript/javascript.js');
+opts.SCRIPTS.push('CodeMirror/mode/css/css.js');
+opts.SCRIPTS.push('CodeMirror/mode/xml/xml.js');
+opts.SCRIPTS.push('CodeMirror/mode/htmlmixed/htmlmixed.js');
 opts.SCRIPTS.push('jshint/jshint.js','CodeMirror/addon/lint/lint.js',
 				  'CodeMirror/addon/lint/javascript-lint.js');
 opts.STYLESHEETS.push('CodeMirror/addon/lint/lint.css');
@@ -94,12 +97,16 @@ opts.STYLESHEETS.push(
 );
 
 opts.SCRIPTS.push(
-	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js','altmlsbatchscriptresultswidget.js'
+	'altmlsmainwindow.js','altmlsdatasetwidget.js','altmlsscriptwidget.js','altmlsbatchscriptresultswidget.js',
+	'altmlswebmodulewidget.js','mlswebmodulelistwidget.js'
 );
 opts.STYLESHEETS.push(
 	'altmlsmainwindow.css'
 );
-opts.HTML_SNIPPETS.push('altmlsmainwindow.html','altmlsdatasetwidget.html','altmlsscriptwidget.html');
+opts.HTML_SNIPPETS.push(
+	'altmlsmainwindow.html','altmlsdatasetwidget.html','altmlsscriptwidget.html',
+	'altmlswebmodulewidget.html'
+);
 
 //////////////////////////////////////////////////////////////////////
 opts.SOURCEPATH.push('mlpipeline')
