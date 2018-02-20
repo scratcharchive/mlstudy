@@ -38,7 +38,7 @@ function AltMLSMainWindow(O) {
 	m_output_view.div().addClass('h-100');
 	O.div().find('#output').append(m_output_view.div());
 
-	O.div().find('#save_changes').click(save_changes);
+	O.div().find('#save_changes').click(on_save_study);
 
 	O.div().find('#home_button').click(function() {check_can_close(function() {O.emit('goto_overview');});});
 	O.div().find('#return_to_main_page').click(function() {check_can_close(function() {O.emit('goto_overview');});});
@@ -47,6 +47,7 @@ function AltMLSMainWindow(O) {
 	O.div().find('#open_study').click(on_open_study);
 	O.div().find('#save_study').click(on_save_study);
 	O.div().find('#save_study_as').click(on_save_study_as);
+	O.div().find('#share_study').click(on_share_study);
 
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
@@ -118,23 +119,29 @@ function AltMLSMainWindow(O) {
 	}
 
 	function is_dirty() {
+		if (!m_file_info.title) return true;
 		return (JSON.stringify(get_mls_object())!=JSON.stringify(m_original_study_object));
 	}
 
 	function update_document_info() {
-		var info=`${m_file_info.title} (${m_file_info.owner})`;
+		var info=`${m_file_info.title||'[untitled]'} (${m_file_info.owner||'anonymous'})`;
 		O.div().find('#document_info').html(info);
 
 		if (is_dirty()) {
 			O.div().find('#save_changes').removeAttr('disabled');
+			O.div().find('#save_study').attr('href','#');
+			O.div().find('#save_study').removeClass('disabled');
 		}
 		else {
 			O.div().find('#save_changes').attr('disabled','disabled');	
+			O.div().find('#save_study').removeAttr('href');
+			O.div().find('#save_study').addClass('disabled');
 		}
+		update_url();
 	}
 
 	function save_changes(callback) {
-		if (m_file_source=='docstor') {
+		if ((m_file_source||'docstor')=='docstor') {
 			save_changes_docstor({},callback);
 		}
 		else {
@@ -158,7 +165,7 @@ function AltMLSMainWindow(O) {
 			set_file_info('docstor',{owner:owner,title:title});
 			set_original_study_object(obj);
 			alert('Changes saved to cloud document: '+m_file_info.title+' ('+owner+')');
-			callback(null);
+			if (callback) callback(null);
 		});
 	}
 
@@ -310,7 +317,7 @@ function AltMLSMainWindow(O) {
 
 	function on_new_study() {
 		check_can_close(function() {
-			O.emit('new_study');
+			O.emit('new_study',{});
 		});
 	}
 
@@ -321,6 +328,10 @@ function AltMLSMainWindow(O) {
 	}
 
 	function on_save_study() {
+		if (!m_file_info.title) {
+			on_save_study_as();
+			return;
+		}
 		save_changes();
 	}
 
@@ -328,8 +339,11 @@ function AltMLSMainWindow(O) {
 		var user=m_mls_manager.user()||m_file_info.owner;
 		mlprompt('Save study as',`Enter title of study (owner will be ${user}):`,m_file_info.title,function(title) {
 			if (!title) return;
+			if (!jsu_ends_with(title,'.mls')) {
+				title+='.mls';
+			}
 			var m_old_file_info=m_file_info;
-			m_file_info={title:title,owner:user};
+			m_file_info={title:title,owner:user,source:'docstor'};
 			save_changes(function(err) {
 				if (err) {
 					m_file_info=m_old_file_info;
@@ -337,6 +351,13 @@ function AltMLSMainWindow(O) {
 				update_document_info();
 			});
 		});
+	}
+
+	function on_share_study() {
+		var dlg=new DocShareDialog();
+		dlg.setDocStorClient(m_mls_manager.docStorClient());
+		dlg.setDocumentInfo(m_file_info);
+		dlg.show();
 	}
 
 	function check_can_close(callback) {

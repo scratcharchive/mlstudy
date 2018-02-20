@@ -268,6 +268,14 @@ function jsqmain_alt(query) {
                     create_new_overview_window();
                     overview_window.showFullBrowser();
                 });
+                JSQ.connect(main_window,'new_study',null,function() {
+                    main_window.hide();
+                    show_status(null);
+                    mls_manager.clear();
+                    create_new_main_window();
+                    show_status('','');
+                    main_window.showFullBrowser();
+                });
             }
 
             function reset_url() {
@@ -324,6 +332,7 @@ function jsqmain_alt(query) {
                 if (!study0.storage) study0.storage='docstor';
 
                 if (study0.storage=='docstor') {
+                    mls_manager.clear();
                     show_status('info','Opening study from docstor...');
                     create_new_main_window();
                     main_window.loadFromDocStor(study0.owner,study0.title,function(err) {

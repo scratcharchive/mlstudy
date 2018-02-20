@@ -29,11 +29,12 @@ function MLSManager(O) {
   this.onConfigChanged=function(handler) {m_config_changed_handlers.push(handler);};
   this.defaultMLSConfig=function() {return JSQ.clone(default_config);};
   this.lariClient=function() {return m_lari_client;};
+  this.clear=function() {clear();};
 
 	var m_study=new MLStudy(null);
+  var m_batch_job_manager=new BatchJobManager();
   var m_login_info={};
   var m_job_manager=null;
-  var m_batch_job_manager=new BatchJobManager();
   var m_config_changed_handlers=[];
   var m_docstor_client=null;
 
@@ -101,6 +102,10 @@ function MLSManager(O) {
       return m_login_info.google_profile.U3||'';
     }
     else return '';
+  }
+  function clear() {
+    m_study=new MLStudy(null);
+    m_batch_job_manager=new BatchJobManager();
   }
 }
 
