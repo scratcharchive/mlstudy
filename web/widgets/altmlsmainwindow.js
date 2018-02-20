@@ -47,6 +47,7 @@ function AltMLSMainWindow(O) {
 	O.div().find('#open_study').click(on_open_study);
 	O.div().find('#save_study').click(on_save_study);
 	O.div().find('#save_study_as').click(on_save_study_as);
+	O.div().find('#download_study').click(on_download_study);
 	O.div().find('#share_study').click(on_share_study);
 
 	////////////////////////////////////////////////////////////////////////////////////
@@ -351,6 +352,11 @@ function AltMLSMainWindow(O) {
 				update_document_info();
 			});
 		});
+	}
+
+	function on_download_study() {
+		var obj=get_mls_object();
+		download(JSON.stringify(obj,null,4),m_file_info.title);
 	}
 
 	function on_share_study() {

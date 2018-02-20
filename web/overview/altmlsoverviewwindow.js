@@ -103,6 +103,7 @@ function StudyListWidget(O) {
 	var m_mode='';
 	m_table.setParent(O);
 	
+	/*
 	var m_menu_bar=new MLMenuBar();
 	var menu=m_menu_bar.addMenu('...');
 	var menu_item_add_label=menu.addItem('Add label...',add_label);
@@ -113,11 +114,19 @@ function StudyListWidget(O) {
 	menu.addDivider();
 	var menu_item_delete=menu.addItem('Delete selected studies...',delete_selected_studies);
 	//m_menu_bar.setParent(O);
+	*/
+
+	
+
+	O.div().append($('#template-StudyListWidget').children().clone());
+
+	O.div().find('#add_label').click(add_label);
+	O.div().find('#remove_label').click(remove_label);
+	O.div().find('#share_with').click(share_with);
+	O.div().find('#unshare_with').click(unshare_with);
+	O.div().find('#delete_selected_studies').click(delete_selected_studies);
 	update_menus();
 
-	O.div().append('<span id=alert></span>');
-	O.div().append('<h2 id=heading></h2>');
-	O.div().append('<p><button type=button class=btn id=create_new_study>Create new study</button></p>');
 	O.div().find('#create_new_study').click(create_new_study);
 
 	O.div().append(m_table.div());
@@ -167,10 +176,14 @@ function StudyListWidget(O) {
 	}
 
 	function remove_label() {
-		add_label(true);
+		add_label2(true);
 	}
 
-	function add_label(do_remove) {
+	function add_label() {
+		add_label2(false);
+	}
+
+	function add_label2(do_remove) {
 	    var DC=m_docstor_client;
 	    var ids=get_selected_document_ids_list();
 	    if (ids.length==0) {
@@ -226,11 +239,15 @@ function StudyListWidget(O) {
 	    });
 	}
 
-	function unshare_with() {
-		share_with(true);
+	function share_with() {
+		share_with2(false);
 	}
 
-	function share_with(do_unshare) {
+	function unshare_with() {
+		share_with2(true);
+	}
+
+	function share_with2(do_unshare) {
 	    var DC=m_docstor_client;
 	    var ids=get_selected_document_ids_list();
 	    if (ids.length==0) {
@@ -457,17 +474,19 @@ function StudyListWidget(O) {
 
 	function update_menus() {
 		var list=[
-			menu_item_add_label,menu_item_remove_label,
-			menu_item_share_with,menu_item_unshare_with,
-			menu_item_delete
+			'add_label','remove_label',
+			'share_with','unshare_with',
+			'delete_selected_studies'
 		];
 		for (var i in list) {
-			list[i].setDisabled(true);
+			O.div().find('#'+list[i]).addClass('disabled');
+			O.div().find('#'+list[i]).removeAttr('href');
 		}
 		if (m_mode=='my_studies') {
 			if (m_table.selectedRows().length>0) {
 				for (var i in list) {
-					list[i].setDisabled(false);
+					O.div().find('#'+list[i]).removeClass('disabled');
+					O.div().find('#'+list[i]).attr('href','#');
 				}
 			}
 		}	
