@@ -31,16 +31,14 @@ function MLSManager(O) {
   this.lariClient=function() {return m_lari_client;};
   this.clear=function() {clear();};
 
-	var m_study=new MLStudy(null);
-  var m_batch_job_manager=new BatchJobManager();
+  var m_lari_client=new LariClient();
+  m_lari_client.setContainerId('child');
+  clear(); //creates m_study and m_batch_job_manager
+
   var m_login_info={};
   var m_job_manager=null;
   var m_config_changed_handlers=[];
   var m_docstor_client=null;
-
-  var m_lari_client=new LariClient();
-  m_lari_client.setContainerId('child');
-  m_batch_job_manager.setLariClient(m_lari_client);
 
   JSQ.connect(m_batch_job_manager,'results_changed',O,'results_changed');
 
@@ -106,6 +104,9 @@ function MLSManager(O) {
   function clear() {
     m_study=new MLStudy(null);
     m_batch_job_manager=new BatchJobManager();
+    m_batch_job_manager.setLariClient(m_lari_client);
+    m_batch_job_manager.setDocStorClient(m_docstor_client);
+    m_batch_job_manager.setKBucketUrl(mlsConfig().kbucket_url);
   }
 }
 
