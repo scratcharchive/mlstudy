@@ -44,7 +44,7 @@ function AltMLSWebModuleWidget(O) {
     	mode: "javascript",
     	lint:true,
     	gutters: ["CodeMirror-lint-markers"],
-    	extraKeys: {"Alt-F": "findPersistent"}
+    	extraKeys: {"Alt-F": "findPersistent","F3":"findNext"}
   	});
   	m_content_editor.on('change',on_content_editor_changed);
   	//O.div().append(m_script_editor_div);

@@ -887,34 +887,6 @@ function LoadStudyTask(opts,docstor_client) {
     m_error=err;
     m_is_finished=true;
   }
-  function download_document_content_from_docstor(DSC,owner,title,callback) {
-    var query={owned_by:owner,filter:{"attributes.title":title}};
-    if (DSC.user()!=owner)
-      query.and_shared_with=DSC.user();
-    DSC.findDocuments(query,function(err,docs) {
-      if (m_is_finished) return;
-      if (err) {
-          callback('Problem finding document: '+err);
-          return;
-      }
-      if (docs.length==0) {
-          callback('Document not found.');
-          return; 
-      }
-      if (docs.length>1) {
-          callback('Error: more than one document with this title and owner found.');
-          return; 
-      }
-      DSC.getDocument(docs[0]._id,{include_content:true},function(err,doc0) {
-        if (m_is_finished) return;
-        if (err) {
-            callback('Problem getting document content: '+err);
-            return;
-        }
-        callback(null,doc0.content,docs[0]._id);
-      });
-    });
-  }
 }
 
 function LoadFileTask(opts,lari_client) {

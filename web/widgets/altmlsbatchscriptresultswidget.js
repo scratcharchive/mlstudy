@@ -134,37 +134,69 @@ function AltMLSBatchScriptResultsWidget(O) {
 	}
 
 	function popup_widget(result_object) {
+		get_study_object(function(study_object) {
+			var X=new PopupDialog();
+			X.popup();
+			console.log(study_object);
+			var js=study_object.scripts[result_object.show.script].script;
+			var scr=`(function() {var exports={}; ${js}; return exports;})()`;
+			var A=eval(scr);
+			A[result_object.show.method]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
 
-		var study_object=m_mls_manager.study().object();
+			function require(str) {
+		      var script_text='';
+		      if (typeof(str)=='object') {
+		        script_text=str.script||'';
+		      }
+		      else {
+		        if (!(str in study_object.scripts)) {
+		          throw new Error('Error in require, script not found: '+str);
+		        }
+		        script_text=study_object.scripts[str].script;
+		      }
+		      var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
+		      try {
+		        var ret=eval(script0);
+		        return ret;
+		      }
+		      catch(err) {
+		        console.error('Error in module '+str+': '+err.message);
+		        return;
+		      }
+		    }
+		});
 
-		var X=new PopupDialog();
-		X.popup();
-		var js=study_object.scripts[result_object.show.script].script;
-		var scr=`(function() {var exports={}; ${js}; return exports;})()`;
-		var A=eval(scr);
-		A[result_object.show.func]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+		function get_study_object(callback) {
+			if (result_object.show.study) {
+				var docstor_client=m_mls_manager.docStorClient();
+				var owner=result_object.show.study.owner;
+				var title=result_object.show.study.title;
+				download_document_content_from_docstor(docstor_client,owner,title,function(err,content) {
+					if (err) {
+						console.error('Error getting study: '+err);
+						return;
+					}
+					var obj=try_parse_json(content);
+					if (!obj) {
+						console.error('Error parsing study JSON.');
+						return;
+					}
+					callback(obj);
+				});
+			}
+			else {
+				callback(m_mls_manager.study().object());
+			}
+		}
 
-		function require(str) {
-	      var script_text='';
-	      if (typeof(str)=='object') {
-	        script_text=str.script||'';
-	      }
-	      else {
-	        if (!(str in study_object.scripts)) {
-	          throw new Error('Error in require, script not found: '+str);
-	        }
-	        script_text=study_object.scripts[str].script;
-	      }
-	      var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
-	      try {
-	        var ret=eval(script0);
-	        return ret;
-	      }
-	      catch(err) {
-	        console.error('Error in module '+str+': '+err.message);
-	        return;
-	      }
-	    }
+	    function try_parse_json(str) {
+		    try {
+		        return JSON.parse(str);
+		    }
+		    catch(err) {
+		        return null;
+		    }
+		}
 	}
 
 	function download_result_object(rname,result) {
