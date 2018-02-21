@@ -501,3 +501,57 @@ function AltMLSBatchScriptResultsWidget(O) {
 
 	do_refresh();
 }
+
+function PopupDialog(O) {
+	O=O||this;
+	JSQObject(O);
+
+	this.popup=function() {popup();};
+	this.contentDiv=function() {return m_div.find('.modal-body')};
+	this.onResize=function(handler) {JSQ.connect(O,'resized',O,handler);};
+
+	var m_div=$('#template-PopupDialog').find('#myModal').clone();
+	var m_is_closed=false;
+
+	m_div.find('.modal-content').resizable({
+	    //alsoResize: ".modal-dialog",
+	    minHeight: 300,
+	    minWidth: 300
+	});
+	m_div.find('.modal-content').draggable({
+		handle: ".modal-header"
+	});
+	m_div.on('show.bs.modal', function () {
+	    $(this).find('.modal-body').css({
+	        'max-height':'100%'
+	    });
+	});
+	m_div.on('hidden.bs.modal', function (e) {
+	  m_is_closed=true;
+	});
+	m_div.find('.modal-body').attr('id',O.objectId());
+
+	var old_size=[O.contentDiv().width(),O.contentDiv().height()];
+	var timer=new Date();
+	function check_size() {
+		var new_size=[O.contentDiv().width(),O.contentDiv().height()];
+		if ((new_size[0]!=old_size[0])||(new_size[1]!=old_size[1])) {
+			O.emit('resized');
+		}
+		var elapsed=(new Date())-timer;
+		var msec=1000;
+		if (elapsed<5000) msec=100;
+		if (!m_is_closed) {
+			setTimeout(check_size,msec);
+		}
+	}
+	check_size();
+
+	function popup() {
+		$('body').append(m_div);
+		m_div.modal({
+			show:true,
+			focus:true
+		});
+	}
+}

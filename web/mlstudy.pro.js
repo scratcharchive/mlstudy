@@ -55,7 +55,14 @@ opts.SCRIPTS.push('CodeMirror/mode/xml/xml.js');
 opts.SCRIPTS.push('CodeMirror/mode/htmlmixed/htmlmixed.js');
 opts.SCRIPTS.push('jshint/jshint.js','CodeMirror/addon/lint/lint.js',
 				  'CodeMirror/addon/lint/javascript-lint.js');
+
+opts.SCRIPTS.push('CodeMirror/addon/search/search.js');
+opts.SCRIPTS.push('CodeMirror/addon/search/searchcursor.js');
+opts.SCRIPTS.push('CodeMirror/addon/dialog/dialog.js');
+opts.STYLESHEETS.push('CodeMirror/addon/dialog/dialog.css');
+
 opts.STYLESHEETS.push('CodeMirror/addon/lint/lint.css');
+
 
 
 //////////////////////////////////////////////////////////////////////

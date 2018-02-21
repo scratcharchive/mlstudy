@@ -43,7 +43,8 @@ function AltMLSWebModuleWidget(O) {
     	lineNumbers: true,
     	mode: "javascript",
     	lint:true,
-    	gutters: ["CodeMirror-lint-markers"]
+    	gutters: ["CodeMirror-lint-markers"],
+    	extraKeys: {"Alt-F": "findPersistent"}
   	});
   	m_content_editor.on('change',on_content_editor_changed);
   	//O.div().append(m_script_editor_div);
@@ -146,50 +147,3 @@ function AltMLSWebModuleWidget(O) {
 	}
 }
 
-function PopupDialog(O) {
-	O=O||this;
-	JSQWidget(O);
-	O.div().addClass('PopupDialog');
-
-	this.popup=function() {popup();};
-	this.contentDiv=function() {return O.div().find('.modal-body')};
-	this.onResize=function(handler) {JSQ.connect(O,'resized',O,handler);};
-
-	O.div().append($('#template-PopupDialog').children().clone());
-	O.div().find('.modal-content').resizable({
-	    //alsoResize: ".modal-dialog",
-	    minHeight: 300,
-	    minWidth: 300
-	});
-	O.div().find('.modal-content').draggable({
-		handle: ".modal-header"
-	});
-	O.div().find('#myModal').on('show.bs.modal', function () {
-	    $(this).find('.modal-body').css({
-	        'max-height':'100%'
-	    });
-	});
-	O.div().find('.modal-body').attr('id',O.objectId());
-
-	var old_size=[O.contentDiv().width(),O.contentDiv().height()];
-	var timer=new Date();
-	function check_size() {
-		var new_size=[O.contentDiv().width(),O.contentDiv().height()];
-		if ((new_size[0]!=old_size[0])||(new_size[1]!=old_size[1])) {
-			O.emit('resized');
-		}
-		var elapsed=(new Date())-timer;
-		var msec=1000;
-		if (elapsed<5000) msec=100;
-		setTimeout(check_size,msec);
-	}
-	check_size();
-
-	function popup() {
-		$('body').append(O.div());
-		O.div().find('#myModal').modal({
-			show:true,
-			focus:true
-		});
-	}
-}

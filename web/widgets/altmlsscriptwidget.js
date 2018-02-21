@@ -58,7 +58,8 @@ function AltMLSScriptWidget(O) {
     	lineNumbers: true,
     	mode: "javascript",
     	lint:true,
-    	gutters: ["CodeMirror-lint-markers"]
+    	gutters: ["CodeMirror-lint-markers"],
+    	extraKeys: {"Alt-F": "findPersistent","F3":"findNext"}
   	});
   	m_script_editor.on('change',on_script_editor_changed);
   	//O.div().append(m_script_editor_div);
