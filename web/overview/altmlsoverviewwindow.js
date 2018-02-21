@@ -128,6 +128,7 @@ function StudyListWidget(O) {
 	update_menus();
 
 	O.div().find('#create_new_study').click(create_new_study);
+	O.div().find('#upload_study').click(upload_study);
 
 	O.div().append(m_table.div());
 
@@ -340,6 +341,37 @@ function StudyListWidget(O) {
 		});
 	}
 
+	function upload_study() {
+		var UP=new FileUploader();
+		UP.uploadTextFile({},function(tmp) {
+			if (!tmp.success) {
+				set_alert('warning',tmp.error);
+				return;
+			}
+			var obj=try_parse_json(tmp.text);
+			if (!obj) {
+				set_alert('warning','Error parsing json');
+				return;
+			}
+			var fname=tmp.file_name;
+			if (!jsu_ends_with(fname,'.mls'))
+				fname+='.mls';
+			var opts={
+				owner:m_login_info.user_id,
+				content:JSON.stringify(obj),
+				attributes:{title:fname}
+			}
+			m_docstor_client.createDocument(opts,function(err) {
+				if (err) {
+					set_alert('warning',err);
+					return;
+				}
+				//O.emit('open_study',{study:{owner:opts.owner,title:opts.attributes.title}});
+				refresh();
+			});
+		});
+	}
+
 	function create_new_study() {
 		mlprompt('Create new study','Enter title of new study:','untitled.mls',function(title0) {
 			if (!jsu_ends_with(title0,'.mls')) {
@@ -384,9 +416,11 @@ function StudyListWidget(O) {
 
 		if ((mode=='my_studies')||(mode=='on_this_browser')) {
 			O.div().find('#create_new_study').css({visibility:''});
+			O.div().find('#upload_study').css({visibility:''});
 		}
 		else {
 			O.div().find('#create_new_study').css({visibility:'hidden'});
+			O.div().find('#upload_study').css({visibility:'hidden'});
 		}
 
 		m_studies=[];

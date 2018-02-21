@@ -84,7 +84,7 @@ function BatchJob(O,lari_client) {
       }
     }
 
-    var script2='(function() {'+m_script+'\n})()';
+    var script2='(function() {var exports={}; '+m_script+'\n})()';
 
     try {
       run_some_code(function() {

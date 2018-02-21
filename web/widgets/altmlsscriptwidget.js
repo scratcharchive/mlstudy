@@ -64,7 +64,7 @@ function AltMLSScriptWidget(O) {
   	//O.div().append(m_script_editor_div);
 
   	O.div().find('.CodeMirror').addClass('h-100');
-  	O.div().find('.CodeMirror').css({width:'95%'});
+  	O.div().find('.CodeMirror').css({width:'98%'});
 
   	O.div().find('#start_button').click(start_script_job);
   	O.div().find('#stop_button').click(stop_script_job);

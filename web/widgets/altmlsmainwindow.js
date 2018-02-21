@@ -530,6 +530,7 @@ function AltMLSScriptsView(O) {
 	O.div().find('#script_widget').append(m_script_widget.div());
 
 	O.div().find("#add_script").click(add_script);
+	O.div().find('#delete_selected').click(delete_selected);
 
 	m_script_list.onCurrentBatchScriptChanged(update_current_script);
 
@@ -575,6 +576,26 @@ function AltMLSScriptsView(O) {
 		m_mls_manager.study().setBatchScript(script_name,new MLSBatchScript());
 		refresh();
 		m_script_list.setCurrentBatchScriptName(script_name);
+	}
+
+	function delete_selected() {
+		var names=m_script_list.selectedBatchScriptNames();
+		if (names.length===0) {
+			mlinfo('No scripts selected','',null);
+			return;
+		}
+		var msg='Are you sure you want to delete these '+names.length+' scripts?';
+		if (names.length==1) {
+			msg='Are you sure you want to delete this script?';
+		}
+		mlconfirm('Delete scripts?',msg,function(ok) {
+			if (ok) {
+				for (var i in names) {
+					m_mls_manager.study().removeBatchScript(names[i]);
+				}
+				refresh();
+			}
+		});
 	}
 
 	function getResultsByScript() {

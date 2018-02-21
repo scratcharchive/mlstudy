@@ -1,6 +1,6 @@
-function mlprompt(text,message,val,callback) {
+function mlprompt(title,message,val,callback) {
 	bootbox.prompt({
-		title:text,
+		title:title,
 		message:message,
 		value:val,
 		callback:callback

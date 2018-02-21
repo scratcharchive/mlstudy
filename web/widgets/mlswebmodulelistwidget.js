@@ -68,7 +68,7 @@ function MLSWebModuleListWidget(O) {
 
 		m_table.clearRows();
 		m_table.setColumnCount(1);
-		m_table.headerRow().cell(0).html('Web modules');
+		m_table.headerRow().cell(0).html('<nobr>Web modules</nobr>');
 		var names=m_manager.study().webModuleNames();
 		for (var i=0; i<names.length; i++) {
 			var row=m_table.createRow();

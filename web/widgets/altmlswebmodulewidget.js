@@ -57,7 +57,7 @@ function AltMLSWebModuleWidget(O) {
   	}
 
   	O.div().find('.CodeMirror').addClass('h-100');
-  	O.div().find('.CodeMirror').css({width:'95%'});
+  	O.div().find('.CodeMirror').css({width:'98%'});
 
   	update_buttons();
   	update_editor_visible();
@@ -131,11 +131,18 @@ function AltMLSWebModuleWidget(O) {
 		if (!m_web_module) return;
 		var content=m_web_module.content();
 		var X=new PopupDialog();
-		X.setHtml(content.HTML||'');
 		X.popup();
-		var id0=X.div().find('.modal-body').attr('id');
-		var script0=`(function() {   ${content.JavaScript||''}  }).call($('#${id0}'))`;
-		eval(script0);
+		X.contentDiv().html('<h3>Running...</h3>');
+		//var id0=X.div().find('.modal-body').attr('id');
+		var script0=`(function(_HTML,_DIV) { var exports={}; ${content.JavaScript||''} return exports; })`;
+		var func=eval(script0);
+		var A=func(content.HTML);
+		X.contentDiv().empty();
+		var div=X.contentDiv();
+		div.onresize=function(handler) {
+			X.onResize(handler);
+		}
+		A.popup(div);
 	}
 }
 
@@ -145,7 +152,8 @@ function PopupDialog(O) {
 	O.div().addClass('PopupDialog');
 
 	this.popup=function() {popup();};
-	this.setHtml=function(html) {setHtml(html);};
+	this.contentDiv=function() {return O.div().find('.modal-body')};
+	this.onResize=function(handler) {JSQ.connect(O,'resized',O,handler);};
 
 	O.div().append($('#template-PopupDialog').children().clone());
 	O.div().find('.modal-content').resizable({
@@ -153,7 +161,7 @@ function PopupDialog(O) {
 	    minHeight: 300,
 	    minWidth: 300
 	});
-	O.div().find('.modal-dialog').draggable({
+	O.div().find('.modal-content').draggable({
 		handle: ".modal-header"
 	});
 	O.div().find('#myModal').on('show.bs.modal', function () {
@@ -163,9 +171,19 @@ function PopupDialog(O) {
 	});
 	O.div().find('.modal-body').attr('id',O.objectId());
 
-	function setHtml(html) {
-		O.div().find('.modal-body').html(html);
+	var old_size=[O.contentDiv().width(),O.contentDiv().height()];
+	var timer=new Date();
+	function check_size() {
+		var new_size=[O.contentDiv().width(),O.contentDiv().height()];
+		if ((new_size[0]!=old_size[0])||(new_size[1]!=old_size[1])) {
+			O.emit('resized');
+		}
+		var elapsed=(new Date())-timer;
+		var msec=1000;
+		if (elapsed<5000) msec=100;
+		setTimeout(check_size,msec);
 	}
+	check_size();
 
 	function popup() {
 		$('body').append(O.div());
