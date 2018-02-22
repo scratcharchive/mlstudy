@@ -60,6 +60,7 @@ opts.SCRIPTS.push('CodeMirror/addon/search/search.js');
 opts.SCRIPTS.push('CodeMirror/addon/search/searchcursor.js');
 opts.SCRIPTS.push('CodeMirror/addon/dialog/dialog.js');
 opts.STYLESHEETS.push('CodeMirror/addon/dialog/dialog.css');
+opts.SCRIPTS.push('CodeMirror/addon/edit/closebrackets.js');
 
 opts.STYLESHEETS.push('CodeMirror/addon/lint/lint.css');
 

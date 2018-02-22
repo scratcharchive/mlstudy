@@ -54,6 +54,9 @@ function AltMLSMainWindow(O) {
 	O.div().find('#download_study').click(on_download_study);
 	O.div().find('#share_study').click(on_share_study);
 
+	O.div().find('.action_sign_in').click(sign_in);
+	O.div().find('.action_sign_out').click(sign_out);
+
 	////////////////////////////////////////////////////////////////////////////////////
 	O.div().find('.bd-toc-item').addClass('active');
 	O.div().find('.bd-toc-item ul > li > a').click(function() {
@@ -328,6 +331,14 @@ function AltMLSMainWindow(O) {
 		else {
 			callback();
 		}
+	}
+
+	function sign_in() {
+		O.emit('log_in');
+	}
+
+	function sign_out() {
+		mlinfo('Not yet implemented','Sign out - not yet implemented');
 	}
 
 }
