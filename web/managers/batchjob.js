@@ -59,42 +59,74 @@ function BatchJob(O,lari_client) {
       prvToUrl: _prv_to_url
     };
 
-    var require=function(str) {
-      var script_text='';
-      if (typeof(str)=='object') {
-        script_text=str.script||'';
+    _MLS._context={study:_MLS.study};
+
+    function require(str,obj) {
+      if (!obj) {
+        return do_require(str,_MLS._context.study);
       }
       else {
-        if (!(str in m_all_scripts)) {
-          throw new Error('Error in require, script not found: '+str);
-        }
-        script_text=m_all_scripts[str];
-      }
-      var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
-      try {
-        var ret=run_some_code(function() {
-          return eval(script0);
+        var ret={loaded:false};
+        _load_study(obj,function(study0) {
+          var tmp=do_require(str,study0);
+          if (!tmp) {
+            return;
+          }
+          ret.loaded=true;
+          for (var key in tmp) {
+            ret[key]=tmp[key];
+          }
         });
         return ret;
       }
-      catch(err) {
-        console.error(err);
-        report_error('Error in module '+str+': '+err.message);
-        return;
+
+      function do_require(str,study0) {
+        var old_study=_MLS._context.study;
+        _MLS._context.study=study0;
+
+        var all_scripts=study0.scripts;
+        if (!(str in all_scripts)) {
+          console.error('Error in require, script not found: '+str);
+          throw new Error('Error in require, script not found: '+str);
+          return;
+        }
+        var script_text=all_scripts[str].script;
+        var script0=`(function() {var exports={}; ${script_text}\n return exports;})()`;
+        var ret=null;
+        try {
+          ret=run_some_code(function() {
+            return eval(script0);
+          });
+        }
+        catch(err) {
+          console.error(err);
+          throw new Error('Error in module '+str+': '+err.message);
+        }
+
+        _MLS._context.study=old_study;
+        return ret;
       }
     }
 
-    var script2='(function() {var exports={}; '+m_script+'\n})()';
-
+    var script2=`(function() {var exports={}; ${m_script}\n return exports;})()`;
+    var result=null;
     try {
-      run_some_code(function() {
-        eval(script2);
+      result=run_some_code(function() {
+        return eval(script2);
       });
     }
     catch(err) {
       console.error(err);
       report_error('Error evaluating script: '+err.message);
       return;
+    }
+
+    if (result) {
+      if (result.main) {
+        _wait(function() {
+          result.main();
+        });
+      }
     }
 
     schedule_check_queued_processes();
@@ -283,7 +315,7 @@ function BatchJob(O,lari_client) {
     for (var i=0; i<m_load_study_tasks.length; i++) {
       if (m_load_study_tasks[i].isFinished()) {
         if (m_load_study_tasks[i].error()) {
-          report_error('Error loading study: '+m_load_study_tasks[i].error());
+          report_error(`Error loading study (${m_load_study_tasks[i].opts.title}): ${m_load_study_tasks[i].error()}`);
           return;
         }
       }
@@ -722,17 +754,22 @@ function BatchJob(O,lari_client) {
     O.emit('results_changed');
   }
   function _load_study(opts,callback) {
+    var ret={loaded:false,opts:opts};
     var LST=new LoadStudyTask(opts,m_docstor_client);
     m_load_study_tasks.push(LST);
     LST.onFinished(function(err,study0) {
       if (err) {
-        console.error('Error loading study: '+err);
-        report_error('Error loading study: '+err);
+        var str=`Error loading study (${opts.title}): ${err}`;
+        console.error(str);
+        report_error(str);
         return;
       }
       try {
         run_some_code(function() {
-          callback(study0);
+          for (key in study0) {
+            ret[key]=study0[key];
+          }
+          if (callback) callback(study0);
         });
       }
       catch(err) {
@@ -742,12 +779,15 @@ function BatchJob(O,lari_client) {
       }
     });
     LST.start();
+    return ret;
   }
   function _prv_to_url(prv,fname) {
+    if (typeof(prv)=='string') return prv; //already a url, probably
     if (!m_kbucket_url) {
       console.error('kbucket url not set.');
       return null;
     }
+    if (prv.prv) prv=prv.prv;
     if (!prv.original_checksum) {
       console.error('Missing field in prv object: original_checksum');
       return null;  
@@ -838,6 +878,7 @@ function LoadStudyTask(opts,docstor_client) {
   this.stop=function() {stop();};
   this.isFinished=function() {return m_is_finished;};
   this.error=function() {return m_error;};
+  this.opts=function() {return JSQ.clone(opts);};
 
   var m_finished_handlers=[];
   var m_error=null;

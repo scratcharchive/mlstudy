@@ -137,7 +137,6 @@ function AltMLSBatchScriptResultsWidget(O) {
 		get_study_object(function(study_object) {
 			var X=new PopupDialog();
 			X.popup();
-			console.log(study_object);
 			var js=study_object.scripts[result_object.show.script].script;
 			var scr=`(function() {var exports={}; ${js}; return exports;})()`;
 			var A=eval(scr);

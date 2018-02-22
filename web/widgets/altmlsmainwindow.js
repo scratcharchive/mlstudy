@@ -250,7 +250,7 @@ function AltMLSMainWindow(O) {
 	}
 
 	function on_batch_job_changed() {
-		//m_output_view.setBatchJob(m_scripts_view.currentBatchJob());
+		m_output_view.setBatchJob(m_scripts_view.currentBatchJob());
 	}
 
 	function setMLSManager(manager) {
@@ -259,7 +259,7 @@ function AltMLSMainWindow(O) {
 		m_datasets_view.setMLSManager(manager);
 		m_scripts_view.setMLSManager(manager);
 		m_web_modules_view.setMLSManager(manager);
-		//m_output_view.setMLSManager(manager);
+		m_output_view.setMLSManager(manager);
 		m_processing_server_widget.setMLSManager(manager);
 		m_advanced_configuration_widget.setMLSManager(manager);
 		JSQ.connect(manager.study(),'changed',O,update_document_info);
