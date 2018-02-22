@@ -1,9 +1,20 @@
 <span id="template-AltMLSScriptWidget">
 	<div class="" style="display:flex;flex-flow: column;width:60%">
-		<div class="" style="padding-left:50px;padding-bottom: 10px">
+		<div class="" style="padding-left:50px;padding-bottom: 10px;display:flex;flex-flow:row">
 			<button type=button class="btn btn-success" id=start_button>Start</button>
 			&nbsp;
 			<button type=button class="btn btn-danger" disabled="disabled" id=stop_button>Stop</button>
+			<div style="flex:1"></div>
+			<ul class="nav navbar-nav">
+	          <li class="dropdown" style="padding-top: 10px">
+	            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+	            	... <span class="caret"></span>
+	            </a>
+	            <ul class="dropdown-menu" style="padding:15px">
+	              <li><nobr><a href="#" id=show_as_popup_widget>Show as popup widget</a></nobr></li>
+	            </ul>
+	          </li>
+	        </ul>
 		</div>
 		<div class="" style="flex:1; overflow: auto">
 			<textarea class=code_editor></textarea>

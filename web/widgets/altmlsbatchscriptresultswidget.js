@@ -546,8 +546,7 @@ function PopupDialog(O) {
 
 	m_div.find('.modal-content').resizable({
 	    //alsoResize: ".modal-dialog",
-	    minHeight: 300,
-	    minWidth: 300
+	    resize: function() {O.emit('resized');}
 	});
 	m_div.find('.modal-content').draggable({
 		handle: ".modal-header"
@@ -561,19 +560,22 @@ function PopupDialog(O) {
 	  m_is_closed=true;
 	});
 	m_div.find('.modal-body').attr('id',O.objectId());
+	m_div.find('.modal-body').css({padding:0,overflow:'hidden'}); //important
+	m_div.find('.modal-body').css({'min-width':300,'min-height':300});
 
-	var old_size=[O.contentDiv().width(),O.contentDiv().height()];
 	var timer=new Date();
 	function check_size() {
 		var new_size=[O.contentDiv().width(),O.contentDiv().height()];
-		if ((new_size[0]!=old_size[0])||(new_size[1]!=old_size[1])) {
-			O.emit('resized');
+		if ((new_size[0]!=0)&&(new_size[1]!=0)) {
+			O.emit('resized'); //initial resize event
 		}
-		var elapsed=(new Date())-timer;
-		var msec=1000;
-		if (elapsed<5000) msec=100;
-		if (!m_is_closed) {
-			setTimeout(check_size,msec);
+		else {
+			var elapsed=(new Date())-timer;
+			var msec=1000;
+			if (elapsed<5000) msec=100;
+			if (!m_is_closed) {
+				setTimeout(check_size,msec);
+			}
 		}
 	}
 	check_size();

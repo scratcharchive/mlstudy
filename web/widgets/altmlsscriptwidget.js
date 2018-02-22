@@ -70,6 +70,8 @@ function AltMLSScriptWidget(O) {
   	O.div().find('#start_button').click(start_script_job);
   	O.div().find('#stop_button').click(stop_script_job);
 
+  	O.div().find('#show_as_popup_widget').click(show_as_popup_widget);
+
   	update_buttons();
   	update_editor_visible();
 
@@ -165,5 +167,15 @@ function AltMLSScriptWidget(O) {
 			return;
 		}
 		J.stop();
+	}
+
+	function show_as_popup_widget() {
+		if (!m_script) return;
+		var X=new PopupDialog();
+		X.popup();
+		var js=m_script.script();
+		var scr=`(function() {var exports={}; ${js}; return exports;})()`;
+		var A=eval(scr);
+		A.show({div:X.contentDiv(),on_resize:X.onResize,data:null});
 	}
 }
