@@ -173,9 +173,38 @@ function AltMLSScriptWidget(O) {
 		if (!m_script) return;
 		var X=new PopupDialog();
 		X.popup();
+
+		X.contentDiv().html('Running script...');
+
+		var script='';
+		script+=`var show=require('${m_script_name}').show;`;	
+		script+=`window.popup_widget_show=show;`; //the biggest hack!
+
+		var module_scripts={};
+		var names0=m_mls_manager.study().batchScriptNames();
+		for (var i in names0) {
+			module_scripts[names0[i]]=m_mls_manager.study().batchScript(names0[i]);
+		}
+		window.popup_widget_show=null; //the biggest hack
+		var script0=new MLSBatchScript({script:script});
+		var J=m_mls_manager.batchJobManager().startBatchJob(script0,module_scripts,m_mls_manager.study().object());
+		JSQ.connect(J,'completed',null,check_completed);
+		function check_completed() {
+			if (J.isCompleted()) {
+				if (window.popup_widget_show) {
+					window.popup_widget_show({div:X.contentDiv(),on_resize:X.onResize,data:null});
+				}
+				else {
+					X.contentDiv().html('Error. popup_widget_show is null.');
+				}
+			}
+		}
+
+		/*
 		var js=m_script.script();
 		var scr=`(function() {var exports={}; ${js}; return exports;})()`;
 		var A=eval(scr);
 		A.show({div:X.contentDiv(),on_resize:X.onResize,data:null});
+		*/
 	}
 }

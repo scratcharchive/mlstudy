@@ -137,11 +137,43 @@ function AltMLSBatchScriptResultsWidget(O) {
 		get_study_object(function(study_object) {
 			var X=new PopupDialog();
 			X.popup();
-			var js=study_object.scripts[result_object.show.script].script;
-			var scr=`(function() {var exports={}; ${js}; return exports;})()`;
-			var A=eval(scr);
-			A[result_object.show.method]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+			X.contentDiv().html('Running script...');
 
+			var script='';
+			if (result_object.show.study) {
+				script+=`var show=require('${result_object.show.script}',${JSON.stringify(result_object.show_study)}).${result_object.show.method};`;
+			}
+			else {
+				script+=`var show=require('${result_object.show.script}').${result_object.show.method};`;	
+			}
+			script+=`window.popup_widget_show=show;`; //the biggest hack!
+
+			var module_scripts={};
+			var names0=m_mls_manager.study().batchScriptNames();
+			for (var i in names0) {
+				module_scripts[names0[i]]=m_mls_manager.study().batchScript(names0[i]);
+			}
+			window.popup_widget_show=null; //the biggest hack
+			var script0=new MLSBatchScript({script:script});
+			var J=m_mls_manager.batchJobManager().startBatchJob(script0,module_scripts,m_mls_manager.study().object());
+			JSQ.connect(J,'completed',null,check_completed);
+			function check_completed() {
+				if (J.isCompleted()) {
+					if (window.popup_widget_show) {
+						window.popup_widget_show({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+					}
+					else {
+						X.contentDiv().html('Error. popup_widget_show is null.');
+					}
+				}
+			}
+
+			//var js=study_object.scripts[result_object.show.script].script;
+			//var scr=`(function() {var exports={}; ${js}; return exports;})()`;
+			//var A=eval(scr);
+			//A[result_object.show.method]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+
+			/*
 			function require(str) {
 		      var script_text='';
 		      if (typeof(str)=='object') {
@@ -163,6 +195,7 @@ function AltMLSBatchScriptResultsWidget(O) {
 		        return;
 		      }
 		    }
+		    */
 		});
 
 		function get_study_object(callback) {
