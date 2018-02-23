@@ -139,14 +139,15 @@ function AltMLSBatchScriptResultsWidget(O) {
 			X.popup();
 			X.contentDiv().html('Running script...');
 
+			window.popup_widget_show_args={div:X.contentDiv(),on_resize:X.onResize,data:result_object.data}; //the biggest hack!!
 			var script='';
 			if (result_object.show.study) {
-				script+=`var show=require('${result_object.show.script}',${JSON.stringify(result_object.show_study)}).${result_object.show.method};`;
+				script+=`var A=require('${result_object.show.script}',${JSON.stringify(result_object.show.study)});`;
 			}
 			else {
-				script+=`var show=require('${result_object.show.script}').${result_object.show.method};`;	
+				script+=`var A=require('${result_object.show.script}')`;	
 			}
-			script+=`window.popup_widget_show=show;`; //the biggest hack!
+			script+=`exports.main=function() {A.show(window.popup_widget_show_args);};`; //the biggest hack!
 
 			var module_scripts={};
 			var names0=m_mls_manager.study().batchScriptNames();
@@ -156,17 +157,22 @@ function AltMLSBatchScriptResultsWidget(O) {
 			window.popup_widget_show=null; //the biggest hack
 			var script0=new MLSBatchScript({script:script});
 			var J=m_mls_manager.batchJobManager().startBatchJob(script0,module_scripts,m_mls_manager.study().object());
+
+			/*
 			JSQ.connect(J,'completed',null,check_completed);
 			function check_completed() {
 				if (J.isCompleted()) {
 					if (window.popup_widget_show) {
-						window.popup_widget_show({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+						var tmp=window.popup_widget_show;
+						window.popup_widget_show=null;
+						tmp({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
 					}
 					else {
 						X.contentDiv().html('Error. popup_widget_show is null.');
 					}
 				}
 			}
+			*/
 
 			//var js=study_object.scripts[result_object.show.script].script;
 			//var scr=`(function() {var exports={}; ${js}; return exports;})()`;
