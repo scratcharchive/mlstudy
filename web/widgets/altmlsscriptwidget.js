@@ -170,6 +170,20 @@ function AltMLSScriptWidget(O) {
 	}
 
 	function show_as_popup_widget() {
+
+		var result_object={
+    		"type": "widget",
+    		"show": {
+        		"script": m_script_name,
+        		"method": "show"
+    		},
+    		"data": {}
+    	};
+
+		popup_widget(m_mls_manager,result_object);
+
+		/*
+
 		if (!m_script) return;
 		var X=new PopupDialog();
 		X.popup();
@@ -199,6 +213,7 @@ function AltMLSScriptWidget(O) {
 				}
 			}
 		}
+		*/
 
 		/*
 		var js=m_script.script();

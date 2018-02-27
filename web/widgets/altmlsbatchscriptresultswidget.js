@@ -120,7 +120,7 @@ function AltMLSBatchScriptResultsWidget(O) {
 				else if (row.result_object.type=='widget') {
 					var link0=$('<span class=view_button></span>');
 					link0.click(function() {
-						popup_widget(row.result_object);
+						popup_widget(m_mls_manager,row.result_object);
 					});
 					elmt0.find('#open_view').append(link0);
 				}
@@ -131,110 +131,6 @@ function AltMLSBatchScriptResultsWidget(O) {
 		row.cell(2).append(elmt2);
 		row.cell(3).append(elmt3);
 		return row;
-	}
-
-	function popup_widget(result_object) {
-		get_study_object(function(study_object) {
-			var X=new PopupDialog();
-			X.popup();
-			X.contentDiv().html('Running script...');
-
-			window.popup_widget_show_args={div:X.contentDiv(),on_resize:X.onResize,data:result_object.data}; //the biggest hack!!
-			var script='';
-			if (result_object.show.study) {
-				script+=`var A=require('${result_object.show.script}',${JSON.stringify(result_object.show.study)});`;
-			}
-			else {
-				script+=`var A=require('${result_object.show.script}')`;	
-			}
-			script+=`exports.main=function() {A.show(window.popup_widget_show_args);};`; //the biggest hack!
-
-			var module_scripts={};
-			var names0=m_mls_manager.study().batchScriptNames();
-			for (var i in names0) {
-				module_scripts[names0[i]]=m_mls_manager.study().batchScript(names0[i]);
-			}
-			window.popup_widget_show=null; //the biggest hack
-			var script0=new MLSBatchScript({script:script});
-			var J=m_mls_manager.batchJobManager().startBatchJob(script0,module_scripts,m_mls_manager.study().object());
-
-			/*
-			JSQ.connect(J,'completed',null,check_completed);
-			function check_completed() {
-				if (J.isCompleted()) {
-					if (window.popup_widget_show) {
-						var tmp=window.popup_widget_show;
-						window.popup_widget_show=null;
-						tmp({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
-					}
-					else {
-						X.contentDiv().html('Error. popup_widget_show is null.');
-					}
-				}
-			}
-			*/
-
-			//var js=study_object.scripts[result_object.show.script].script;
-			//var scr=`(function() {var exports={}; ${js}; return exports;})()`;
-			//var A=eval(scr);
-			//A[result_object.show.method]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
-
-			/*
-			function require(str) {
-		      var script_text='';
-		      if (typeof(str)=='object') {
-		        script_text=str.script||'';
-		      }
-		      else {
-		        if (!(str in study_object.scripts)) {
-		          throw new Error('Error in require, script not found: '+str);
-		        }
-		        script_text=study_object.scripts[str].script;
-		      }
-		      var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
-		      try {
-		        var ret=eval(script0);
-		        return ret;
-		      }
-		      catch(err) {
-		        console.error('Error in module '+str+': '+err.message);
-		        return;
-		      }
-		    }
-		    */
-		});
-
-		function get_study_object(callback) {
-			if (result_object.show.study) {
-				var docstor_client=m_mls_manager.docStorClient();
-				var owner=result_object.show.study.owner;
-				var title=result_object.show.study.title;
-				download_document_content_from_docstor(docstor_client,owner,title,function(err,content) {
-					if (err) {
-						console.error('Error getting study: '+err);
-						return;
-					}
-					var obj=try_parse_json(content);
-					if (!obj) {
-						console.error('Error parsing study JSON.');
-						return;
-					}
-					callback(obj);
-				});
-			}
-			else {
-				callback(m_mls_manager.study().object());
-			}
-		}
-
-	    function try_parse_json(str) {
-		    try {
-		        return JSON.parse(str);
-		    }
-		    catch(err) {
-		        return null;
-		    }
-		}
 	}
 
 	function download_result_object(rname,result) {
@@ -625,5 +521,110 @@ function PopupDialog(O) {
 			show:true,
 			focus:true
 		});
+	}
+}
+
+function popup_widget(mls_manager,result_object) {
+
+	get_study_object(function(study_object) {
+		var X=new PopupDialog();
+		X.popup();
+		X.contentDiv().html('Running script...');
+
+		window.popup_widget_show_args={div:X.contentDiv(),on_resize:X.onResize,data:result_object.data}; //the biggest hack!!
+		var script='';
+		if (result_object.show.study) {
+			script+=`var A=require('${result_object.show.script}',${JSON.stringify(result_object.show.study)}); `;
+		}
+		else {
+			script+=`var A=require('${result_object.show.script}'); `;	
+		}
+		script+=`exports.main=function() {A['${result_object.show.method}'](window.popup_widget_show_args);};`; //the biggest hack!
+
+		var module_scripts={};
+		var names0=mls_manager.study().batchScriptNames();
+		for (var i in names0) {
+			module_scripts[names0[i]]=mls_manager.study().batchScript(names0[i]);
+		}
+		window.popup_widget_show=null; //the biggest hack
+		var script0=new MLSBatchScript({script:script});
+		var J=mls_manager.batchJobManager().startBatchJob(script0,module_scripts,mls_manager.study().object());
+
+		/*
+		JSQ.connect(J,'completed',null,check_completed);
+		-function check_completed() {
+			if (J.isCompleted()) {
+				if (window.popup_widget_show) {
+					var tmp=window.popup_widget_show;
+					window.popup_widget_show=null;
+					tmp({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+				}
+				else {
+					X.contentDiv().html('Error. popup_widget_show is null.');
+				}
+			}
+		}
+		*/
+
+		//var js=study_object.scripts[result_object.show.script].script;
+		//var scr=`(function() {var exports={}; ${js}; return exports;})()`;
+		//var A=eval(scr);
+		//A[result_object.show.method]({div:X.contentDiv(),on_resize:X.onResize,data:result_object.data});
+
+		/*
+		function require(str) {
+	      var script_text='';
+	      if (typeof(str)=='object') {
+	        script_text=str.script||'';
+	      }
+	      else {
+	        if (!(str in study_object.scripts)) {
+	          throw new Error('Error in require, script not found: '+str);
+	        }
+	        script_text=study_object.scripts[str].script;
+	      }
+	      var script0='(function() {var exports={};'+script_text+'\n return exports;})()';
+	      try {
+	        var ret=eval(script0);
+	        return ret;
+	      }
+	      catch(err) {
+	        console.error('Error in module '+str+': '+err.message);
+	        return;
+	      }
+	    }
+	    */
+	});
+
+	function get_study_object(callback) {
+		if (result_object.show.study) {
+			var docstor_client=mls_manager.docStorClient();
+			var owner=result_object.show.study.owner;
+			var title=result_object.show.study.title;
+			download_document_content_from_docstor(docstor_client,owner,title,function(err,content) {
+				if (err) {
+					console.error('Error getting study: '+err);
+					return;
+				}
+				var obj=try_parse_json(content);
+				if (!obj) {
+					console.error('Error parsing study JSON.');
+					return;
+				}
+				callback(obj);
+			});
+		}
+		else {
+			callback(mls_manager.study().object());
+		}
+	}
+
+    function try_parse_json(str) {
+	    try {
+	        return JSON.parse(str);
+	    }
+	    catch(err) {
+	        return null;
+	    }
 	}
 }
